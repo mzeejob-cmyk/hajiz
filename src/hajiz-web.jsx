@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext, Component } from "react";
 import { signUpUser, signInUser } from "./auth.js";
+import { createBooking, uploadReceipt, createPayment } from "./bookings.js";
 
 // ═══════════════════════════════════════════════════════════════════════
 // HAJIZ — OTA PLATFORM v4 (PRODUCTION ARCHITECTURE)
@@ -811,6 +812,7 @@ const PageWrap = ({ title, sub, children, maxW = 1100 }) => (
 // ═══════════════════════════════════════════════════════════
 
 const PaymentGateway = ({ total, currency, rates, summary, onConfirmed, onBack }) => {
+  const { user } = useAuth();
   const [method, setMethod] = useState(null); // null until chosen
   const ALL_METHODS = [
     { id: "bankak", icon: "🏦", name: "بنكك", desc: "تحويل محلي — تأكيد يدوي خلال 30 دقيقة", tag: "متاح الآن" },
@@ -821,7 +823,7 @@ const PaymentGateway = ({ total, currency, rates, summary, onConfirmed, onBack }
   ];
   const methods = ALL_METHODS.map(m => ({ ...m, disabled: !PAYMENT_CONFIG.enabled.includes(m.id) }));
 
-  if (method === "bankak") return <BankakPayment total={total} currency={currency} rates={rates} summary={summary} onConfirmed={onConfirmed} onBack={() => setMethod(null)} />;
+  if (method === "bankak") return <BankakPayment total={total} currency={currency} rates={rates} summary={summary} currentUser={user} onConfirmed={onConfirmed} onBack={() => setMethod(null)} />;
   if (method === "card") return <CardPayment total={total} currency={currency} rates={rates} onConfirmed={onConfirmed} onBack={() => setMethod(null)} />;
   if (method === "apple") return <WalletPayment kind="apple" total={total} currency={currency} rates={rates} onConfirmed={onConfirmed} onBack={() => setMethod(null)} />;
   if (method === "google") return <WalletPayment kind="google" total={total} currency={currency} rates={rates} onConfirmed={onConfirmed} onBack={() => setMethod(null)} />;
@@ -854,14 +856,22 @@ const PaymentGateway = ({ total, currency, rates, summary, onConfirmed, onBack }
 };
 
 // ── BANKAK: the full required flow ───────────────────────────
-const BankakPayment = ({ total, currency, rates, summary, onConfirmed, onBack }) => {
+const BankakPayment = ({ total, currency, rates, summary, onConfirmed, onBack, currentUser }) => {
   const [stage, setStage] = useState("instructions"); // instructions → upload → waiting
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [fileName, setFileName] = useState("");
   const [verifying, setVerifying] = useState(false);
-  const ref = useRef(`HJZ-${Math.random().toString(36).substr(2, 6).toUpperCase()}`).current;
+  const genRef = () => {
+    const d = new Date();
+    const ymd = `${String(d.getFullYear()).slice(2)}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+    const seq = String(Math.floor(Math.random()*9999)+1).padStart(4,"0");
+    return `HJZ-${ymd}-${seq}`;
+  };
+  const [ref] = useState(genRef);
+  const [realFile, setRealFile] = useState(null);
+  const fileInputRef = useRef(null);
   const bankAccount = "1234 5678 9012"; // Hajiz Bankak account (placeholder)
 
   useEffect(() => {
@@ -876,13 +886,32 @@ const BankakPayment = ({ total, currency, rates, summary, onConfirmed, onBack })
   const pct = (timeLeft / 900) * 100;
   const expired = timeLeft <= 0;
 
-  const doUpload = () => {
-    setUploading(true);
-    setTimeout(() => { setUploading(false); setUploaded(true); setFileName("receipt_bankak.jpg"); }, 1500);
+  const doUpload = () => { fileInputRef.current?.click(); };
+  const onFilePicked = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setRealFile(f);
+    setUploaded(true);
+    setFileName(f.name);
   };
-  const submit = () => {
+  const submit = async () => {
     setVerifying(true);
-    setTimeout(() => { setVerifying(false); setStage("waiting"); }, 1800);
+    try {
+      const bookingRes = await createBooking({ ...(summary || {}), title: summary?.title || "حجز", price: total, ref }, currentUser);
+      let receiptPath = null;
+      if (realFile && currentUser) {
+        const up = await uploadReceipt(realFile, currentUser, ref);
+        if (up.ok) receiptPath = up.path;
+      }
+      if (bookingRes.ok) {
+        await createPayment(bookingRes.booking.id, { reference: ref, amount: total, currency: "SDG", receiptPath });
+      }
+    } catch (err) {
+      console.error("Payment save error:", err);
+    }
+    setVerifying(false);
+    setStage("waiting");
+    if (onConfirmed) onConfirmed();
   };
 
   if (stage === "waiting") return (
@@ -957,6 +986,7 @@ const BankakPayment = ({ total, currency, rates, summary, onConfirmed, onBack })
 
         {/* Upload */}
         <Card style={{ padding: 22, marginBottom: 18, border: `2px dashed ${uploaded ? T.green : T.gold}`, background: uploaded ? T.greenBg : T.card }}>
+          <input ref={fileInputRef} type="file" accept="image/*,.pdf" style={{ display: "none" }} onChange={onFilePicked} />
           {!uploaded ? (
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 34, marginBottom: 10 }}>📎</div>
@@ -3585,11 +3615,20 @@ function HajizApp() {
 
   const nav = useCallback((p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }, []);
 
-  const handleBook = useCallback((b) => {
-    setBooking(b);
-    addToast(`تم تأكيد حجزك — ${b.title}`, "booking", 5000);
+  const handleBook = useCallback(async (b) => {
+    console.log("🔵 handleBook called. user =", user);
+    console.log("🔵 booking data =", b);
+    const res = await createBooking(b, user);
+    console.log("🔵 createBooking result =", res);
+    if (res.ok) {
+      setBooking({ ...b, ref: res.ref, id: res.booking.id });
+      addToast(`تم حفظ الحجز — ${b.title}`, "booking", 5000);
+    } else {
+      setBooking(b);
+      addToast(`تم الحجز (لم يُحفظ بالكامل)`, "booking", 5000);
+    }
     nav("success");
-  }, [nav, addToast]);
+  }, [nav, addToast, user]);
 
   const requireAuth = useCallback(() => setAuthModal("login"), []);
   const startSearch = useCallback((svc, params) => { setPrefill({ svc, params, ts: Date.now() }); nav(svc); }, [nav]);
