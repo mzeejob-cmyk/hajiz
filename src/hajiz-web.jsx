@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext, Component } from "react";
+import { signUpUser, signInUser } from "./auth.js";
 
 // ═══════════════════════════════════════════════════════════════════════
 // HAJIZ — OTA PLATFORM v4 (PRODUCTION ARCHITECTURE)
@@ -1963,19 +1964,23 @@ const AuthModal = ({ initialMode, onClose, onAuth }) => {
   const [identity, setIdentity] = useState({ docType: "passport", docNumber: "", uploaded: false });
   const otpRefs = useRef([]);
 
-  const submitForm = () => {
+  const submitForm = async () => {
     if (!email.includes("@")) { setError("أدخل بريداً صحيحاً"); return; }
     if (mode === "login") {
       if (password.length < 6) { setError("كلمة المرور 6 أحرف على الأقل"); return; }
       setError(""); setLoading(true);
-      // AuthService.login(email, password) → session
-      setTimeout(() => { setLoading(false); onAuth({ email, userType: "customer", verified: true }); }, 700);
+      const res = await signInUser(email, password);
+      setLoading(false);
+      if (!res.ok) { setError("بيانات الدخول غير صحيحة"); return; }
+      onAuth({ email, userType: "customer", verified: true });
       return;
     }
-    // register → validate password then OTP verification path
     if (password.length < 6) { setError("كلمة المرور 6 أحرف على الأقل"); return; }
     setError(""); setLoading(true);
-    setTimeout(() => { setLoading(false); setStep("otp"); }, 800);
+    const res = await signUpUser(email, password, profile);
+    setLoading(false);
+    if (!res.ok) { setError(res.error); return; }
+    setStep("verify-email");
   };
   const handleOtp = (i, v) => {
     if (!/^\d?$/.test(v)) return;
@@ -2043,21 +2048,13 @@ const AuthModal = ({ initialMode, onClose, onAuth }) => {
           </>}
 
           {/* STEP: OTP */}
-          {step === "otp" && <div className="fade-in">
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-              <div style={{ fontSize: 44, marginBottom: 12 }}>📬</div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: T.text }}>تحقق من بريدك</h2>
-              <p style={{ fontSize: 14, color: T.gray600, marginTop: 8 }}>أرسلنا رمزاً إلى <strong style={{ color: T.gold, direction: "ltr", display: "inline-block" }}>{email}</strong></p>
-            </div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 20, direction: "ltr" }}>
-              {otp.map((d, i) => (
-                <input key={i} ref={el => otpRefs.current[i] = el} value={d} onChange={e => handleOtp(i, e.target.value)} maxLength={1} inputMode="numeric"
-                  style={{ width: 48, height: 58, background: T.card, textAlign: "center", fontSize: 24, fontWeight: 700, border: `2px solid ${d ? T.gold : T.gray200}`, borderRadius: 13, color: T.text }} onFocus={e => e.target.style.borderColor = T.gold} />
-              ))}
-            </div>
-            {error && <p style={{ color: T.red, fontSize: 13, textAlign: "center", marginBottom: 14 }}>{error}</p>}
-            <Btn full onClick={verifyOtp} disabled={loading}>{loading ? <Spinner /> : "تأكيد"}</Btn>
-            <button onClick={() => setStep("form")} style={{ display: "block", margin: "16px auto 0", color: T.gold, fontSize: 13, fontWeight: 600, background: "none" }}>← تغيير البريد</button>
+          {step === "verify-email" && <div className="fade-in" style={{ textAlign: "center", padding: "20px 8px" }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#E9F9F1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, margin: "0 auto 18px" }}>📧</div>
+            <h3 style={{ fontSize: 19, fontWeight: 800, color: T.text, marginBottom: 10 }}>تفقّد بريدك الإلكتروني</h3>
+            <p style={{ fontSize: 14, color: T.gray600, lineHeight: 1.8, marginBottom: 8 }}>أرسلنا رابط تأكيد إلى</p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: T.goldDark, marginBottom: 18, direction: "ltr" }}>{email}</p>
+            <p style={{ fontSize: 13, color: T.gray600, lineHeight: 1.8, marginBottom: 24 }}>اضغط الرابط في الرسالة لتفعيل حسابك، ثم عُد وسجّل الدخول. إن لم تجد الرسالة، تفقّد مجلد الرسائل غير المرغوبة (Spam).</p>
+            <Btn full onClick={onClose}>فهمت</Btn>
           </div>}
 
           {/* STEP: confirm-data (profile completion) */}
