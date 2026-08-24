@@ -1,4 +1,7 @@
-import { Link } from "react-router-dom"
-import { Container } from "../../design-system/primitives/Container.jsx"
-import { shellHighlights } from "../../services/mocks/shellContent.js"
-export default function HomePage() { return <><section className="home-hero"><Container><div className="hero-copy"><span className="eyebrow">HAJIZ V1</span><h1>رحلتك تبدأ<br/><em>بخطوة واضحة.</em></h1><p>استكشف رحلات الطيران والفنادق والتأمين والباقات والعروض من واجهة عربية بسيطة.</p><div className="hero-actions"><Link className="button" to="/flights">ابدأ بالطيران</Link><Link className="button button--ghost" to="/offers">شاهد العروض</Link></div></div><div className="hero-card" aria-label="ملخص خدمات حاجز"><span className="hero-card__tag">جاهز للاستكشاف</span><strong>كل ما تحتاجه لرحلتك</strong><div className="service-pills"><span>طيران</span><span>فنادق</span><span>تأمين</span><span>باقات</span></div><small>بيانات العرض الحالية اصطناعية وغير قابلة للحجز.</small></div></Container></section><Container><section className="highlight-grid">{shellHighlights.map(item => <article key={item.title}><span>✦</span><h2>{item.title}</h2><p>{item.text}</p></article>)}</section></Container></> }
+import { HeroSection } from "./components/HeroSection.jsx"
+import { OffersSection } from "./components/OffersSection.jsx"
+import { PopularRoutesSection } from "./components/PopularRoutesSection.jsx"
+import { HotelDestinationsSection } from "./components/HotelDestinationsSection.jsx"
+import { PackagesSection } from "./components/PackagesSection.jsx"
+import { HomeCTA } from "./components/HomeCTA.jsx"
+export default function HomePage() { return <><HeroSection/><OffersSection/><PopularRoutesSection/><HotelDestinationsSection/><PackagesSection/><HomeCTA type="insurance"/><HomeCTA type="partners"/></> }

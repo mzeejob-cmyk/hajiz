@@ -1,0 +1,1 @@
+export function SectionHeading({ title, text, mobileText }) { return <div className="home-section-heading"><div><h2>{title}</h2>{text && <p className="desktop-copy">{text}</p>}{mobileText && <p className="mobile-copy">{mobileText}</p>}</div></div> }

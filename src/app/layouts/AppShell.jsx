@@ -12,18 +12,14 @@ export function AppShell({ children }) {
     <a className="skip-link" href="#main-content">تجاوز إلى المحتوى</a>
     <header className="site-header">
       <Container className="header-inner">
-        <NavLink className="brand" to="/" aria-label="حاجز — الرئيسية"><span className="brand-mark">ح</span><span>حاجز</span></NavLink>
-        <nav className="desktop-nav" aria-label="التنقل الرئيسي">{PRIMARY_NAVIGATION.map(item => <NavLink key={item.id} className={navClass} to={item.to}>{item.label}</NavLink>)}</nav>
-        <div className="header-actions">
-          <NavLink className="account-link" to="/account">حسابي</NavLink>
-          <button className="menu-button" type="button" aria-label="فتح قائمة التنقل" aria-expanded={mobileOpen} aria-controls="mobile-navigation" onClick={() => setMobileOpen(open => !open)}><span /><span /><span /></button>
-        </div>
+        <NavLink className="brand" to="/" aria-label="حاجز — الرئيسية"><span className="brand-latin" dir="ltr">HAJIZ</span><span>حاجز</span></NavLink>
+        <nav className="desktop-nav" aria-label="التنقل الرئيسي">{PRIMARY_NAVIGATION.slice(1).map(item => <NavLink key={item.id} className={navClass} to={item.to}>{item.label}</NavLink>)}</nav>
+        <div className="header-utilities"><span className="latin-text" dir="ltr">AED</span><button type="button">العربية</button><NavLink to="/bookings/demo-reference">حجوزاتي</NavLink></div>
+        <button className="menu-button" type="button" aria-label="فتح قائمة التنقل" aria-expanded={mobileOpen} aria-controls="mobile-navigation" onClick={() => setMobileOpen(open => !open)}><span/><span/><span/></button>
       </Container>
-      <nav id="mobile-navigation" className={`mobile-nav${mobileOpen ? " mobile-nav--open" : ""}`} aria-label="التنقل عبر الهاتف" hidden={!mobileOpen}>
-        <Container>{PRIMARY_NAVIGATION.map(item => <NavLink key={item.id} className={navClass} to={item.to} onClick={() => setMobileOpen(false)}>{item.label}</NavLink>)}</Container>
-      </nav>
+      <nav id="mobile-navigation" className={`mobile-nav${mobileOpen ? " mobile-nav--open" : ""}`} aria-label="التنقل عبر الهاتف" hidden={!mobileOpen}><Container>{PRIMARY_NAVIGATION.slice(1).map(item => <NavLink key={item.id} className={navClass} to={item.to} onClick={() => setMobileOpen(false)}>{item.label}</NavLink>)}</Container></nav>
     </header>
     <main id="main-content" tabIndex="-1">{children ?? <Outlet />}</main>
-    <footer className="site-footer"><Container className="footer-grid"><div><div className="brand brand--footer"><span className="brand-mark">ح</span><span>حاجز</span></div><p>واجهة V1 تجريبية للبحث والتخطيط لرحلتك.</p></div><div><h2>خدمات V1</h2><div className="footer-links">{PRIMARY_NAVIGATION.slice(1).map(item => <NavLink key={item.id} to={item.to}>{item.label}</NavLink>)}</div></div><div><h2>روابط</h2><div className="footer-links"><NavLink to="/account">الحساب</NavLink><NavLink to="/bookings/demo-reference">متابعة حجز</NavLink></div></div></Container><Container><p className="copyright">© <span className="latin-text" dir="ltr">2026</span> حاجز. بيئة واجهة معزولة.</p></Container></footer>
+    <footer className="site-footer"><Container className="simple-footer"><div className="brand brand--footer"><span className="brand-latin" dir="ltr">HAJIZ</span><span>حاجز</span></div><nav aria-label="روابط التذييل">{PRIMARY_NAVIGATION.slice(1).map((item, index) => <span key={item.id}><NavLink to={item.to}>{item.label}</NavLink>{index < PRIMARY_NAVIGATION.length - 2 && " · "}</span>)}</nav><p>السفر أقرب ليك.</p></Container></footer>
   </div>
 }

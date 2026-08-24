@@ -1,0 +1,3 @@
+import { Link } from "react-router-dom"
+import { Container } from "../../../design-system/primitives/Container.jsx"
+export function HomeCTA({ type }) { const insurance = type === "insurance"; return <section className="home-cta-section"><Container><div className="home-cta-card"><div><h2>{insurance ? "تأمين السفر" : "حاجز للشركاء"}</h2><p className="desktop-copy">{insurance ? "قارن الخطط والتغطيات المناسبة لرحلتك عند ربط مزود التأمين." : "للوكالات والمسوقين: أدوات حجز، عمولات، ومحفظة منفصلة حسب صلاحيتك."}</p>{!insurance && <p className="mobile-copy">للعملاء التجاريين والمسوقين.</p>}</div><Link className="button" to={insurance ? "/insurance" : "/partners"}>{insurance ? "قارن التأمين" : "اكتشف الشراكة"}</Link></div></Container></section> }
