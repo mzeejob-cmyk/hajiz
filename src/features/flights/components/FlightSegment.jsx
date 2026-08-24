@@ -1,0 +1,2 @@
+import { DirectionText } from "../../../design-system/primitives/DirectionText.jsx"
+export function FlightSegment({ offer }) { return <div className="flight-segment" dir="ltr"><div className="segment-end segment-origin"><strong>{offer.departure}</strong><DirectionText>{offer.origin}</DirectionText></div><div className="segment-line"><span>{offer.duration}</span><i/><small>{offer.stops === 0 ? "مباشر" : "توقف واحد"}</small></div><div className="segment-end segment-destination"><strong>{offer.arrival}</strong><DirectionText>{offer.destination}</DirectionText></div></div> }

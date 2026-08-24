@@ -1,0 +1,1 @@
+export function FeedbackAlert({ tone = "info", title, children }) { return <div className={`feedback-alert feedback-alert--${tone}`} role="status"><span aria-hidden="true">i</span><div><strong>{title}</strong><p>{children}</p></div></div> }
