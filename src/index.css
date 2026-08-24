@@ -293,3 +293,57 @@ button { border: 0; cursor: pointer; }
   .fare-summary-price { padding: 0; border: 0; font-size: 1.25rem; }
   .fare-summary > button { width: 5.875rem; }
 }
+
+/* Figma 68:972 / 68:1374 — traveler details */
+.traveler-page { min-height: 100vh; padding-block: 1.75rem 5rem; background: #f7f8fa; color: #060f1b; }
+.traveler-heading { margin-block-end: 2rem; display: grid; grid-template-columns: 21rem 1fr; gap: .75rem 1.5rem; align-items: start; }
+.traveler-heading > div { grid-column: 2; grid-row: 1; }
+.traveler-heading h1 { margin: 0; font-size: 1.875rem; }
+.traveler-heading p { margin: .2rem 0 0; color: #5a6474; }
+.traveler-back { grid-column: 1; grid-row: 1; justify-self: start; min-height: var(--touch-target); padding: 0; background: transparent; color: #1c4f8f; }
+.traveler-heading .booking-steps { grid-column: 2; grid-row: 2; }
+.traveler-layout { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 1.5rem; align-items: start; }
+.traveler-content { display: grid; gap: 1rem; }
+.saved-traveler, .traveler-card, .traveler-summary { border: 1px solid #e2e6ec; border-radius: .85rem; background: white; }
+.saved-traveler { min-height: 6.75rem; padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.saved-traveler h2, .traveler-card h2, .traveler-summary h2 { margin: 0; font-size: 1.125rem; }
+.saved-traveler p, .traveler-card header p { margin: .35rem 0 0; color: #7c8798; font-size: .875rem; }
+.saved-traveler button { min-height: 2.75rem; padding-inline: 1rem; border: 1px solid #e2e6ec; border-radius: .625rem; background: white; color: #060f1b; font-weight: 600; }
+.traveler-card { padding: 1.25rem; }
+.traveler-card > header { margin-block-end: 1.25rem; }
+.traveler-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.traveler-field { display: grid; gap: .5rem; color: #5a6474; font-size: .875rem; font-weight: 600; }
+.traveler-field b { color: #72201a; }
+.traveler-field input, .traveler-field select { width: 100%; min-height: 3rem; padding-inline: .875rem; border: 1px solid #e2e6ec; border-radius: .75rem; background: white; color: #060f1b; font-weight: 500; }
+.save-traveler { min-height: var(--touch-target); margin-block-start: 1rem; display: flex; align-items: center; gap: .75rem; cursor: pointer; }
+.save-traveler input { width: 1.25rem; height: 1.25rem; accent-color: #060f1b; }
+.traveler-privacy { padding: 1rem; border-radius: .75rem; background: #eaf2fc; color: #143a6a; }
+.traveler-privacy p { margin: 0 0 .35rem; }
+.traveler-summary { position: sticky; top: 6rem; padding: 1.25rem; display: grid; gap: 1rem; }
+.traveler-summary strong { font: 700 1.1rem/1 var(--font-latin); }
+.traveler-summary p { margin: 0; color: #5a6474; }
+.traveler-price-lock { padding: .75rem 1rem; display: flex; align-items: center; gap: .75rem; border-radius: .75rem; background: #fef6e7; color: #7a4f10; }
+.traveler-price-lock bdi { font: 700 1.55rem/1 var(--font-latin); }
+.traveler-summary > button { width: 100%; min-height: 3rem; border-radius: .65rem; background: #060f1b; color: white; font-weight: 700; }
+.traveler-feedback { padding: .75rem; border-radius: .6rem; background: #eaf7f0; color: #105538 !important; font-size: .8rem; }
+.traveler-layout > .traveler-feedback { grid-column: 1; margin: 0; }
+@media (max-width: 900px) {
+  .traveler-page { padding-block: .75rem 7rem; }
+  .traveler-page > .container { width: min(calc(100% - 1.5rem), var(--container-max)); }
+  .traveler-heading { margin-block-end: .75rem; grid-template-columns: auto 1fr; gap: .5rem; }
+  .traveler-heading > div { grid-column: 2; }
+  .traveler-heading h1 { font-size: 1.5rem; }
+  .traveler-back { grid-column: 1; }
+  .traveler-heading .booking-steps { grid-column: 1 / -1; grid-row: 2; }
+  .traveler-layout { display: contents; }
+  .traveler-content { gap: .75rem; }
+  .saved-traveler { min-height: auto; padding: 1rem; align-items: stretch; flex-direction: column; }
+  .saved-traveler h2, .traveler-card h2 { font-size: 1rem; }
+  .saved-traveler button { width: 100%; }
+  .traveler-card { padding: 1rem; }
+  .traveler-field-grid { grid-template-columns: 1fr; gap: .85rem; }
+  .mobile-check-note { margin: .25rem 0 1rem; color: #5a6474; font-size: .8rem; text-align: center; }
+  .traveler-summary { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; top: auto; padding: 1rem; display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; border-radius: 0; box-shadow: 0 -2px 8px rgb(6 15 27 / 8%); }
+  .traveler-summary > button { width: 5.875rem; }
+  .traveler-layout > .traveler-feedback { position: fixed; z-index: 21; right: 1rem; bottom: 5.5rem; left: 1rem; }
+}

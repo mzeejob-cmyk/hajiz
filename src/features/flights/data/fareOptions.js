@@ -5,4 +5,4 @@ export const FARE_OPTIONS = Object.freeze([
   { key: "checked", title: "اقتصادية · أمتعة مشمولة", subtitle: "الدرجة السياحية", amount: "1,205", currency: "AED", baggage: "أمتعة مشمولة · 23 كجم", flexibility: "تطبق الشروط" },
 ])
 export function resolveItinerary(key) { return FLIGHT_FIXTURES.find((offer) => offer.key === key) }
-export function resolveFare(key) { return FARE_OPTIONS.find((fare) => fare.key === key) ?? FARE_OPTIONS[1] }
+export function resolveFare(key) { return FARE_OPTIONS.find((fare) => fare.key === key) }
