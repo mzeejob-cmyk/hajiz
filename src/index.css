@@ -208,3 +208,88 @@ button { border: 0; cursor: pointer; }
 @media (max-width: 900px) { .flights-layout { grid-template-columns: 1fr; } .filters-sidebar { display: none; } .mobile-filter-trigger { display: inline-flex; align-items: center; } .state-gallery { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .flights-page { padding-block: 1rem 3rem; } .flights-page > .container { width: min(calc(100% - 2rem), var(--container-max)); } .flights-summary { min-height: 6rem; padding: .8rem 1rem; } .desktop-summary, .results-count > strong { display: none; } .mobile-results-label { display: block; margin-inline-end: auto; font-weight: 700; } .flights-title { display: none; } .results-count { margin-block-start: 1rem; } .results-count label { font-size: 0; } .results-count label select { font-size: .85rem; } .result-chips { overflow-x: auto; } .feedback-alert { font-size: .85rem; } .flight-offer-card { width: 100%; } .offer-airline { padding: .8rem 1rem; } .flight-segment { min-height: 7rem; padding: 1rem; grid-template-columns: 4.25rem minmax(5rem, 1fr) 4.25rem; } .segment-end strong { font-size: 1.2rem; } .offer-details { min-height: auto; padding: .8rem 1rem; align-items: flex-start; flex-direction: column; gap: .5rem; } .offer-purchase { align-items: stretch; flex-direction: column; } .offer-purchase > button { width: 100%; } .price > b:first-child { font-size: 1.35rem; } .state-gallery { margin-block-start: 3rem; } }
 .flights-filters--mobile .desktop-only { display: none; }
+
+/* Figma 66:741 / 66:990 — fare selection */
+.mobile-only { display: none !important; }
+.fare-page { min-height: 100vh; padding-block: 1.75rem 5rem; background: #f7f8fa; color: #060f1b; }
+.fare-heading { margin-block-end: 2rem; display: grid; grid-template-columns: 21rem 1fr; gap: .75rem 1.5rem; align-items: start; }
+.fare-heading > div { grid-column: 2; grid-row: 1; }
+.fare-heading h1 { margin: 0; font-size: 1.875rem; line-height: 1.35; }
+.fare-subheading { margin: .15rem 0 0; color: #5a6474; }
+.fare-back { grid-column: 1; grid-row: 1; justify-self: start; min-height: var(--touch-target); padding: 0; background: transparent; color: #1c4f8f; font-weight: 500; }
+.booking-steps { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; list-style: none; }
+.fare-heading .booking-steps { grid-column: 2; grid-row: 2; }
+.booking-steps li { min-height: 2.75rem; display: flex; align-items: center; justify-content: center; gap: .4rem; border-radius: .65rem; background: #eef0f4; color: #5a6474; font-size: .85rem; font-weight: 700; }
+.booking-steps li[aria-current="step"] { background: #060f1b; color: white; }
+.booking-steps span { font-family: var(--font-latin); }
+.fare-layout { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 1.5rem; align-items: start; }
+.fare-content { display: grid; gap: 1rem; }
+.selected-itinerary, .fare-rules, .fare-summary { border: 1px solid #e2e6ec; border-radius: .85rem; background: white; }
+.selected-itinerary { padding: 1.25rem; }
+.selected-itinerary-heading { display: flex; justify-content: space-between; align-items: center; }
+.selected-itinerary-heading h2 { margin: 0; font-size: 1.25rem; }
+.selected-itinerary-heading > span { color: #105538; font-size: .75rem; font-weight: 700; }
+.itinerary-airline { margin-block-start: 1rem; display: flex; justify-content: space-between; color: #7c8798; font-size: .85rem; }
+.selected-itinerary .flight-segment { padding-inline: 0; }
+.itinerary-footer { margin: 0; color: #5a6474; font-size: .875rem; }
+.fare-price-note { padding: 1rem; border-radius: .75rem; background: #eaf2fc; color: #143a6a; }
+.fare-price-note p { margin: .35rem 0 0; color: #5a6474; }
+.fare-options > h2 { margin: 0; font-size: 1.5rem; }
+.fare-options-support { margin: .35rem 0 1rem; color: #5a6474; font-size: .875rem; }
+.fare-option-grid { display: grid; gap: .75rem; }
+.fare-option { min-height: 7.875rem; padding: 1rem; display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; gap: 1rem; border: 1px solid #e2e6ec; border-radius: .75rem; background: white; cursor: pointer; }
+.fare-option.is-selected { border: 2px solid #060f1b; background: #e7eaef; }
+.fare-option-copy { flex: 1; }
+.fare-option-copy > strong, .fare-option-copy > small { display: block; }
+.fare-option-copy > small { margin-block-start: .25rem; color: #7c8798; }
+.fare-meta { margin-block-start: .5rem; display: flex; gap: .75rem; color: #5a6474; font-size: .8125rem; }
+.fare-option-action { display: grid; gap: .5rem; justify-items: start; }
+.fare-option-action .price { font-size: .8rem; }
+.fare-select-label { min-width: 4.25rem; min-height: 2.75rem; display: grid; place-items: center; border: 1px solid #e2e6ec; border-radius: .625rem; background: white; font-size: .8125rem; }
+.is-selected .fare-select-label { border-color: #060f1b; background: #060f1b; color: white; }
+.fare-rules { padding: 1rem 1.125rem; }
+.fare-rules h2 { margin: 0 0 .5rem; font-size: 1.25rem; }
+.fare-rules p { margin: .35rem 0; color: #5a6474; line-height: 1.7; }
+.fare-summary { position: sticky; top: 6rem; padding: 1.25rem; display: grid; gap: 1rem; }
+.fare-price-lock { padding: .75rem 1rem; display: flex; align-items: center; gap: .75rem; border-radius: .75rem; background: #fef6e7; color: #7a4f10; }
+.fare-price-lock bdi { font: 700 1.55rem/1 var(--font-latin); }
+.fare-summary h2, .fare-summary p { margin: 0; }
+.fare-summary-price { padding-block: .5rem 1rem; border-block-end: 1px solid #eef0f4; font-size: 2rem; font-weight: 700; }
+.fare-summary > button { width: 100%; min-height: 3rem; border-radius: .65rem; background: #060f1b; color: white; font-weight: 700; }
+.fare-summary > small { color: #7c8798; }
+.fare-invalid section { max-width: 38rem; margin: 4rem auto; padding: 2rem; border: 1px solid #e2e6ec; border-radius: .85rem; background: white; text-align: center; }
+.fare-invalid button { min-height: 2.75rem; padding-inline: 1rem; border-radius: .65rem; background: #060f1b; color: white; }
+@media (max-width: 900px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: revert !important; }
+  .fare-page { padding-block: .75rem 0; }
+  .fare-page > .container { width: min(calc(100% - 1.5rem), var(--container-max)); }
+  .fare-heading { margin-block-end: .5rem; display: grid; grid-template-columns: auto 1fr; gap: .5rem; }
+  .fare-heading > div { grid-column: 2; grid-row: 1; }
+  .fare-heading h1 { font-size: 1.5rem; text-align: right; }
+  .fare-back { grid-column: 1; grid-row: 1; }
+  .fare-heading .booking-steps { grid-column: 1 / -1; grid-row: 2; }
+  .booking-steps { direction: rtl; gap: .35rem; }
+  .booking-steps li { min-width: 0; font-size: .7rem; }
+  .fare-layout { display: contents; }
+  .selected-itinerary { padding: .5rem 0; border: 0; border-radius: 0; background: transparent; }
+  .mobile-itinerary-title { display: flex !important; justify-content: space-between; align-items: center; border-block-start: 5px solid white; padding-block-start: .5rem; }
+  .mobile-itinerary-title span { color: #105538; font-size: .75rem; }
+  .selected-itinerary .flight-segment { min-height: 5.75rem; grid-template-columns: 3.5rem minmax(5rem, 1fr) 3.5rem; padding: .5rem 0; }
+  .selected-itinerary .segment-end strong { font-size: .875rem; }
+  .itinerary-footer { font-size: .75rem; }
+  .fare-content > .fare-price-lock { width: max-content; margin: 1rem auto .5rem; }
+  .fare-options > h2 { font-size: 1.25rem; text-align: center; }
+  .fare-options-support { text-align: center; font-size: .75rem; }
+  .fare-option { min-height: 6.625rem; padding: .75rem; }
+  .fare-option-copy > strong { font-size: .875rem; }
+  .fare-meta { flex-wrap: wrap; font-size: .75rem; }
+  .fare-option-action .price { font-size: .75rem; }
+  .fare-rules { border-inline: 0; border-radius: 0; padding-inline: .5rem; }
+  .fare-rules h2 { font-size: 1rem; }
+  .fare-rules p, .mobile-prebooking-note { font-size: .75rem; color: #5a6474; }
+  .mobile-prebooking-note { text-align: center; padding-block: 1rem 8rem; }
+  .fare-summary { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; top: auto; padding: 1rem; display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; border-radius: 0; box-shadow: 0 -2px 8px rgb(6 15 27 / 8%); }
+  .fare-summary-price { padding: 0; border: 0; font-size: 1.25rem; }
+  .fare-summary > button { width: 5.875rem; }
+}
