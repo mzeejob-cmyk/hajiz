@@ -27,7 +27,7 @@ function Field({ name, label, value, type, options, onChange }) {
     : <input name={name} type={type} value={value} onChange={onChange} required aria-required="true"/>}</label>
 }
 
-export function TravelerDetails({ itineraryKey, fareKey, onBack, onInvalid }) {
+export function TravelerDetails({ itineraryKey, fareKey, onBack, onInvalid, onReview }) {
   const itinerary = resolveItinerary(itineraryKey)
   const fare = resolveFare(fareKey)
   const initialValues = Object.fromEntries([...PASSENGER_FIELDS, ...CONTACT_FIELDS].map(([name, , value]) => [name, value]))
@@ -41,7 +41,9 @@ export function TravelerDetails({ itineraryKey, fareKey, onBack, onInvalid }) {
   const review = (event) => {
     event.preventDefault()
     const missing = [...PASSENGER_FIELDS, ...CONTACT_FIELDS].some(([name]) => !values[name].trim())
-    setFeedback(missing ? "يرجى إكمال جميع الحقول المطلوبة قبل المراجعة." : "تمت مراجعة البيانات محلياً. خطوة مراجعة الحجز هي التالية، ولم يتم إنشاء أي حجز أو حفظ بيانات.")
+    if (missing) return setFeedback("يرجى إكمال جميع الحقول المطلوبة قبل المراجعة.")
+    if (onReview) return onReview({ ...values })
+    setFeedback("تمت مراجعة البيانات محلياً. خطوة مراجعة الحجز هي التالية، ولم يتم إنشاء أي حجز أو حفظ بيانات.")
   }
 
   return <div className="traveler-page" data-view="traveler" data-itinerary={itinerary.key} data-fare={fare.key}><Container>

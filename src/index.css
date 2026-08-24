@@ -209,6 +209,57 @@ button { border: 0; cursor: pointer; }
 @media (max-width: 520px) { .flights-page { padding-block: 1rem 3rem; } .flights-page > .container { width: min(calc(100% - 2rem), var(--container-max)); } .flights-summary { min-height: 6rem; padding: .8rem 1rem; } .desktop-summary, .results-count > strong { display: none; } .mobile-results-label { display: block; margin-inline-end: auto; font-weight: 700; } .flights-title { display: none; } .results-count { margin-block-start: 1rem; } .results-count label { font-size: 0; } .results-count label select { font-size: .85rem; } .result-chips { overflow-x: auto; } .feedback-alert { font-size: .85rem; } .flight-offer-card { width: 100%; } .offer-airline { padding: .8rem 1rem; } .flight-segment { min-height: 7rem; padding: 1rem; grid-template-columns: 4.25rem minmax(5rem, 1fr) 4.25rem; } .segment-end strong { font-size: 1.2rem; } .offer-details { min-height: auto; padding: .8rem 1rem; align-items: flex-start; flex-direction: column; gap: .5rem; } .offer-purchase { align-items: stretch; flex-direction: column; } .offer-purchase > button { width: 100%; } .price > b:first-child { font-size: 1.35rem; } .state-gallery { margin-block-start: 3rem; } }
 .flights-filters--mobile .desktop-only { display: none; }
 
+/* Figma 70:3728 / 70:3793 — checkout review boundary */
+.review-page { min-height: 100vh; padding-block: 1.75rem 5rem; background: #f7f8fa; color: #060f1b; }
+.review-heading { margin-block-end: 2rem; display: grid; grid-template-columns: 21rem 1fr; gap: .75rem 1.5rem; align-items: start; }
+.review-heading > div { grid-column: 2; grid-row: 1; }
+.review-heading h1 { margin: 0; font-size: 1.875rem; line-height: 1.35; }
+.review-heading p { margin: .2rem 0 0; color: #5a6474; }
+.review-back { grid-column: 1; grid-row: 1; justify-self: start; min-height: var(--touch-target); padding: 0; background: transparent; color: #1c4f8f; font-weight: 500; }
+.review-heading .booking-steps { grid-column: 2; grid-row: 2; }
+.review-layout { display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: 1.75rem; align-items: start; direction: ltr; }
+.review-layout > * { direction: rtl; }
+.review-content { display: grid; gap: 1.125rem; }
+.review-card, .review-summary { border: 1px solid #eef0f4; border-radius: .875rem; background: white; }
+.review-card { padding: 1.375rem; display: grid; gap: .875rem; }
+.review-card h2, .review-summary h2 { margin: 0; font-size: 1.5rem; line-height: 1.4; }
+.review-card > strong { font: 700 1rem/1.7 var(--font-latin); }
+.review-card p { margin: 0; color: #5a6474; line-height: 1.7; }
+.review-flight > strong { font-size: 1.5rem; }
+.review-traveler header { display: flex; align-items: start; justify-content: space-between; }
+.review-traveler header button { min-height: var(--touch-target); padding: 0; background: transparent; color: #1c4f8f; font-weight: 500; }
+.review-note { padding: 1rem; display: grid; gap: .375rem; border-radius: .75rem; background: #eaf2fc; color: #143a6a; }
+.review-note p { margin: 0; line-height: 1.6; }
+.review-note p + p { color: #5a6474; font-size: .875rem; }
+.review-summary { position: sticky; top: 6rem; padding: 1.375rem; display: grid; gap: 1rem; }
+.review-summary .price { margin-block: .5rem; }
+.review-summary .price > b:first-child { font-size: 2rem; }
+.review-summary hr { width: 100%; margin: 0; border: 0; border-block-start: 1px solid #eef0f4; }
+.review-summary p { margin: 0; color: #5a6474; font-size: .875rem; line-height: 1.7; }
+.review-summary button { width: 100%; min-height: 3.5rem; border-radius: .875rem; background: #060f1b; color: white; font-size: 1.0625rem; font-weight: 700; }
+.review-feedback { grid-column: 1 / -1; margin: 0; padding: .75rem 1rem; border-radius: .6rem; background: #eaf7f0; color: #105538; text-align: center; }
+@media (max-width: 900px) {
+  .review-page { padding-block: .75rem 7.75rem; }
+  .review-page > .container { width: min(calc(100% - 1.5rem), var(--container-max)); }
+  .review-heading { margin-block-end: 1rem; grid-template-columns: auto 1fr; gap: .5rem; }
+  .review-heading > div { grid-column: 2; grid-row: 1; }
+  .review-heading h1 { font-size: 1.5rem; }
+  .review-back { grid-column: 1; grid-row: 1; }
+  .review-heading .booking-steps { grid-column: 1 / -1; grid-row: 2; }
+  .review-layout { display: contents; }
+  .review-content { gap: .75rem; }
+  .review-card { padding: 1rem; gap: .625rem; }
+  .review-card h2 { font-size: 1.25rem; }
+  .review-flight > strong { font-size: 1rem; }
+  .review-card p { font-size: .875rem; line-height: 1.5rem; }
+  .review-note { margin-block-end: 1rem; padding: .875rem; }
+  .review-summary { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; top: auto; min-height: 6.75rem; padding: 1rem; display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; border-radius: 0; box-shadow: 0 -2px 8px rgb(6 15 27 / 8%); }
+  .review-summary .price { margin: 0; }
+  .review-summary .price > b:first-child { font-size: 1.5rem; }
+  .review-summary button { width: 8.625rem; min-height: 3rem; }
+  .review-feedback { position: fixed; z-index: 21; right: 1rem; bottom: 7.25rem; left: 1rem; }
+}
+
 /* Figma 66:741 / 66:990 — fare selection */
 .mobile-only { display: none !important; }
 .fare-page { min-height: 100vh; padding-block: 1.75rem 5rem; background: #f7f8fa; color: #060f1b; }
