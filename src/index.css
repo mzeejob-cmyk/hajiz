@@ -333,10 +333,54 @@ button { border: 0; cursor: pointer; }
 .status-badge img { width: 1rem; height: 1rem; display: block; }
 .status-badge--info { border-color: #97c0ef; background: #eaf2fc; color: #143a6a; }
 .status-badge--warning { border-color: #f6d28e; background: #fef6e7; color: #7a4f10; }
+.status-badge--success { border-color: #93d7b7; background: #eaf7f0; color: #105538; }
 .payment-status-card h2 { margin: 0; font-size: 1.5rem; line-height: 2.125rem; letter-spacing: -.0125rem; }
 .payment-status-card p { margin: 0; color: #5a6474; font-size: 1rem; line-height: 1.6875rem; }
 .payment-status-card .payment-status-note { color: #060f1b; font-weight: 500; }
 @media (max-width: 520px) { .payment-status-page { padding-block: 1.5rem 3rem; } .payment-status-page > .container { width: min(calc(100% - 1.5rem), var(--container-max)); } .payment-status-page h1 { font-size: 1.5rem; line-height: 2.125rem; } .payment-status-card { padding: 1rem; } }
+
+/* Figma 73:2 / 73:108 / 73:168 — synthetic booking detail presentation */
+.booking-detail-page { min-height: 100vh; padding-block: 1.75rem 5rem; background: #f7f8fa; color: #060f1b; }
+.booking-detail-heading { margin-block-end: 2rem; display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+.booking-detail-heading h1 { margin: 0; font-size: 1.875rem; line-height: 2.5rem; }
+.booking-reference { margin: .2rem 0 0; color: #5a6474; font-size: .8125rem; letter-spacing: .03125rem; }
+.booking-detail-heading .presentation-fixture-label { margin: 0; }
+.booking-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: 1.75rem; direction: ltr; align-items: start; }
+.booking-detail-layout > * { direction: rtl; }
+.booking-detail-content { display: grid; gap: 1.125rem; }
+.booking-detail-card { padding: 1.375rem; border: 1px solid #eef0f4; border-radius: .875rem; background: white; }
+.booking-detail-card h2 { margin: 0; font-size: 1.5rem; line-height: 2.125rem; }
+.booking-status-summary { display: grid; justify-items: start; gap: .875rem; }
+.booking-status-summary > p { margin: 0; color: #5a6474; line-height: 1.6875rem; }
+.booking-ticket-note { width: 100%; padding: .875rem; display: grid; gap: .375rem; border-radius: .625rem; background: #eaf2fc; color: #143a6a; }
+.booking-ticket-note span { color: #5a6474; font-size: .8125rem; }
+.synthetic-pnr { padding: .5rem .75rem; border-radius: .5rem; background: #eef0f4; color: #060f1b !important; font-weight: 700; }
+.booking-flight h2 { text-align: left; }
+.booking-flight p { margin: .65rem 0 0; color: #5a6474; line-height: 1.65; }
+.booking-timeline ol { margin: .875rem 0 0; padding: 0; display: grid; gap: .875rem; list-style: none; }
+.booking-timeline li { display: flex; align-items: center; gap: .75rem; }
+.booking-timeline li > span { width: 1.125rem; height: 1.125rem; flex: 0 0 auto; border: 1px solid #d7dce4; border-radius: 50%; background: #eef0f4; }
+.booking-timeline li.is-complete > span { border-color: #93d7b7; background: #eaf7f0; }
+.booking-timeline li div { display: grid; gap: .125rem; }
+.booking-timeline li small { color: #7c8798; }
+.booking-timeline li.is-pending strong { color: #7c8798; font-weight: 500; }
+.booking-actions { position: sticky; top: 6rem; display: grid; gap: 1rem; }
+.booking-actions button { width: 100%; min-height: 3rem; padding-inline: 1.375rem; border-radius: .75rem; background: #060f1b; color: white; font-weight: 700; }
+.booking-actions button:disabled { background: #e2e6ec; color: #a6afbd; cursor: not-allowed; }
+.booking-actions small { color: #7c8798; }
+.booking-actions .booking-help { border: 1px solid #e2e6ec; background: white; color: #060f1b; }
+.booking-local-feedback { margin: 1rem 0 0; padding: .75rem 1rem; border-radius: .65rem; background: #eaf2fc; color: #143a6a; }
+@media (max-width: 900px) {
+  .booking-detail-page { padding-block: .75rem 3rem; }
+  .booking-detail-page > .container { width: min(calc(100% - 1.5rem), var(--container-max)); }
+  .booking-detail-heading { margin-block-end: .75rem; align-items: start; flex-direction: column; }
+  .booking-detail-heading h1 { font-size: 1.5rem; line-height: 2.125rem; }
+  .booking-detail-heading .presentation-fixture-label { width: auto; }
+  .booking-detail-layout { grid-template-columns: 1fr; gap: .75rem; }
+  .booking-detail-card { padding: 1rem; }
+  .booking-detail-card h2 { font-size: 1.25rem; line-height: 1.875rem; }
+  .booking-actions { position: static; }
+}
 
 /* Figma 66:741 / 66:990 — fare selection */
 .mobile-only { display: none !important; }

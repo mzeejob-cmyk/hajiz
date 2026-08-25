@@ -13,6 +13,8 @@ const BOOKING_BADGES = Object.freeze({
   pending_payment: { label: "بانتظار الدفع", icon: clock, tone: "warning" },
   payment_confirmed: { label: "تم استلام الدفع", icon: creditCard, tone: "info" },
   processing: { label: "جاري تنفيذ الحجز", icon: rotateCw, tone: "info" },
+  confirmed: { label: "الحجز مؤكد", icon: circleCheck, tone: "success" },
+  ticketed: { label: "صدرت التذكرة", icon: circleCheck, tone: "success" },
 })
 
 export function PaymentStatusBadge({ domain, status }) {
