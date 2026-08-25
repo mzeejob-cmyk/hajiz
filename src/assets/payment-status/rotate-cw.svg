@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icons/rotate-cw">
+<rect x="0.5" y="0.5" width="15" height="15" stroke="#143A6A"/>
+<path id="Vector" d="M14 8C14.0021 9.36069 13.5415 10.6817 12.694 11.7462C11.8465 12.8107 10.6623 13.5555 9.33581 13.8585C8.00927 14.1614 6.61916 14.0045 5.39356 13.4134C4.16797 12.8223 3.17968 11.8321 2.59087 10.6055C2.00206 9.37876 1.84769 7.98835 2.15309 6.66238C2.45849 5.33641 3.20553 4.15362 4.27162 3.30809C5.33772 2.46256 6.65955 2.00451 8.02023 2.0091C9.38092 2.01368 10.6996 2.48064 11.76 3.33333" stroke="#143A6A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M14 2V6H10" stroke="#143A6A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

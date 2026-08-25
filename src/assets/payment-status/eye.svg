@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icons/eye">
+<rect x="0.5" y="0.5" width="15" height="15" stroke="#143A6A"/>
+<path id="Vector" d="M1.37333 7.76667C1.31711 7.91714 1.31711 8.08286 1.37333 8.23333C1.91405 9.54625 2.83259 10.6689 4.01239 11.459C5.1922 12.249 6.5801 12.6708 8 12.6708C9.4199 12.6708 10.8078 12.249 11.9876 11.459C13.1674 10.6689 14.0859 9.54625 14.6267 8.23333C14.6829 8.08286 14.6829 7.91714 14.6267 7.76667C14.0859 6.45375 13.1674 5.33105 11.9876 4.541C10.8078 3.75096 9.4199 3.32918 8 3.32918C6.5801 3.32918 5.1922 3.75096 4.01239 4.541C2.83259 5.33105 1.91405 6.45375 1.37333 7.76667Z" stroke="#143A6A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="#143A6A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

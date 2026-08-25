@@ -5,6 +5,8 @@ import { FareSelection } from "./components/FareSelection.jsx"
 import { TravelerDetails } from "./components/TravelerDetails.jsx"
 import { FlightReview } from "./components/FlightReview.jsx"
 import { PaymentMethods } from "./components/PaymentMethods.jsx"
+import { PaymentBookingStatus } from "./components/PaymentBookingStatus.jsx"
+import { PAYMENT_STATUS_PRESENTATION_STATES } from "./data/paymentStatusPresentation.js"
 import { V1_PAYMENT_METHODS } from "../../services/contracts/paymentContract.js"
 import { FeedbackAlert } from "./components/FeedbackAlert.jsx"
 import { FlightOfferCard } from "./components/FlightOfferCard.jsx"
@@ -26,6 +28,7 @@ export default function FlightsPage() {
   const closeSheet = useCallback(() => setSheetOpen(false), [])
   const itineraryKey = params.get("itinerary")
   const fareKey = params.get("fare")
+  if (params.get("view") === "payment-status") { const requestedState = params.get("state"); const state = PAYMENT_STATUS_PRESENTATION_STATES.includes(requestedState) ? requestedState : "under_review"; return <PaymentBookingStatus state={state}/> }
   if (params.get("view") === "fare") return <FareSelection itineraryKey={itineraryKey} initialFareKey={fareKey} onBack={() => navigate(`/flights?from=${query.from}&to=${query.to}`)} onContinue={(selectedFare) => navigate(`/flights?from=${query.from}&to=${query.to}&view=traveler&itinerary=${encodeURIComponent(itineraryKey)}&fare=${encodeURIComponent(selectedFare)}`)}/>
   if (params.get("view") === "traveler") return <TravelerDetails itineraryKey={itineraryKey} fareKey={fareKey} onBack={() => navigate(`/flights?from=${query.from}&to=${query.to}&view=fare&itinerary=${encodeURIComponent(itineraryKey)}&fare=${encodeURIComponent(fareKey)}`)} onInvalid={() => navigate(`/flights?from=${query.from}&to=${query.to}`)} onReview={(values) => { setReviewDraft(values); navigate(`/flights?from=${query.from}&to=${query.to}&view=review&itinerary=${encodeURIComponent(itineraryKey)}&fare=${encodeURIComponent(fareKey)}`) }}/>
   const travelerTarget = `/flights?from=${query.from}&to=${query.to}&view=traveler&itinerary=${encodeURIComponent(itineraryKey)}&fare=${encodeURIComponent(fareKey)}`

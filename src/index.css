@@ -322,6 +322,22 @@ button { border: 0; cursor: pointer; }
 }
 @media (max-width: 520px) { .payment-methods { grid-template-columns: 1fr; } .bankak-account dl div { align-items: start; flex-direction: column; gap: .25rem; } }
 
+/* Figma 71:167 — payment and booking state presentation */
+.payment-status-page { min-height: 100vh; padding-block: 3rem 5rem; background: #f7f8fa; color: #060f1b; }
+.payment-status-page > .container { max-width: 51.25rem; }
+.payment-status-page h1 { margin: 0 0 1.875rem; font-size: 1.875rem; line-height: 2.5rem; letter-spacing: -.01875rem; text-align: right; }
+.presentation-fixture-label { width: max-content; margin: 0 0 .75rem; padding: .3rem .65rem; border-radius: 999px; background: #eef0f4; color: #5a6474; font-size: .75rem; font-weight: 500; }
+.payment-status-card { padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start; gap: .875rem; border: 1px solid #eef0f4; border-radius: .875rem; background: #fff; }
+.payment-status-badges { display: flex; flex-wrap: wrap; gap: .75rem; }
+.status-badge { height: 1.875rem; padding-inline: .75rem; display: inline-flex; align-items: center; justify-content: center; gap: .375rem; border: 1px solid; border-radius: 999px; font-size: .75rem; font-weight: 500; line-height: 1rem; letter-spacing: .0125rem; white-space: nowrap; }
+.status-badge img { width: 1rem; height: 1rem; display: block; }
+.status-badge--info { border-color: #97c0ef; background: #eaf2fc; color: #143a6a; }
+.status-badge--warning { border-color: #f6d28e; background: #fef6e7; color: #7a4f10; }
+.payment-status-card h2 { margin: 0; font-size: 1.5rem; line-height: 2.125rem; letter-spacing: -.0125rem; }
+.payment-status-card p { margin: 0; color: #5a6474; font-size: 1rem; line-height: 1.6875rem; }
+.payment-status-card .payment-status-note { color: #060f1b; font-weight: 500; }
+@media (max-width: 520px) { .payment-status-page { padding-block: 1.5rem 3rem; } .payment-status-page > .container { width: min(calc(100% - 1.5rem), var(--container-max)); } .payment-status-page h1 { font-size: 1.5rem; line-height: 2.125rem; } .payment-status-card { padding: 1rem; } }
+
 /* Figma 66:741 / 66:990 — fare selection */
 .mobile-only { display: none !important; }
 .fare-page { min-height: 100vh; padding-block: 1.75rem 5rem; background: #f7f8fa; color: #060f1b; }
