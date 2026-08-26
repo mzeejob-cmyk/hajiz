@@ -334,6 +334,29 @@ button { border: 0; cursor: pointer; }
 .status-badge--info { border-color: #97c0ef; background: #eaf2fc; color: #143a6a; }
 .status-badge--warning { border-color: #f6d28e; background: #fef6e7; color: #7a4f10; }
 .status-badge--success { border-color: #93d7b7; background: #eaf7f0; color: #105538; }
+
+/* Account & Trips page 18:21; list/empty layouts are documented design-system deviations. */
+.my-trips-page { min-height: 100vh; padding-block: 2rem 5rem; background: #f7f8fa; color: #060f1b; }
+.trips-heading { margin-block-end: 1.75rem; display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+.trips-heading > div > span { color: #5a6474; font-size: .8125rem; }
+.trips-heading h1 { margin: .25rem 0 0; font-size: 1.875rem; line-height: 2.5rem; }
+.trips-heading p { margin: .35rem 0 0; color: #5a6474; }
+.trip-list { display: grid; gap: 1rem; }
+.trip-card { padding: 1.375rem; border: 1px solid #eef0f4; border-radius: .875rem; background: white; }
+.trip-card__top, .trip-card__body { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.trip-card__top { padding-block-end: 1rem; border-block-end: 1px solid #eef0f4; }
+.trip-reference { color: #5a6474; font-size: .8125rem; letter-spacing: .03125rem; }
+.trip-card__body { padding-block-start: 1rem; }
+.trip-card h2 { margin: 0; text-align: left; font-size: 1.5rem; line-height: 2.125rem; }
+.trip-card p { margin: .45rem 0; color: #5a6474; line-height: 1.6875rem; }
+.trip-card small { color: #7c8798; }
+.trip-card__link, .trips-empty a { min-height: 3rem; padding-inline: 1.375rem; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; flex: 0 0 auto; border-radius: .75rem; background: #060f1b; color: white; font-weight: 700; }
+.trips-empty { min-height: 20rem; padding: 2rem; display: grid; place-items: center; align-content: center; gap: .65rem; text-align: center; border: 1px solid #eef0f4; border-radius: .875rem; background: white; }
+.trips-empty > span { font-size: 2rem; color: #143a6a; }
+.trips-empty h2, .trips-empty p { margin: 0; }
+.trips-empty p { color: #5a6474; }
+.trips-empty a { margin-block-start: .5rem; }
+@media (max-width: 720px) { .my-trips-page { padding-block: 1.25rem 3rem; } .my-trips-page > .container { width: min(calc(100% - 1.5rem), var(--container-max)); } .trips-heading, .trip-card__top, .trip-card__body { align-items: stretch; flex-direction: column; } .trips-heading h1 { font-size: 1.5rem; line-height: 2.125rem; } .trips-heading .presentation-fixture-label { width: max-content; } .trip-card { padding: 1rem; } .trip-card__link { width: 100%; } }
 .payment-status-card h2 { margin: 0; font-size: 1.5rem; line-height: 2.125rem; letter-spacing: -.0125rem; }
 .payment-status-card p { margin: 0; color: #5a6474; font-size: 1rem; line-height: 1.6875rem; }
 .payment-status-card .payment-status-note { color: #060f1b; font-weight: 500; }

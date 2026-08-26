@@ -14,7 +14,7 @@ export function AppShell({ children }) {
       <Container className="header-inner">
         <NavLink className="brand" to="/" aria-label="حاجز — الرئيسية"><span className="brand-latin" dir="ltr">HAJIZ</span><span>حاجز</span></NavLink>
         <nav className="desktop-nav" aria-label="التنقل الرئيسي">{PRIMARY_NAVIGATION.slice(1).map(item => <NavLink key={item.id} className={navClass} to={item.to}>{item.label}</NavLink>)}</nav>
-        <div className="header-utilities"><span className="latin-text" dir="ltr">AED</span><button type="button">العربية</button><NavLink to="/bookings/demo-reference">حجوزاتي</NavLink></div>
+        <div className="header-utilities"><span className="latin-text" dir="ltr">AED</span><button type="button">العربية</button><NavLink to="/account/trips">حجوزاتي</NavLink></div>
         <button className="menu-button" type="button" aria-label="فتح قائمة التنقل" aria-expanded={mobileOpen} aria-controls="mobile-navigation" onClick={() => setMobileOpen(open => !open)}><span/><span/><span/></button>
       </Container>
       <nav id="mobile-navigation" className={`mobile-nav${mobileOpen ? " mobile-nav--open" : ""}`} aria-label="التنقل عبر الهاتف" hidden={!mobileOpen}><Container>{PRIMARY_NAVIGATION.slice(1).map(item => <NavLink key={item.id} className={navClass} to={item.to} onClick={() => setMobileOpen(false)}>{item.label}</NavLink>)}</Container></nav>
