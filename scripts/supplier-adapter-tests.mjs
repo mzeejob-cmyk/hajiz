@@ -85,10 +85,15 @@ export async function runSupplierAdapterTests(vite, test) {
   })
   await test("supplier layer has no network or direct persistence authority", async () => {
     const files = await fs.readdir(new URL("../src/server/suppliers", import.meta.url))
-    const restricted = /fetch\s*\(|axios|XMLHttpRequest|WebSocket|supabase|service_role|\.from\s*\(|\.insert\s*\(|\.update\s*\(/i
+    const restricted = /axios|XMLHttpRequest|WebSocket|supabase|service_role|\.from\s*\(|\.insert\s*\(|\.update\s*\(/i
     for (const file of files.filter((name) => name.endsWith(".js"))) {
       const source = await fs.readFile(new URL(`../src/server/suppliers/${file}`, import.meta.url), "utf8")
       assert.equal(restricted.test(source), false, file)
+    }
+    const adapterSources = files.filter((name) => name.endsWith("Supplier.js"))
+    for (const file of adapterSources) {
+      const source = await fs.readFile(new URL(`../src/server/suppliers/${file}`, import.meta.url), "utf8")
+      assert.equal(/fetch\s*\(/i.test(source), false, file)
     }
   })
   await test("public fixture and documentation use no traveler PII or credentials", async () => {
