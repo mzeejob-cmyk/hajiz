@@ -34,6 +34,8 @@ Bankak adds only server-calculated `amountSDG`, literal `currency: "SDG"`, `paym
 
 ## Adapter model
 
+The executable provider-neutral boundary is documented in `docs/PSP_ADAPTER_LAYER_V1.md`. It preserves the model below while standardizing method names, capability gates, registry failure behavior, and the normalized handoff to `apply_payment_event`.
+
 The payment hub selects an adapter by enabled method. `card`, `apple_pay`, and `google_pay` share a generic PSP adapter contract; no provider is selected in V1:
 
 ```text
