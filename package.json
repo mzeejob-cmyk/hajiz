@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "node scripts/run-tests.mjs && node scripts/psp-adapter-tests.mjs"
+    "test": "node scripts/run-tests.mjs && node scripts/psp-adapter-tests.mjs && node scripts/psp-sandbox-adapter-tests.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.1",

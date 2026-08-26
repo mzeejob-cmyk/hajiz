@@ -99,7 +99,15 @@ These are mapping intentions only, not implemented integrations:
 
 Before writing either adapter, verify every event name, signature algorithm, timestamp/replay rule, amount unit, currency representation, payment/session identity, idempotency behavior, wallet support, capture/void/refund semantics, and finality rule against the provider's current official documentation. Do not infer fields from the table above. TODOs must remain explicit where official sandbox documentation is incomplete.
 
-The current database `apply_payment_event` transition boundary applies PSP confirmation, expiry, and refund transitions. A normalized `rejected` event is valid domain vocabulary but currently becomes an audited/disallowed no-op unless a separately reviewed migration expands the authority transition policy. This adapter layer does not widen that policy.
+Migration `20260826200000_psp_rejected_transition_v1.sql` narrowly permits a trusted PSP event to move a non-Bankak payment from `awaiting` to `rejected`. The unique provider event insert remains the idempotency boundary and a successful transition still writes `payment_audit`. It does not permit PSP rejection from `under_review`; Bankak rejection remains owned by the finance review command.
+
+## Checkout.com sandbox readiness
+
+No Checkout.com or APS credential/configuration was present in the repository environment review. `CheckoutComSandboxAdapterSkeleton` therefore provides only a fail-closed contract surface and reviewed event-name mapping; every network operation is disabled and metadata explicitly reports `live: false` and `conformanceOnly: true`.
+
+The current official Checkout.com Flow documentation uses a server-created Payment Session and says fulfillment must wait for a webhook (or trusted server retrieval), not a success redirect. Its sandbox base URL is account-specific. The fixed HAJIZ contract also lacks a reviewed way to persist the Payment Session ID and later bind the resulting `pay_...` payment ID. Credentialed network work is blocked until that protected identity handoff, account base URL, key scopes, webhook signing key/algorithm handling, currency minor-unit conversion, and exact response/event schemas are reviewed with a real sandbox account.
+
+Reviewed provider mappings are deliberately narrow: `payment_pending`/`payment_approved` remain `awaiting`; `payment_captured` becomes `confirmed`; `payment_declined` and `payment_voided` become `rejected`; `payment_expired` becomes `expired`; and `payment_refunded` becomes `refunded`. Declined operation events such as `payment_capture_declined` are rejected instead of being misrepresented as a payment-state transition.
 
 ## Security invariants
 
