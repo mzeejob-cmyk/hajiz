@@ -1,0 +1,11 @@
+import { useState } from "react"
+import { Container } from "../../../design-system/primitives/Container.jsx"
+import { resolveRoom } from "../data/hotelFixtures.js"
+
+const BOUNDARY_COPY = "هذه نهاية العرض. لم يتم إنشاء حجز أو عملية دفع أو حجز غرفة مؤقت."
+
+export function GuestDetails({ roomKey, onBack }) {
+  const room = resolveRoom(roomKey)
+  const [boundary, setBoundary] = useState("")
+  return <div className="hotels-page hotel-guest-page" data-view="guest" data-checkout-boundary="presentation-only" data-layout="responsive-desktop-mobile"><Container><button className="hotel-back" type="button" onClick={onBack}>← العودة إلى اختيار الغرفة</button><header className="guest-heading"><h1>بيانات الضيف</h1><p>أدخل بيانات الشخص الرئيسي الذي سيقيم في الفندق</p></header><ol className="hotel-steps"><li>1 اختيار الغرفة</li><li aria-current="step">2 بيانات الضيف</li><li>3 الدفع</li></ol><div className="guest-layout"><main><section className="guest-form"><h2>الضيف الرئيسي</h2><p>استخدم الاسم كما يظهر في وثيقة الهوية أو جواز السفر.</p><div className="guest-fields"><label>الاسم الأول <input defaultValue="MOHAMED" dir="ltr" autoComplete="off"/></label><label>اسم العائلة <input defaultValue="AHMED" dir="ltr" autoComplete="off"/></label><label>رقم الهاتف <input defaultValue="+971 50 123 4567" dir="ltr" autoComplete="off"/></label><label>البريد الإلكتروني <input defaultValue="name@example.com" dir="ltr" autoComplete="off"/></label></div></section><section className="guest-note"><strong>بيانات التواصل تُستخدم لتحديثات الحجز والقسيمة.</strong><span>لن نطلب بيانات جواز إضافية للفندق ما لم يطلبها مسار الحجز الفعلي لاحقًا.</span></section></main><aside className="stay-summary"><h2>ملخص الإقامة</h2><strong>فندق النخلة دبي</strong><p>15–18 سبتمبر · 3 ليالٍ</p><p>{room.name.split(" · ")[0]} · {room.meal}</p><strong className="selected-price latin-text" dir="ltr">{room.price} AED</strong><hr/><p>{room.tax}</p><button type="button" onClick={() => setBoundary(BOUNDARY_COPY)}>مراجعة الحجز</button>{boundary && <p role="status" aria-live="polite" className="checkout-boundary">{boundary}</p>}</aside></div></Container><div className="guest-mobile-summary"><strong className="latin-text" dir="ltr">{room.price} AED</strong><button type="button" onClick={() => setBoundary(BOUNDARY_COPY)}>مراجعة</button></div></div>
+}
