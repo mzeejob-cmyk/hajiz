@@ -4,6 +4,7 @@ import { createServer } from "vite"
 import { renderToStaticMarkup } from "react-dom/server"
 import React from "react"
 import { MemoryRouter } from "react-router-dom"
+import { runSupplierAdapterTests } from "./supplier-adapter-tests.mjs"
 
 let passed = 0
 const test = async (name, fn) => { await fn(); passed += 1; process.stdout.write(`✓ ${name}\n`) }
@@ -109,5 +110,6 @@ try {
   await test("mobile review uses a fixed summary with price and payment button only", async () => { const css = await fs.readFile(new URL("../src/index.css", import.meta.url), "utf8"); assert.match(css, /\.review-summary \{ position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; top: auto;/); const source = await fs.readFile(new URL("../src/features/flights/components/FlightReview.jsx", import.meta.url), "utf8"); const summary = source.match(/<aside className="review-summary"[\s\S]*?<\/aside>/)?.[0] ?? ""; assert.match(summary, /<Price amount=\{fare\.amount\}/); assert.match(summary, /<span className="mobile-only">الدفع<\/span>/); assert.equal(/PriceLock|12:10|SDG|ج\.س/.test(summary), false) })
   await test("Flights source excludes restricted authority and legacy imports", async () => { const files = ["FlightsPage.jsx", "data/flightFixtures.js", "data/flightQuery.js", "components/FlightOfferCard.jsx", "components/FlightSegment.jsx", "components/Price.jsx", "components/FlightsFilters.jsx", "components/FlightsFiltersSheet.jsx"]; const restricted = /src\/legacy|supabase|supplier_net|net_cost|supplierId|supplier_id|commission|bankak|service_role/i; for (const file of files) { const source = await fs.readFile(new URL(`../src/features/flights/${file}`, import.meta.url), "utf8"); assert.equal(restricted.test(source), false) } })
   await test("document is Arabic-first RTL", async () => { const html = await fs.readFile(new URL("../index.html", import.meta.url), "utf8"); assert.match(html, /<html lang="ar" dir="rtl">/) })
+  await runSupplierAdapterTests(vite, test)
   process.stdout.write(`\n${passed} tests passed\n`)
 } finally { await vite.close() }
