@@ -404,6 +404,8 @@ button { border: 0; cursor: pointer; }
 .status-badge--info { border-color: #97c0ef; background: #eaf2fc; color: #143a6a; }
 .status-badge--warning { border-color: #f6d28e; background: #fef6e7; color: #7a4f10; }
 .status-badge--success { border-color: #93d7b7; background: #eaf7f0; color: #105538; }
+.trip-card__link--disabled { color: #7c8798; cursor: not-allowed; text-decoration: none; }
+.trips-invalid button { min-height: 2.75rem; padding-inline: 1rem; border: 0; border-radius: .65rem; background: #060f1b; color: white; }
 @media (max-width: 900px) { .booking-detail-layout { grid-template-columns: 1fr; } .booking-actions { position: static; } }
 
 /* Figma 66:741 / 66:990 — fare selection */
