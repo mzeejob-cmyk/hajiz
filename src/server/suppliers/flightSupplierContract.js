@@ -1,16 +1,10 @@
-export const SUPPLIER_CAPABILITIES = Object.freeze([
-  "flights_search", "reprice", "create_booking", "status", "confirm_booking",
-  "cancel", "explicit_ticketing", "ticket_retrieval", "hotels_search", "internal_hold_confirm",
-])
+import { assertImplementedProvider } from "./providerIdentity.js"
+import { OPERATION_METHODS, SUPPLIER_OPERATIONS, SupplierCapabilityError, assertSupplierOperation } from "./supplierOperations.js"
+
+export const SUPPLIER_CAPABILITIES = SUPPLIER_OPERATIONS
 
 export const OPERATIONAL_OUTCOMES = Object.freeze([
   "available", "repriced", "processing", "confirmed", "ticketed", "cancelled", "unavailable",
-])
-
-export const PUBLIC_FLIGHT_OFFER_FIELDS = Object.freeze([
-  "airline", "airlineCode", "flightNumber", "segments", "origin", "destination",
-  "departure", "arrival", "durationMinutes", "stops", "cabin", "baggage",
-  "sellingAmount", "currency", "expiresAt",
 ])
 
 export const FROZEN_BOOKING_STATES = Object.freeze([
@@ -38,20 +32,27 @@ export function validateBookingRequest(request) {
 
 export function assertFlightSupplier(adapter) {
   if (!adapter || typeof adapter !== "object") throw new TypeError("supplier adapter is required")
-  requireString(adapter.providerName, "providerName")
+  assertImplementedProvider(adapter.providerName)
   if (!adapter.capabilities || typeof adapter.capabilities !== "object") throw new TypeError("supplier capabilities are required")
-  for (const capability of Object.keys(adapter.capabilities)) {
-    if (!SUPPLIER_CAPABILITIES.includes(capability)) throw new TypeError(`unknown supplier capability: ${capability}`)
-    if (typeof adapter.capabilities[capability] !== "boolean") throw new TypeError(`capability ${capability} must be boolean`)
+  const unknown = Object.keys(adapter.capabilities).filter((capability) => !SUPPLIER_CAPABILITIES.includes(capability))
+  if (unknown.length) throw new TypeError(`unknown supplier capability: ${unknown.join(", ")}`)
+  for (const capability of SUPPLIER_CAPABILITIES) {
+    if (typeof adapter.capabilities[capability] !== "boolean") throw new TypeError(`capability ${capability} must be explicit`)
+    const method = OPERATION_METHODS[capability]
+    if (adapter.capabilities[capability] && typeof adapter[method] !== "function") throw new TypeError(`enabled capability ${capability} requires ${method}`)
   }
-  for (const method of ["health", "searchFlights", "repriceOffer", "createBooking", "getBookingStatus"]) {
-    if (typeof adapter[method] !== "function") throw new TypeError(`supplier adapter must implement ${method}`)
-  }
+  if (typeof adapter.health !== "function") throw new TypeError("supplier adapter must implement health")
   return adapter
 }
 
 export function requireCapability(adapter, capability) {
-  if (!SUPPLIER_CAPABILITIES.includes(capability) || adapter.capabilities[capability] !== true) {
-    throw new Error(`supplier capability is not enabled: ${capability}`)
-  }
+  assertSupplierOperation(capability)
+  if (adapter?.capabilities?.[capability] !== true) throw new SupplierCapabilityError(adapter?.providerName ?? "unknown", capability)
+  return true
+}
+
+export async function invokeSupplierOperation(adapter, operation, ...args) {
+  assertFlightSupplier(adapter)
+  requireCapability(adapter, operation)
+  return adapter[OPERATION_METHODS[operation]](...args)
 }

@@ -3,7 +3,7 @@ import { requireCapability, validateSearchRequest } from "./flightSupplierContra
 import { createTravelportClient, createTravelportConfig } from "./travelportClient.js"
 import { normalizeTravelportOffers, normalizeTravelportReprice } from "./travelportResponseMapper.js"
 
-const PROVIDER = "travelport_tripservices_v11"
+const PROVIDER = "travelport"
 const freeze = (value) => Object.freeze(value)
 
 export function createTravelportFlightSupplier({ env = process.env, fetchImpl = globalThis.fetch, createId = randomUUID } = {}) {
@@ -11,21 +11,22 @@ export function createTravelportFlightSupplier({ env = process.env, fetchImpl = 
   const client = config.configured ? createTravelportClient({ config, fetchImpl }) : undefined
   const references = new Map()
   const capabilities = freeze({
-    flights_search: config.configured, reprice: config.configured,
-    create_booking: false, status: false, confirm_booking: false, cancel: false,
-    explicit_ticketing: false, ticket_retrieval: false, hotels_search: false, internal_hold_confirm: false,
+    search_flights: config.configured, reprice: config.configured, create_booking: false,
+    confirm_booking: false, get_booking_status: false, retrieve_ticket: false,
+    cancel: false, change: false, hold: false,
   })
-  const createOfferRef = (details) => {
-    const reference = `tp_${createId()}`
-    references.set(reference, freeze(details))
-    return reference
+  const createOfferIdentity = (details) => {
+    const suffix = createId()
+    const identity = freeze({ internalOfferId: `hfo_${suffix}`, providerOfferRef: `tp_${suffix}` })
+    references.set(identity.providerOfferRef, freeze(details))
+    return identity
   }
   const adapter = {
     providerName: PROVIDER,
     capabilities,
     async health() { return freeze({ providerName: PROVIDER, healthy: config.configured, configured: config.configured, networkChecked: false, capabilities }) },
     async searchFlights(request) {
-      requireCapability(adapter, "flights_search")
+      requireCapability(adapter, "search_flights")
       const safe = validateSearchRequest(request)
       const payload = {
         CatalogProductOfferingsQueryRequest: {
@@ -37,7 +38,7 @@ export function createTravelportFlightSupplier({ env = process.env, fetchImpl = 
         },
       }
       const response = await client.post("/catalog/search/catalogproductofferings", payload, createId())
-      return freeze(normalizeTravelportOffers(response, { createOfferRef }))
+      return freeze(normalizeTravelportOffers(response, { createOfferIdentity }))
     },
     async repriceOffer(supplierOfferRef) {
       requireCapability(adapter, "reprice")
@@ -52,10 +53,10 @@ export function createTravelportFlightSupplier({ env = process.env, fetchImpl = 
         }],
       } } }
       const response = await client.post("/price/offers/buildfromcatalogproductofferings", payload, createId())
-      return normalizeTravelportReprice(response, supplierOfferRef, createOfferRef)
+      return normalizeTravelportReprice(response, supplierOfferRef, createOfferIdentity)
     },
     async createBooking() { requireCapability(adapter, "create_booking") },
-    async getBookingStatus() { requireCapability(adapter, "status") },
+    async getBookingStatus() { requireCapability(adapter, "get_booking_status") },
   }
   return freeze(adapter)
 }

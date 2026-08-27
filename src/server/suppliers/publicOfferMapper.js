@@ -1,23 +1,34 @@
-import { PUBLIC_FLIGHT_OFFER_FIELDS } from "./flightSupplierContract.js"
+import { assertFlightOfferV1 } from "./flightOfferV1.js"
+
+export const PUBLIC_SEARCH_OFFER_VERSION = "search-offer/v1"
+export const PUBLIC_FLIGHT_OFFER_FIELDS = Object.freeze([
+  "contractVersion", "selectionKey", "airline", "airlineCode", "flightNumber", "segments",
+  "origin", "destination", "departure", "arrival", "durationMinutes", "stops", "cabin",
+  "baggage", "sellingAmount", "currency", "expiresAt",
+])
 
 export function toPublicFlightOffer(privateOffer, price) {
-  if (!privateOffer || !price) throw new TypeError("private offer and server price are required")
+  const offer = assertFlightOfferV1(privateOffer)
+  if (!price || typeof price !== "object" || typeof price.sellingAmount !== "string" || Number(price.sellingAmount) <= 0 || !/^[A-Z]{3}$/.test(price.currency)) throw new TypeError("valid authoritative server price is required")
+  const firstSegment = offer.itinerary.segments[0]
   const candidate = {
-    airline: privateOffer.itinerary.airline,
-    airlineCode: privateOffer.itinerary.airlineCode,
-    flightNumber: privateOffer.itinerary.flightNumber,
-    segments: privateOffer.itinerary.segments,
-    origin: privateOffer.itinerary.origin,
-    destination: privateOffer.itinerary.destination,
-    departure: privateOffer.itinerary.departure,
-    arrival: privateOffer.itinerary.arrival,
-    durationMinutes: privateOffer.itinerary.durationMinutes,
-    stops: privateOffer.itinerary.stops,
-    cabin: privateOffer.itinerary.cabin,
-    baggage: privateOffer.itinerary.baggage,
+    contractVersion: PUBLIC_SEARCH_OFFER_VERSION,
+    selectionKey: offer.internalOfferId,
+    airline: offer.itinerary.marketingCarrierName ?? firstSegment.marketingCarrier,
+    airlineCode: firstSegment.marketingCarrier,
+    flightNumber: firstSegment.flightNumber,
+    segments: offer.itinerary.segments,
+    origin: offer.itinerary.origin,
+    destination: offer.itinerary.destination,
+    departure: offer.itinerary.departureAt,
+    arrival: offer.itinerary.arrivalAt,
+    durationMinutes: offer.itinerary.durationMinutes,
+    stops: offer.itinerary.stops,
+    cabin: offer.fare.cabin,
+    baggage: offer.fare.baggage,
     sellingAmount: price.sellingAmount,
     currency: price.currency,
-    expiresAt: privateOffer.expiresAt,
+    expiresAt: offer.validity.expiresAt,
   }
   if (Object.keys(candidate).some((field) => !PUBLIC_FLIGHT_OFFER_FIELDS.includes(field))) throw new Error("public offer contract violation")
   return Object.freeze(candidate)
