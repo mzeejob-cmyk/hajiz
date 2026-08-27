@@ -15,7 +15,11 @@ const deepFreeze = (value) => {
   }
   return value
 }
-const digest = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex")
+const digest = (value) => {
+  const hash = createHash("sha256")
+  hash["update"](JSON.stringify(value))
+  return hash.digest("hex")
+}
 const instant = (value) => new Date(value).toISOString()
 const requireFingerprint = (value, prefix, field) => {
   if (typeof value !== "string" || !new RegExp(`^${prefix}_[a-f0-9]{64}(?:_isolated_[1-9]\\d*)?$`).test(value)) throw new TypeError(`${field} is invalid`)
