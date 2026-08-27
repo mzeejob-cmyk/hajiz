@@ -28,7 +28,8 @@ const freezeOutcome = (provider, status, durationMs, offerCount, errorCode) => O
   provider, status, durationMs, offerCount, ...(errorCode ? { errorCode } : {}),
 })
 
-function overallStatus(outcomes) {
+export function overallStatus(outcomes) {
+  if (!Array.isArray(outcomes) || outcomes.length === 0) throw new FlightSearchUnavailableError()
   const completed = outcomes.filter(({ status }) => status === "success" || status === "no_results").length
   if (completed === outcomes.length) return "COMPLETE"
   if (completed > 0) return "PARTIAL"
@@ -128,6 +129,8 @@ export function createMultiSupplierFlightSearchOrchestrator({
       }
       const workers = new Array(Math.min(policy.maxConcurrency, suppliers.length)).fill(null).map(() => worker())
       await Promise.all(workers)
+
+      if (attempts.length === 0 || attempts.some((attempt) => !attempt)) throw new FlightSearchUnavailableError()
 
       const supplierOutcomes = Object.freeze(attempts.map(({ outcome }) => outcome))
       const offers = Object.freeze(attempts.flatMap((attempt) => attempt.offers))
