@@ -90,10 +90,10 @@ export async function runSupplierAdapterTests(vite, test) {
       const source = await fs.readFile(new URL(`../src/server/suppliers/${file}`, import.meta.url), "utf8")
       assert.equal(restricted.test(source), false, file)
     }
-    const adapterSources = files.filter((name) => name.endsWith("Supplier.js"))
-    for (const file of adapterSources) {
+    const networkCallers = files.filter((name) => name.endsWith(".js") && name !== "travelportClient.js")
+    for (const file of networkCallers) {
       const source = await fs.readFile(new URL(`../src/server/suppliers/${file}`, import.meta.url), "utf8")
-      assert.equal(/fetch\s*\(/i.test(source), false, file)
+      assert.equal(/(?:fetch|fetchImpl)\s*\(/i.test(source), false, file)
     }
   })
   await test("public fixture and documentation use no traveler PII or credentials", async () => {
