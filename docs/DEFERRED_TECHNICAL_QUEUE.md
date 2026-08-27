@@ -20,4 +20,3 @@ These items are deliberately recorded without implementation in the Backend Core
 - Decide whether checkout return URLs may contain query strings or fragments.
 - Define Bankak checkout UI scope against the trusted receipt/review contracts.
 - Remove or externalize the inactive legacy public Supabase configuration.
-

@@ -26,4 +26,3 @@ The following isolated, synthetic scenarios passed on HAJIZ Staging. The validat
 Backend Core is considered **CLOSED for normal product work**.
 
 Any future change to the payment state machine, booking state machine, provider-event idempotency, Bankak authority, or payment-expiry rules must reopen this Runtime Gate and repeat focused validation before the change is treated as canonical.
-

@@ -87,4 +87,3 @@ No payment or booking enum change is justified. A new search-results table, dedu
 7. Durable reprice and booking-provider selection: resolve one persisted provider, reprice, execute once with operation idempotency, and preserve frozen booking transitions.
 8. Travelport pre-production enablement review only after explicit flag, injected network client, persistent references, isolation tests, credentials, and provisioned booking contracts exist.
 9. Define hotel canonical contracts separately before any hotel adapter implementation.
-
