@@ -126,7 +126,8 @@ export function createMultiSupplierFlightSearchOrchestrator({
           })
         }
       }
-      await Promise.all(Array.from({ length: Math.min(policy.maxConcurrency, suppliers.length) }, worker))
+      const workers = new Array(Math.min(policy.maxConcurrency, suppliers.length)).fill(null).map(() => worker())
+      await Promise.all(workers)
 
       const supplierOutcomes = Object.freeze(attempts.map(({ outcome }) => outcome))
       const offers = Object.freeze(attempts.flatMap((attempt) => attempt.offers))

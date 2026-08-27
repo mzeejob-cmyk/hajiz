@@ -33,14 +33,21 @@ export async function runTravelportAdapterTests(vite, test) {
       calls.push({ url, init })
       return calls.length === 1 ? jsonResponse({ access_token: "opaque-test-token", expires_in: 86400 }) : jsonResponse(responseFixture())
     }
-    const ids = ["trace-search", "offer-local-1"]
+    const ids = ["offer-local-1"]
+    const controller = new AbortController()
     const adapter = createTravelportFlightSupplier({ env, fetchImpl, createId: () => ids.shift() })
-    const [offer] = await adapter.searchFlights({ origin: "DXB", destination: "KRT", departureDate: "2026-09-15", adults: 1 })
+    const [offer] = await adapter.searchFlights(
+      { origin: "DXB", destination: "KRT", departureDate: "2026-09-15", adults: 1 },
+      { signal: controller.signal, traceId: "htr_server_search_trace" },
+    )
     assert.equal(calls[0].url, "https://auth.pp.travelport.net/oauth/token")
     assert.equal(calls[1].url, "https://api.pp.travelport.net/11/air/catalog/search/catalogproductofferings")
     assert.equal(calls[1].init.headers.authorization, "Bearer opaque-test-token")
     assert.equal(calls[1].init.headers.XAUTH_TRAVELPORT_ACCESSGROUP, "test-group")
     assert.equal(calls[1].init.headers["Accept-Version"], "11")
+    assert.equal(calls[0].init.signal, controller.signal)
+    assert.equal(calls[1].init.signal, controller.signal)
+    assert.equal(calls[1].init.headers.traceId, "htr_server_search_trace")
     assert.equal(offer.providerOfferRef, "tp_offer-local-1")
     assert.equal(offer.itinerary.segments[0].marketingCarrier, "EK")
     assert.equal(offer.itinerary.durationMinutes, 225)
