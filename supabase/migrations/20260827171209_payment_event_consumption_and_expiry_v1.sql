@@ -21,7 +21,7 @@ as $$ declare v public.payments%rowtype; begin
   select * into strict v from public.payments where id=p_payment_id for update;
   if not p_verified or p_amount is distinct from v.amount or p_currency is distinct from v.currency then raise exception 'unverified or economics mismatch'; end if;
   if not (
-    (v.method<>'bankak' and v.status='awaiting' and p_target='confirmed' and v.expires_at>now()) or
+    (v.method<>'bankak' and v.status='awaiting' and p_target='confirmed' and v.expires_at is not null and v.expires_at>now()) or
     (v.method<>'bankak' and v.status='awaiting' and p_target='rejected') or
     (v.status in ('awaiting','under_review') and p_target='expired') or
     (v.status='confirmed' and p_target='refunded')

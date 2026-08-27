@@ -30,7 +30,8 @@ await test("genuine duplicate applicable provider event remains idempotent", () 
 })
 
 await test("expired PSP confirmation cannot mutate payment or booking or consume the event ID", () => {
-  assert.match(sql, /v\.method<>'bankak' and v\.status='awaiting' and p_target='confirmed' and v\.expires_at>now\(\)/)
+  assert.match(sql, /p_target='confirmed'[^\n]+v\.expires_at is not null/)
+  assert.match(sql, /p_target='confirmed'[^\n]+v\.expires_at>now\(\)/)
   assert.ok(applicability < eventInsert)
   assert.ok(eventInsert < paymentUpdate)
 })
