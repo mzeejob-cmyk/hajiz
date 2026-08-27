@@ -8,7 +8,7 @@ let passed = 0
 const test = async (name, fn) => { await fn(); passed += 1; process.stdout.write(`✓ ${name}\n`) }
 const migrationUrl = new URL("../supabase/migrations/20260827171209_payment_event_consumption_and_expiry_v1.sql", import.meta.url)
 const sql = await fs.readFile(migrationUrl, "utf8")
-const applicability = sql.indexOf("if not (\n    (v.method<>'bankak'")
+const applicability = sql.indexOf("(v.method<>'bankak'")
 const eventInsert = sql.indexOf("insert into public.payment_provider_events")
 const duplicateGuard = sql.indexOf("if not found then return false", eventInsert)
 const paymentUpdate = sql.indexOf("update public.payments set status=p_target")
