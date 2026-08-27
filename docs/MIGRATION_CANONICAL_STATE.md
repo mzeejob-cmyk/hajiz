@@ -7,7 +7,7 @@ This document records the read-only Staging Ground Truth captured from project `
 | Object | Live Staging state | Canonical migration source | Replay verdict | Known remediation |
 |---|---|---|---|---|
 | `public.create_checkout` | Security V2 body; calls `app_private.is_allowed_checkout_return_url()`; `search_path = pg_catalog, public, app_private`; Bankak expiry is 24 hours | `20260825210000_payment_authority_security_v2.sql` | Do not replay the full migration | Confirm environment origins; centralize expiry configuration |
-| `public.apply_payment_event` | PSP rejection body; non-Bankak `awaiting -> confirmed/rejected`; persists `p_occurred_at`; service-role only | `20260826200000_psp_rejected_transition_v1.sql` | Already applied; do not replay to synchronize history | P0: a refused transition can consume `provider_event_id` before returning `false` |
+| `public.apply_payment_event` | PSP rejection body; non-Bankak `awaiting -> confirmed/rejected`; persists `p_occurred_at`; service-role only | `20260826200000_psp_rejected_transition_v1.sql` | Already applied; do not replay to synchronize history | Before remediation, a refused transition can consume `provider_event_id`, and PSP confirmation does not enforce `expires_at` |
 | `public.apply_booking_transition` | Forward-only `payment_confirmed -> processing -> confirmed -> ticketed -> completed`; service-role only | `20260825173046_payment_authority_staging_v1.sql` | Never replay the base migration | None in this batch |
 | `app_private.enforce_payment_transition` | Includes non-Bankak `awaiting -> rejected`; retains manual Bankak review transitions | `20260826200000_psp_rejected_transition_v1.sql` | Already applied; do not replay | Canonicalize together with the provider-event consumption fix |
 | `app_private.enforce_booking_transition` | Strict full chain including `pending_payment -> payment_confirmed` | `20260825173046_payment_authority_staging_v1.sql` | Never replay the base migration | None in this batch |
@@ -32,6 +32,7 @@ Repository filename timestamps and remote migration-history versions are not ass
 | `20260825173551_payment_authority_staging_v1_advisor_hardening.sql` | NEVER REPLAY blindly | Contains non-idempotent policy/index creation against an already initialized database |
 | `20260825210000_payment_authority_security_v2.sql` | CANONICAL SOURCE, NOT A REPLAY SCRIPT | The live security objects match it, but the whole file contains existing table/trigger/policy setup and must not be reapplied as a synchronization mechanism |
 | `20260826200000_psp_rejected_transition_v1.sql` | APPLIED; DO NOT REPLAY | Staging already has its exact function behavior; repository-history synchronization is not a reason to replace live definitions |
+| `20260827171209_payment_event_consumption_and_expiry_v1.sql` | CANONICAL REMEDIATION; NOT YET APPLIED | Additive function replacements make applicability precede provider-event consumption, enforce PSP confirmation expiry, and reject Bankak `awaiting -> confirmed` in the trigger |
 | `PLAN_ONLY_20260825_payment_authority.sql` | NEVER EXECUTE | Self-aborting plan artifact, not a runtime migration |
 
 ## Effective Bankak expiry
@@ -40,9 +41,19 @@ Repository filename timestamps and remote migration-history versions are not ass
 
 ## Deferred remediation
 
-1. P0: consume a provider event only when its transition is applied or it is a genuine duplicate.
-2. Choose one canonical Bankak expiry duration and derive every gate from it.
-3. Reconcile My Trips fallback states with the database enums.
-4. Confirm real return origins and error mappings before runtime enablement.
+Integration V2 used ancestry-only merges `b57b055` and `6946102` to restore parentage already carried by descendant content. This technique must not be reused blindly when descendants do not carry the merged content.
+
+Before `20260827171209_payment_event_consumption_and_expiry_v1.sql`, `apply_payment_event` did not enforce `expires_at` for a non-Bankak PSP confirmation. The additive remediation migration is now the canonical repository source for provider-event consumption ordering, PSP confirmation expiry enforcement, and the Bankak `awaiting -> confirmed` trigger restriction. It has not been applied to any environment.
+
+1. Choose one canonical Bankak expiry duration and derive every gate from it.
+2. Confirm real return origins and error mappings before runtime enablement.
+
+## Deferred queue after Remediation Batch 1
+
+P1 / pre-supplier: explicit Travelport enablement, persistent Travelport offer references, and `app_private` default privileges.
+
+Pre-production: checkout-origin seeding, refund booking lifecycle, `create_checkout` idempotency scope, Staging project-ref productionization, `PLAN_ONLY` relocation/handling, return URL query/hash product decision, and Bankak checkout UI scope.
+
+Product and later orchestration: Insurance, FX, Packages, Partner Hold, supplier orchestration, and production supplier integration.
 
 No migration was applied and no database row was written while producing this document.

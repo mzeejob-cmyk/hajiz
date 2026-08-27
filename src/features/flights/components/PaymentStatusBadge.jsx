@@ -5,8 +5,13 @@ import eye from "../../../assets/payment-status/eye.svg"
 import rotateCw from "../../../assets/payment-status/rotate-cw.svg"
 
 const PAYMENT_BADGES = Object.freeze({
+  awaiting: { label: "بانتظار الدفع", icon: clock, tone: "warning" },
   under_review: { label: "قيد مراجعة الدفع", icon: eye, tone: "info" },
-  confirmed: { label: "تم تأكيد الدفع", icon: circleCheck, tone: "info" },
+  confirmed: { label: "تم تأكيد الدفع", icon: circleCheck, tone: "success" },
+  rejected: { label: "تم رفض الدفع", icon: clock, tone: "neutral" },
+  expired: { label: "انتهت مهلة الدفع", icon: clock, tone: "neutral" },
+  refunded: { label: "تم رد المبلغ", icon: rotateCw, tone: "info" },
+  unknown: { label: "جاري تحديث الحالة", icon: rotateCw, tone: "neutral" },
 })
 
 const BOOKING_BADGES = Object.freeze({
@@ -16,10 +21,12 @@ const BOOKING_BADGES = Object.freeze({
   confirmed: { label: "الحجز مؤكد", icon: circleCheck, tone: "success" },
   ticketed: { label: "صدرت التذكرة", icon: circleCheck, tone: "success" },
   completed: { label: "مكتملة", icon: circleCheck, tone: "success" },
+  unknown: { label: "جاري تحديث الحالة", icon: rotateCw, tone: "neutral" },
 })
 
 export function PaymentStatusBadge({ domain, status }) {
-  const badge = domain === "payment" ? PAYMENT_BADGES[status] : BOOKING_BADGES[status]
-  if (!badge) return null
-  return <span className={`status-badge status-badge--${badge.tone}`} data-domain={domain} data-status={status}><span>{badge.label}</span><img src={badge.icon} width="16" height="16" alt=""/></span>
+  const badges = domain === "payment" ? PAYMENT_BADGES : BOOKING_BADGES
+  const badge = badges[status] ?? badges.unknown
+  const visibleStatus = badges[status] ? status : "unknown"
+  return <span className={`status-badge status-badge--${badge.tone}`} data-domain={domain} data-status={visibleStatus}><span>{badge.label}</span><img src={badge.icon} width="16" height="16" alt=""/></span>
 }

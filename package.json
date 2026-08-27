@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "node scripts/run-tests.mjs && node scripts/psp-adapter-tests.mjs && node scripts/psp-sandbox-adapter-tests.mjs && node scripts/staging-e2e-booking-tests.mjs",
+    "test": "node scripts/run-tests.mjs && node scripts/psp-adapter-tests.mjs && node scripts/psp-sandbox-adapter-tests.mjs && node scripts/staging-e2e-booking-tests.mjs && node scripts/remediation-regression-tests.mjs",
     "test:staging-e2e": "node scripts/staging-e2e-booking-tests.mjs"
   },
   "dependencies": {
