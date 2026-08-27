@@ -1,11 +1,15 @@
 import assert from "node:assert/strict"
 import fs from "node:fs/promises"
+import { runFlightSupplierConformanceTests } from "./flight-supplier-conformance.mjs"
 
 export async function runSupplierAdapterTests(vite, test) {
   const contract = await vite.ssrLoadModule("/src/server/suppliers/flightSupplierContract.js")
   const { createMockFlightSupplier } = await vite.ssrLoadModule("/src/server/suppliers/mockFlightSupplier.js")
   const { createSupplierRegistry, selectSupplierForClientRequest } = await vite.ssrLoadModule("/src/server/suppliers/supplierRegistry.js")
   const { toPublicFlightOffer } = await vite.ssrLoadModule("/src/server/suppliers/publicOfferMapper.js")
+  const publicContract = await vite.ssrLoadModule("/src/server/suppliers/publicOfferMapper.js")
+  const offerContract = await vite.ssrLoadModule("/src/server/suppliers/flightOfferV1.js")
+  const providerIdentity = await vite.ssrLoadModule("/src/server/suppliers/providerIdentity.js")
   const orchestration = await vite.ssrLoadModule("/src/server/suppliers/bookingOrchestration.js")
   const mock = createMockFlightSupplier()
   const registry = createSupplierRegistry({ adapters: [mock], enabledProviderNames: [mock.providerName], defaultProviderName: mock.providerName })
@@ -15,6 +19,14 @@ export async function runSupplierAdapterTests(vite, test) {
     assert.throws(() => registry.getByServerProviderName("unknown"))
     assert.throws(() => createSupplierRegistry({ adapters: [mock], enabledProviderNames: [], defaultProviderName: mock.providerName }))
   })
+  await test("provider identity separates known, implemented, enabled, and capable", () => {
+    assert.ok(providerIdentity.KNOWN_SUPPLIER_PROVIDERS.includes("duffel"))
+    assert.equal(providerIdentity.IMPLEMENTED_SUPPLIER_PROVIDERS.includes("duffel"), false)
+    assert.throws(() => contract.assertFlightSupplier({ providerName: "duffel", capabilities: {}, health() {} }), /not implemented/)
+    assert.deepEqual(registry.getEnabledSuppliersForCapability("search_flights").map(({ providerName }) => providerName), ["mock"])
+    assert.deepEqual(registry.getEnabledSuppliersForCapability("confirm_booking"), [])
+    assert.throws(() => registry.getEnabledSuppliersForCapability("not_real"), /unknown supplier operation/)
+  })
   await test("client input cannot select an arbitrary supplier", () => {
     assert.equal(selectSupplierForClientRequest(registry, {}).providerName, mock.providerName)
     for (const field of ["provider", "supplier", "providerName"]) assert.throws(() => selectSupplierForClientRequest(registry, { [field]: mock.providerName }))
@@ -22,29 +34,29 @@ export async function runSupplierAdapterTests(vite, test) {
   await test("mock search is deterministic and matches the synthetic EK 735 route", async () => {
     assert.deepEqual(await mock.searchFlights(search), await mock.searchFlights(search))
     const [offer] = await mock.searchFlights(search)
-    assert.equal(offer.itinerary.airlineCode, "EK")
-    assert.equal(offer.itinerary.flightNumber, "735")
+    assert.equal(offer.itinerary.segments[0].marketingCarrier, "EK")
+    assert.equal(offer.itinerary.segments[0].flightNumber, "735")
     assert.equal((await mock.searchFlights({ ...search, origin: "AUH" })).length, 0)
   })
   await test("public mapper emits exactly the frozen customer offer fields", async () => {
     const [privateOffer] = await mock.searchFlights(search)
     const publicOffer = toPublicFlightOffer(privateOffer, { sellingAmount: "1205.00", currency: "AED" })
-    assert.deepEqual(Object.keys(publicOffer), contract.PUBLIC_FLIGHT_OFFER_FIELDS)
+    assert.deepEqual(Object.keys(publicOffer), publicContract.PUBLIC_FLIGHT_OFFER_FIELDS)
     assert.equal(publicOffer.airlineCode, "EK")
   })
   await test("supplier raw data and economics never enter the public offer", async () => {
     const [privateOffer] = await mock.searchFlights(search)
     const publicOffer = toPublicFlightOffer(privateOffer, { sellingAmount: "1205.00", currency: "AED" })
     const serialized = JSON.stringify(publicOffer)
-    for (const forbidden of ["supplierOfferRef", "providerName", "providerStatusRaw", "supplierEconomics", "netAmount", "privateMetadata", "MOCK_AVAILABLE"]) assert.equal(serialized.includes(forbidden), false)
+    for (const forbidden of ["providerOfferRef", "providerStatusRaw", "economics", "supplierAmount", "privateMetadata", "MOCK_AVAILABLE"]) assert.equal(serialized.includes(forbidden), false)
   })
   await test("repricing is deterministic and keeps economics server-private", async () => {
     const [offer] = await mock.searchFlights(search)
-    const first = await mock.repriceOffer(offer.supplierOfferRef)
-    const second = await mock.repriceOffer(offer.supplierOfferRef)
+    const first = await mock.repriceOffer(offer.providerOfferRef)
+    const second = await mock.repriceOffer(offer.providerOfferRef)
     assert.deepEqual(first, second)
-    assert.equal(first.expiresAt, "2026-09-15T06:20:00.000Z")
-    assert.equal(first.supplierEconomics.netAmount, "1000.00")
+    assert.equal(first.validity.expiresAt, "2026-09-15T06:20:00.000Z")
+    assert.equal(first.economics.supplierAmount, "1000.00")
     assert.equal("sellingAmount" in first, false)
   })
   await test("createBooking is idempotent for a trusted key", async () => {
@@ -100,4 +112,26 @@ export async function runSupplierAdapterTests(vite, test) {
     const source = await fs.readFile(new URL("../src/server/suppliers/mockFlightSupplier.js", import.meta.url), "utf8")
     assert.equal(/passport|dateOfBirth|givenName|familyName|email|phone|secret|api[_-]?key/i.test(source), false)
   })
+
+  const validOffer = (await mock.searchFlights(search))[0]
+  await test("FlightOfferV1 rejects unknown or missing contract versions", () => {
+    assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, contractVersion: undefined }), /unsupported FlightOffer contract version/)
+    assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, contractVersion: "flight-offer/v2" }), /unsupported FlightOffer contract version/)
+  })
+  await test("FlightOfferV1 rejects malformed dates, amounts, and currencies", () => {
+    assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, itinerary: { ...validOffer.itinerary, departureAt: "not-a-date" } }), /ISO date-time/)
+    assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, economics: { ...validOffer.economics, supplierAmount: "-1" } }), /positive decimal/)
+    assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, economics: { ...validOffer.economics, supplierCurrency: "aed" } }), /ISO currency/)
+  })
+  await test("FlightOfferV1 validates segment continuity and itinerary boundaries", () => {
+    const first = validOffer.itinerary.segments[0]
+    const disconnected = { ...first, origin: "AUH", departureAt: "2026-09-15T12:00:00+04:00", arrivalAt: "2026-09-15T13:00:00+04:00" }
+    assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, itinerary: { ...validOffer.itinerary, destination: disconnected.destination, arrivalAt: disconnected.arrivalAt, stops: 1, segments: [first, disconnected] } }), /segment continuity/)
+    assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, itinerary: { ...validOffer.itinerary, origin: "AUH" } }), /boundaries/)
+  })
+  await test("FlightOfferV1 isolates provider metadata and rejects credential-shaped data", () => {
+    assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, privateMetadata: { accessToken: "forbidden" } }), /unsafe provider data/)
+  })
+
+  await runFlightSupplierConformanceTests({ test, label: "mock supplier", adapter: mock, searchRequest: search, assertFlightOfferV1: offerContract.assertFlightOfferV1, toPublicFlightOffer, expectedProvider: "mock" })
 }
