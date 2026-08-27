@@ -24,3 +24,12 @@ export function createSafeTelemetryEvent(fields) {
   for (const field of EVENT_FIELDS) if (fields[field] !== undefined) event[field] = fields[field]
   return Object.freeze(event)
 }
+
+export function safeEmitSearchTelemetry(sink, fields) {
+  try {
+    sink.emit(createSafeTelemetryEvent(fields))
+    return true
+  } catch {
+    return false
+  }
+}

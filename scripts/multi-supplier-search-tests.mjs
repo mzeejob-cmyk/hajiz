@@ -236,6 +236,34 @@ test("R telemetry excludes raw responses and private supplier data", async () =>
   }
 })
 
+test("telemetry sink failures never affect search and later events remain attempted", async () => {
+  const attempted = []
+  let supplierCalls = 0
+  const telemetry = Object.freeze({
+    emit(event) {
+      attempted.push(event.event)
+      throw new Error("telemetry backend down")
+    },
+  })
+  const orchestrator = createMultiSupplierFlightSearchOrchestrator({
+    registry: registryFor([fakeAdapter("mock", async () => {
+      supplierCalls += 1
+      return [offerFor("mock", "telemetry-down")]
+    })]),
+    policy: { maxConcurrency: 1, supplierTimeoutMs: 100 },
+    telemetry,
+    traceIdFactory: () => "htr_test_trace_failure",
+  })
+
+  const result = await orchestrator.searchFlightsAcrossSuppliers(searchInput)
+  assert.equal(supplierCalls, 1)
+  assert.equal(result.status, "COMPLETE")
+  assert.equal(result.offers.length, 1)
+  assert.equal(result.offers[0].provider, "mock")
+  assert.deepEqual(attempted, ["search.started", "supplier_search.started", "supplier_search.completed", "search.completed"])
+  assert.equal(JSON.stringify(result).includes("telemetry backend down"), false)
+})
+
 test("S malformed non-array supplier response fails FlightOffer boundary", async () => {
   const { orchestrator } = orchestratorFor([fakeAdapter("mock", async () => ({ offers: [] }))])
   const result = await orchestrator.searchFlightsAcrossSuppliers(searchInput)

@@ -1,7 +1,7 @@
 import { assertFlightOfferV1 } from "./flightOfferV1.js"
 import { validateSearchRequest } from "./flightSupplierContract.js"
 import { createMultiSupplierSearchPolicy } from "./multiSupplierSearchPolicy.js"
-import { NOOP_SEARCH_TELEMETRY, assertSearchTelemetrySink, createSafeTelemetryEvent } from "./searchTelemetry.js"
+import { NOOP_SEARCH_TELEMETRY, assertSearchTelemetrySink, safeEmitSearchTelemetry } from "./searchTelemetry.js"
 
 export const MULTI_SUPPLIER_SEARCH_CONTRACT_VERSION = "multi-supplier-flight-search/v1"
 export const MULTI_SUPPLIER_SEARCH_STATUSES = Object.freeze(["COMPLETE", "PARTIAL", "UNAVAILABLE"])
@@ -45,7 +45,7 @@ async function executeSupplierAttempt({ adapter, searchInput, timeoutMs, traceId
   const startedAtMs = now()
   const deadlineAt = new Date(startedAtMs + timeoutMs).toISOString()
   const controller = new AbortController()
-  telemetry.emit(createSafeTelemetryEvent({ event: "supplier_search.started", timestamp: new Date(startedAtMs).toISOString(), traceId, provider: adapter.providerName }))
+  safeEmitSearchTelemetry(telemetry, { event: "supplier_search.started", timestamp: new Date(startedAtMs).toISOString(), traceId, provider: adapter.providerName })
 
   let timer
   const supplierPromise = Promise.resolve()
@@ -82,11 +82,11 @@ async function executeSupplierAttempt({ adapter, searchInput, timeoutMs, traceId
     }
   }
 
-  telemetry.emit(createSafeTelemetryEvent({
+  safeEmitSearchTelemetry(telemetry, {
     event: terminalEventName(outcome.status), timestamp: new Date(now()).toISOString(), traceId,
     provider: outcome.provider, outcome: outcome.status, durationMs: outcome.durationMs,
     offerCount: outcome.offerCount, errorCode: outcome.errorCode,
-  }))
+  })
   return { outcome, offers }
 }
 
@@ -113,7 +113,7 @@ export function createMultiSupplierFlightSearchOrchestrator({
       if (!suppliers.length) throw new FlightSearchUnavailableError()
       const traceId = assertTraceId(traceIdFactory())
       const startedAtMs = now()
-      telemetry.emit(createSafeTelemetryEvent({ event: "search.started", timestamp: new Date(startedAtMs).toISOString(), traceId, supplierCount: suppliers.length }))
+      safeEmitSearchTelemetry(telemetry, { event: "search.started", timestamp: new Date(startedAtMs).toISOString(), traceId, supplierCount: suppliers.length })
 
       const attempts = new Array(suppliers.length)
       let nextIndex = 0
@@ -133,10 +133,10 @@ export function createMultiSupplierFlightSearchOrchestrator({
       const offers = Object.freeze(attempts.flatMap((attempt) => attempt.offers))
       const status = overallStatus(supplierOutcomes)
       const completedAtMs = now()
-      telemetry.emit(createSafeTelemetryEvent({
+      safeEmitSearchTelemetry(telemetry, {
         event: "search.completed", timestamp: new Date(completedAtMs).toISOString(), traceId,
         status, durationMs: Math.max(0, completedAtMs - startedAtMs), offerCount: offers.length, supplierCount: suppliers.length,
-      }))
+      })
       return Object.freeze({
         contractVersion: MULTI_SUPPLIER_SEARCH_CONTRACT_VERSION,
         traceId,
