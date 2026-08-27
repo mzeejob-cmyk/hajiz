@@ -30,7 +30,7 @@ export function createTravelportClient({ config, fetchImpl, now = () => Date.now
   }
 
   let cachedToken
-  async function token() {
+  async function token(signal) {
     if (cachedToken && cachedToken.expiresAt > now() + 60_000) return cachedToken.value
     const body = new URLSearchParams({
       grant_type: "password",
@@ -43,6 +43,7 @@ export function createTravelportClient({ config, fetchImpl, now = () => Date.now
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body,
+      signal,
     })
     if (!response.ok) throw new Error(`Travelport authentication failed (${response.status})`)
     const payload = await response.json()
@@ -52,10 +53,10 @@ export function createTravelportClient({ config, fetchImpl, now = () => Date.now
     return cachedToken.value
   }
 
-  async function post(path, payload, traceId) {
+  async function post(path, payload, traceId, { signal } = {}) {
     if (!path.startsWith("/")) throw new TypeError("Travelport path must be relative")
     const headers = {
-      authorization: `Bearer ${await token()}`,
+      authorization: `Bearer ${await token(signal)}`,
       "content-type": "application/json",
       accept: "application/json",
       "Accept-Version": "11",
@@ -63,7 +64,7 @@ export function createTravelportClient({ config, fetchImpl, now = () => Date.now
     }
     if (config.accessGroup) headers.XAUTH_TRAVELPORT_ACCESSGROUP = config.accessGroup
     if (traceId) headers.traceId = traceId
-    const response = await fetchImpl(`${config.airBaseUrl}${path}`, { method: "POST", headers, body: JSON.stringify(payload) })
+    const response = await fetchImpl(`${config.airBaseUrl}${path}`, { method: "POST", headers, body: JSON.stringify(payload), signal })
     if (!response.ok) throw new Error(`Travelport request failed (${response.status})`)
     return response.json()
   }

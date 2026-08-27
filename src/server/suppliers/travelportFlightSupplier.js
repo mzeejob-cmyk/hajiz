@@ -25,7 +25,7 @@ export function createTravelportFlightSupplier({ env = process.env, fetchImpl = 
     providerName: PROVIDER,
     capabilities,
     async health() { return freeze({ providerName: PROVIDER, healthy: config.configured, configured: config.configured, networkChecked: false, capabilities }) },
-    async searchFlights(request) {
+    async searchFlights(request, executionContext = {}) {
       requireCapability(adapter, "search_flights")
       const safe = validateSearchRequest(request)
       const payload = {
@@ -37,7 +37,7 @@ export function createTravelportFlightSupplier({ env = process.env, fetchImpl = 
           },
         },
       }
-      const response = await client.post("/catalog/search/catalogproductofferings", payload, createId())
+      const response = await client.post("/catalog/search/catalogproductofferings", payload, executionContext.traceId ?? createId(), { signal: executionContext.signal })
       return freeze(normalizeTravelportOffers(response, { createOfferIdentity }))
     },
     async repriceOffer(supplierOfferRef) {
