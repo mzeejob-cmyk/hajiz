@@ -1,5 +1,6 @@
 import { assertKnownProvider } from "./providerIdentity.js"
 import { assertSupplierOperation } from "./supplierOperations.js"
+import { OPERATIONAL_OUTCOMES } from "./flightSupplierContract.js"
 
 export const FLIGHT_OFFER_CONTRACT_VERSION = "flight-offer/v1"
 export const COMPARISON_SEMANTICS = Object.freeze(["unknown", "allowed", "not_allowed", "conditional"])
@@ -52,6 +53,10 @@ const requirePositiveAmount = (value) => {
 }
 const requireComparison = (value, field) => {
   if (!COMPARISON_SEMANTICS.includes(value)) throw new TypeError(`${field} is invalid`)
+  return value
+}
+const requireOperationalOutcome = (value) => {
+  if (!OPERATIONAL_OUTCOMES.includes(value)) throw new TypeError("operationalOutcome is invalid")
   return value
 }
 const clonePrivateEnvelope = (value, field) => {
@@ -125,7 +130,7 @@ export function createFlightOfferV1(input) {
     provider,
     providerOfferRef: requireText(input.providerOfferRef, "providerOfferRef"),
     providerStatusRaw: optionalText(input.providerStatusRaw, "providerStatusRaw"),
-    operationalOutcome: input.operationalOutcome === "repriced" ? "repriced" : "available",
+    operationalOutcome: requireOperationalOutcome(input.operationalOutcome),
     itinerary: {
       origin, destination, departureAt, arrivalAt,
       durationMinutes: itinerary.durationMinutes,

@@ -118,6 +118,14 @@ export async function runSupplierAdapterTests(vite, test) {
     assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, contractVersion: undefined }), /unsupported FlightOffer contract version/)
     assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, contractVersion: "flight-offer/v2" }), /unsupported FlightOffer contract version/)
   })
+  await test("FlightOfferV1 preserves supported operational outcomes and rejects unknown values", () => {
+    for (const operationalOutcome of contract.OPERATIONAL_OUTCOMES) {
+      assert.equal(offerContract.assertFlightOfferV1({ ...validOffer, operationalOutcome }).operationalOutcome, operationalOutcome)
+    }
+    for (const operationalOutcome of ["expired", "successful", "", null]) {
+      assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, operationalOutcome }), /operationalOutcome is invalid/)
+    }
+  })
   await test("FlightOfferV1 rejects malformed dates, amounts, and currencies", () => {
     assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, itinerary: { ...validOffer.itinerary, departureAt: "not-a-date" } }), /ISO date-time/)
     assert.throws(() => offerContract.assertFlightOfferV1({ ...validOffer, economics: { ...validOffer.economics, supplierAmount: "-1" } }), /positive decimal/)
