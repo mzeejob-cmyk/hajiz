@@ -2,7 +2,7 @@
 
 ## Scope and target
 
-This audit now records the Batch 1 contract and its runtime-validated Staging persistence boundary. It does not enable Travelport, change pricing or FX, add a supplier, or implement search fan-out.
+This audit records the runtime-validated Batch 1 persistence boundary, Batch 2 search orchestration, and Batch 3 application-layer marketed-itinerary/fare grouping and public projection boundary. It does not enable Travelport, change pricing or FX, add a supplier, rank offers, or wire a customer endpoint.
 
 Target flow:
 
@@ -10,7 +10,7 @@ Target flow:
 
 ## Current architecture
 
-The server has a strict, versioned `FlightOfferV1` private contract, an explicit provider/capability model, and a shared conformance suite. The Batch 2 search orchestrator resolves enabled, search-capable adapters in stable registry order and executes them through a bounded worker pool with individual deadlines, failure isolation, partial-result semantics, and safe telemetry. The legacy default resolver remains for compatible single-supplier callers. Both mock and Travelport adapters normalize into the same validated private shape, and the versioned public mapper removes provider identity, private metadata, and supplier economics before browser exposure. Booking orchestration accepts one already-selected supplier and preserves the frozen payment/booking state boundaries.
+The server has a strict, versioned `FlightOfferV1` private contract, an explicit provider/capability model, and a shared conformance suite. The Batch 2 search orchestrator resolves enabled, search-capable adapters in stable registry order and executes them through a bounded worker pool with individual deadlines, failure isolation, partial-result semantics, and safe telemetry. Batch 3 groups validated offers by provider-neutral marketed-itinerary and conservative fare fingerprints while retaining every distinct supplier alternative. Its versioned public grouped projection requires authoritative prices and maps every alternative through the existing public mapper. The legacy default resolver remains for compatible single-supplier callers. Booking orchestration accepts one already-selected supplier and preserves the frozen payment/booking state boundaries.
 
 The active customer flight UI remains fixture-driven and does not consume the server supplier layer. Its presentation shape is provider-neutral, although it includes UI-owned fields such as `key`, `rankingLabel`, `additionalOptionsCount`, `flexibility`, and formatted price/duration values that are not produced by the current public mapper.
 
@@ -19,8 +19,8 @@ The active customer flight UI remains fixture-driven and does not consume the se
 1. **Can more than one supplier be queried in one search today?** Yes through the internal Batch 2 orchestrator when multiple server-enabled, search-capable adapters exist. Client input cannot select them. No new supplier is enabled by Batch 2.
 2. **Is supplier execution parallel/sequential?** Search execution uses bounded parallel workers with a validated default concurrency of 3. Registry order, not completion order, determines aggregation.
 3. **Is there a canonical `FlightOffer` contract independent of provider?** Yes. `FlightOfferV1` strictly validates version, identity, itinerary, segments, fare, economics, validity, capabilities, and bounded private metadata; its persistence boundary passed the Staging runtime gate.
-4. **Can two supplier offers for the same physical itinerary coexist?** Yes as distinct provider offers in memory and persistence: equal references may coexist across different providers, while duplicate references within one provider are rejected. There is still no itinerary grouping identity.
-5. **Is there any dedup/grouping logic?** No.
+4. **Can two supplier offers for the same marketed itinerary coexist?** Yes. Batch 3 groups matching marketed segment sequences but preserves distinct provider alternatives. It does not claim physical-flight reconciliation across codeshares.
+5. **Is there any dedup/grouping logic?** Yes for validated flight offers: provider-neutral marketed-itinerary fingerprints, conservative fare fingerprints, and exact duplicate supplier-offer handling. Unknown comparison-critical fare semantics remain deliberately unmerged.
 6. **Is ranking currently supplier-neutral?** No authoritative ranking exists. Fixture labels are manually assigned in frontend data.
 7. **Does ranking occur before or after HAJIZ authoritative pricing?** It does not occur in the server pipeline. The public mapper accepts an externally supplied server price, but no comparison/ranking stage follows it.
 8. **Does frontend code depend on supplier-specific fields?** Active frontend code does not depend on supplier/provider fields. It does depend on a fixture presentation shape not yet supplied by the backend public mapper.
@@ -45,9 +45,9 @@ The active customer flight UI remains fixture-driven and does not consume the se
 | MS-04 | P0 | Partial | Durable operation/idempotency foundation is applied and runtime-validated; supplier-operation execution remains unwired | Booking Provider Selection |
 | MS-05 | P1 | Closed | Canonical versioned private-offer validator and HAJIZ offer identity are implemented | Canonical Normalization |
 | MS-06 | P1 | Closed | Provider-aware offer and booking persistence/schema passed the Staging runtime gate; runtime supplier wiring remains tracked by MS-02/MS-04 | Additive persistence migration |
-| MS-07 | P1 | Open | No itinerary/fare deduplication or grouping | Deduplication |
+| MS-07 | P1 | Closed (flight marketed-itinerary/fare grouping scope) | Provider-neutral itinerary grouping, conservative fare grouping, alternative preservation, and exact duplicate handling are behaviorally tested; codeshare physical-flight reconciliation is not claimed | Deduplication |
 | MS-08 | P1 | Open | No authoritative pricing -> FX -> final price -> ranking pipeline | Pricing and Ranking |
-| MS-09 | P1 | Partial | Versioned public projection and opaque selection key exist; frontend remains unreconciled | Public Search Boundary |
+| MS-09 | P1 | Partial | Versioned grouped public projection requires authoritative prices, maps every alternative through the public mapper, and excludes supplier details; frontend/customer endpoint remains unreconciled | Public Search Boundary |
 | MS-10 | P1 | Partial | Search concurrency, timeout, failure, and telemetry policy exist; market/content scope and non-search operation policy remain absent | Provider Policy |
 | MS-11 | P2 | Open | No hotel canonical supplier contract | Hotel Multi-Supplier phase |
 

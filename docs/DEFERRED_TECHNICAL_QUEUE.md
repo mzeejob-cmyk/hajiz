@@ -13,9 +13,9 @@ These items are deliberately recorded without implementation in the Backend Core
 
 - **B2-02 — PRE-REAL-SUPPLIER-ENABLEMENT / CAPACITY:** an abort-ignoring remote supplier may leave underlying network I/O alive after the orchestrator has finalized its timeout outcome. Account for this in capacity planning and supplier-enablement review.
 - **B2-03 — PRE-REAL-SUPPLIER-ENABLEMENT:** add an overall search deadline before enabled supplier count can create more than two queued timeout batches.
-- **B2-04 — BATCH 3:** make empty aggregation fail closed; `overallStatus([])` must not return `COMPLETE`.
+- **B2-04 — CLOSED IN BATCH 3:** empty aggregation now fails closed in `overallStatus` and at the orchestrator boundary, with behavioral coverage.
 - **B2-05 — PRE-REAL-SUPPLIER-ENABLEMENT:** add safe server-only provider diagnostics without leaking raw supplier errors to telemetry or clients.
-- **B2-07 — BATCH 3:** every customer-facing search surface must map private `FlightOfferV1` values through `toPublicFlightOffer` and test that public boundary.
+- **B2-07 — CLOSED FOR APPLICATION PROJECTION BOUNDARY IN BATCH 3:** the grouped public projection maps every alternative through `toPublicFlightOffer`, requires authoritative customer prices, and has leakage tests. Frontend/customer endpoint reconciliation remains tracked by MS-09.
 
 ## Pre-production
 
