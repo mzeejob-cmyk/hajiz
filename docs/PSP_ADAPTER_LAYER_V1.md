@@ -101,6 +101,13 @@ Before writing either adapter, verify every event name, signature algorithm, tim
 
 Migration `20260826200000_psp_rejected_transition_v1.sql` narrowly permits a trusted PSP event to move a non-Bankak payment from `awaiting` to `rejected`. The unique provider event insert remains the idempotency boundary and a successful transition still writes `payment_audit`. It does not permit PSP rejection from `under_review`; Bankak rejection remains owned by the finance review command.
 
+The Staging gate is recorded in `scripts/payment-rejected-staging-live-tests.sql`.
+It is restricted to HAJIZ Staging (`pdnuswmljownjzjzpoop`), uses synthetic fixed
+IDs, and rolls the entire fixture transaction back. It verifies service-role-only
+execution, trusted rejection, Bankak and `under_review` exclusion, economics and
+verification rejection, replay idempotency, a single audit row, and no booking
+transition. It must never be run against Production.
+
 ## Checkout.com sandbox readiness
 
 No Checkout.com or APS credential/configuration was present in the repository environment review. `CheckoutComSandboxAdapterSkeleton` therefore provides only a fail-closed contract surface and reviewed event-name mapping; every network operation is disabled and metadata explicitly reports `live: false` and `conformanceOnly: true`.
