@@ -10,14 +10,14 @@ Target flow:
 
 ## Current architecture
 
-The server has a strict, versioned `FlightOfferV1` private contract, an explicit provider/capability model, and a shared conformance suite. The registry can resolve all explicitly enabled adapters for one capability in stable order, but normal runtime selection still returns one configured default and no fan-out executes. Both mock and Travelport adapters normalize into the same validated private shape, and the versioned public mapper removes provider identity, private metadata, and supplier economics before browser exposure. Booking orchestration accepts one already-selected supplier and preserves the frozen payment/booking state boundaries.
+The server has a strict, versioned `FlightOfferV1` private contract, an explicit provider/capability model, and a shared conformance suite. The Batch 2 search orchestrator resolves enabled, search-capable adapters in stable registry order and executes them through a bounded worker pool with individual deadlines, failure isolation, partial-result semantics, and safe telemetry. The legacy default resolver remains for compatible single-supplier callers. Both mock and Travelport adapters normalize into the same validated private shape, and the versioned public mapper removes provider identity, private metadata, and supplier economics before browser exposure. Booking orchestration accepts one already-selected supplier and preserves the frozen payment/booking state boundaries.
 
 The active customer flight UI remains fixture-driven and does not consume the server supplier layer. Its presentation shape is provider-neutral, although it includes UI-owned fields such as `key`, `rankingLabel`, `additionalOptionsCount`, `flexibility`, and formatted price/duration values that are not produced by the current public mapper.
 
 ## Exact audit answers
 
-1. **Can more than one supplier be queried in one search today?** No. `selectSupplierForClientRequest` returns `getConfiguredFlightSupplier()`, which resolves one default adapter.
-2. **Is supplier execution parallel/sequential?** Neither multi-supplier mode exists. Calls against the selected adapter are sequential. There is no fan-out scheduler.
+1. **Can more than one supplier be queried in one search today?** Yes through the internal Batch 2 orchestrator when multiple server-enabled, search-capable adapters exist. Client input cannot select them. No new supplier is enabled by Batch 2.
+2. **Is supplier execution parallel/sequential?** Search execution uses bounded parallel workers with a validated default concurrency of 3. Registry order, not completion order, determines aggregation.
 3. **Is there a canonical `FlightOffer` contract independent of provider?** Yes. `FlightOfferV1` strictly validates version, identity, itinerary, segments, fare, economics, validity, capabilities, and bounded private metadata; its persistence boundary passed the Staging runtime gate.
 4. **Can two supplier offers for the same physical itinerary coexist?** Yes as distinct provider offers in memory and persistence: equal references may coexist across different providers, while duplicate references within one provider are rejected. There is still no itinerary grouping identity.
 5. **Is there any dedup/grouping logic?** No.
@@ -27,8 +27,8 @@ The active customer flight UI remains fixture-driven and does not consume the se
 9. **Is supplier identity safely internal while still available to backend operations?** Yes at the schema and projection boundaries: it is hidden from public offers and `get_my_bookings`, while typed provider identity is durable on offers and bookings. Runtime supplier-operation execution is not yet wired.
 10. **What supplier identifiers must be persisted?** Provider name, provider offer reference, opaque provider repricing context (Travelport transaction/offering/product identifiers), expiry, HAJIZ offer ID, selected provider at booking, provider booking reference, and stable operation/idempotency identity. Raw provider payloads should not become public records.
 11. **What breaks with multiple processes?** Travelport search references disappear because they live in a process-local `Map()`. Mock booking/idempotency and status-read state also live in process-local maps. A reprice, booking retry, or status poll routed to another process cannot resolve the prior identity.
-12. **What prevents one failing/slow supplier from blocking all search?** Nothing, because no multi-supplier orchestration exists.
-13. **What timeout/error isolation exists per supplier?** None in the supplier contract or Travelport client. There is no timeout, abort signal, per-provider deadline, circuit state, concurrency budget, or partial-result policy.
+12. **What prevents one failing/slow supplier from blocking all search?** Each search attempt has an isolated outcome and individual timeout. Successful or empty results remain usable when another provider fails.
+13. **What timeout/error isolation exists per supplier?** A validated server-owned timeout, AbortSignal/deadline context, bounded concurrency, safe late-settlement handling, and explicit COMPLETE/PARTIAL/UNAVAILABLE policy. Circuit breakers and provider health state remain future work.
 14. **How are provider-specific capabilities represented?** Every canonical operation has an explicit machine-readable boolean; unsupported invocation fails with one canonical backend error. Richer constraints such as timeout policy, market/content scope, or booking mode remain absent.
 15. **What is missing for future hotel multi-supplier mapping?** A hotel-specific canonical domain contract, room/rate-plan identity, occupancy and board normalization, cancellation/refundability semantics, tax/fee normalization, availability expiry, dedupe keys, capability tests, and a public mapping boundary. The current `hotels_search` flag is only reserved and disabled.
 16. **What changes require additive schema migration?** Typed provider identity on offers and bookings; composite provider/offer uniqueness; and durable supplier-operation attempt/idempotency records for multi-process booking execution. Existing state enums and payment tables do not need alteration.
@@ -39,16 +39,16 @@ The active customer flight UI remains fixture-driven and does not consume the se
 
 | ID | Severity | Status after Batch 1 | Gap | Required phase |
 |---|---|---|---|---|
-| MS-01 | P0 | Partial | Multi-provider capability resolution exists; no multi-adapter search orchestrator | Multi-Supplier Search Core |
+| MS-01 | P0 | Closed (search scope) | Server-owned bounded multi-adapter search fan-out is implemented and behaviorally tested | Multi-Supplier Search Core |
 | MS-02 | P0 | Partial | Durable replacement is designed but Travelport still uses a process-local `Map()` | Pre-supplier persistence |
-| MS-03 | P0 | Open | No per-supplier timeout, cancellation, or failure isolation | Multi-Supplier Search Core |
+| MS-03 | P0 | Closed (search scope) | Per-supplier timeout, AbortSignal, bounded concurrency, failure isolation, late-result safety, and partial-result policy are tested | Multi-Supplier Search Core |
 | MS-04 | P0 | Partial | Durable operation/idempotency foundation is applied and runtime-validated; supplier-operation execution remains unwired | Booking Provider Selection |
 | MS-05 | P1 | Closed | Canonical versioned private-offer validator and HAJIZ offer identity are implemented | Canonical Normalization |
 | MS-06 | P1 | Closed | Provider-aware offer and booking persistence/schema passed the Staging runtime gate; runtime supplier wiring remains tracked by MS-02/MS-04 | Additive persistence migration |
 | MS-07 | P1 | Open | No itinerary/fare deduplication or grouping | Deduplication |
 | MS-08 | P1 | Open | No authoritative pricing -> FX -> final price -> ranking pipeline | Pricing and Ranking |
 | MS-09 | P1 | Partial | Versioned public projection and opaque selection key exist; frontend remains unreconciled | Public Search Boundary |
-| MS-10 | P1 | Partial | Capability vocabulary and canonical failure exist; execution policy and content scope do not | Provider Policy |
+| MS-10 | P1 | Partial | Search concurrency, timeout, failure, and telemetry policy exist; market/content scope and non-search operation policy remain absent | Provider Policy |
 | MS-11 | P2 | Open | No hotel canonical supplier contract | Hotel Multi-Supplier phase |
 
 ## Confirmed additive schema needs
