@@ -76,6 +76,8 @@ No payment or booking enum change is justified. A new search-results table, dedu
 
 **P0 pre-supplier blocker.** `createTravelportFlightSupplier` converts Travelport transaction/offering/product identifiers into a generated reference and stores the reverse mapping in a local `Map()`. The browser-safe opacity is correct, but the storage lifetime is not: references are lost on restart, unavailable to another process, and cannot support durable reprice/checkout. The mapping must move behind a protected persistent offer-reference boundary before Travelport can be enabled. Credentials alone must never enable it.
 
+**C-02 remains a pre-Travelport-enablement blocker:** opaque HAJIZ offer-key/reference derivation is still tied to that process-local mapping. Batch 1 documents the durable boundary but does not replace the map or enable Travelport.
+
 ## Recommended build order
 
 1. Multi-supplier contracts and test harness: versioned private offer validation, provider policy, canonical fingerprints, and frozen-boundary tests.

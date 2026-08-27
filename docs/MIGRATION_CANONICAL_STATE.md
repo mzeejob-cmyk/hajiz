@@ -33,6 +33,7 @@ Repository filename timestamps and remote migration-history versions are not ass
 | `20260825210000_payment_authority_security_v2.sql` | CANONICAL SOURCE, NOT A REPLAY SCRIPT | The live security objects match it, but the whole file contains existing table/trigger/policy setup and must not be reapplied as a synchronization mechanism |
 | `20260826200000_psp_rejected_transition_v1.sql` | APPLIED; DO NOT REPLAY | Staging already has its exact function behavior; repository-history synchronization is not a reason to replace live definitions |
 | `20260827171209_payment_event_consumption_and_expiry_v1.sql` | CANONICAL REMEDIATION; NOT YET APPLIED | Additive function replacements make applicability precede provider-event consumption, enforce PSP confirmation expiry, and reject Bankak `awaiting -> confirmed` in the trigger |
+| `20260827180646_multi_supplier_identity_and_operations_v1.sql` | REPLAY-SAFE ADDITIVE MIGRATION; NOT YET APPLIED | Adds provider-aware offer/booking identity, legacy and provider-scoped reference uniqueness, a private operation ledger, live-operation uniqueness, and immutable supplier identity/request guards. It changes no payment or booking enums or authority functions |
 | `PLAN_ONLY_20260825_payment_authority.sql` | NEVER EXECUTE | Self-aborting plan artifact, not a runtime migration |
 
 ## Effective Bankak expiry
@@ -51,6 +52,8 @@ Before `20260827171209_payment_event_consumption_and_expiry_v1.sql`, `apply_paym
 ## Deferred queue after Remediation Batch 1
 
 P1 / pre-supplier: explicit Travelport enablement, persistent Travelport offer references, and `app_private` default privileges.
+
+The multi-supplier migration is canonical repository design only and has not been checked or applied on Staging. Its replay verdict is based on statement review and structural tests: columns use `IF NOT EXISTS`; the removed legacy constraint uses `IF EXISTS`; seven added checks use catalog/signature guards that raise on same-name drift; indexes use equivalent signature guards; functions are replaced canonically; and triggers are dropped conditionally before recreation.
 
 Pre-production: checkout-origin seeding, refund booking lifecycle, `create_checkout` idempotency scope, Staging project-ref productionization, `PLAN_ONLY` relocation/handling, return URL query/hash product decision, and Bankak checkout UI scope.
 

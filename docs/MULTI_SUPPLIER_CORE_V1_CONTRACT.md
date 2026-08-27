@@ -39,6 +39,12 @@ The unapplied `multi_supplier_identity_and_operations_v1` migration designs thre
 
 New columns remain nullable for legacy-row compatibility. Application writes must populate them before later hardening is considered. The private ledger has RLS enabled, denies browser roles, and grants its limited writes only to `service_role`. Customers neither choose providers nor read supplier economics.
 
+Transitional offers whose provider is still `NULL` retain unique `supplier_offer_ref` values. Non-null providers use `(supplier_provider, supplier_offer_ref)` uniqueness, so equal opaque references may coexist only when they belong to different providers. This batch does not backfill legacy provider identity.
+
+At most one live or recoverable operation may exist for a `(booking_id, provider, operation)` tuple. Live means `pending` or `unknown`; `succeeded` is terminal and excluded so later legitimate reprices or other repeatable operations are not blocked. Logical retries remain bound by unique `(provider, idempotency_key)`.
+
+Supplier-operation `booking_id`, `provider`, `operation`, `idempotency_key`, and `request_digest` are immutable after insert. A reused idempotency key therefore cannot replace the original digest. Booking `supplier_provider` and `supplier_contract_version` permit initial `NULL -> canonical value` assignment and cannot later be cleared or changed.
+
 ## Replacing the Travelport process-local map
 
 Today Travelport retains `providerOfferRef -> transaction/offering/product identifiers` in a process-local `Map`. That is not safe across restarts, multiple processes, horizontal scaling, or delayed reprice.
@@ -46,6 +52,8 @@ Today Travelport retains `providerOfferRef -> transaction/offering/product ident
 Before Travelport can be enabled, the minimal identifiers needed to reprice or book must be stored in the protected offer reference payload under the HAJIZ internal offer key, with provider identity, contract version, and expiry. Only the minimum structured reference is durable; credentials, auth responses, and unrestricted supplier response blobs remain ephemeral. Expired references should be rejected and later removed under a separately reviewed retention policy.
 
 The supplier-operation ledger then persists booking-side retries and ambiguous outcomes. No automatic supplier failover or rebooking is implied. Until this design is applied, reviewed, and wired into runtime, Travelport is not safe to enable.
+
+Opaque-key derivation independent of Travelport process memory remains a pre-Travelport-enablement blocker (C-02).
 
 ## Deliberately unresolved
 
