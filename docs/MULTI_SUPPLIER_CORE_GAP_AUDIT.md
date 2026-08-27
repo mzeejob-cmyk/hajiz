@@ -2,7 +2,7 @@
 
 ## Scope and target
 
-This audit now records the Batch 1 contract and unapplied persistence-design work. It does not enable Travelport, change pricing or FX, add a supplier, apply a migration, or implement search fan-out.
+This audit now records the Batch 1 contract and its runtime-validated Staging persistence boundary. It does not enable Travelport, change pricing or FX, add a supplier, or implement search fan-out.
 
 Target flow:
 
@@ -18,13 +18,13 @@ The active customer flight UI remains fixture-driven and does not consume the se
 
 1. **Can more than one supplier be queried in one search today?** No. `selectSupplierForClientRequest` returns `getConfiguredFlightSupplier()`, which resolves one default adapter.
 2. **Is supplier execution parallel/sequential?** Neither multi-supplier mode exists. Calls against the selected adapter are sequential. There is no fan-out scheduler.
-3. **Is there a canonical `FlightOffer` contract independent of provider?** Yes at the application-contract boundary. `FlightOfferV1` strictly validates version, identity, itinerary, segments, fare, economics, validity, capabilities, and bounded private metadata. Persistence is still only designed, not applied.
-4. **Can two supplier offers for the same physical itinerary coexist?** In memory, yes as separate normalized objects. In persistence, identity is incomplete: `offers.supplier_offer_ref` is globally unique and no provider column disambiguates equal references. There is no itinerary grouping identity.
+3. **Is there a canonical `FlightOffer` contract independent of provider?** Yes. `FlightOfferV1` strictly validates version, identity, itinerary, segments, fare, economics, validity, capabilities, and bounded private metadata; its persistence boundary passed the Staging runtime gate.
+4. **Can two supplier offers for the same physical itinerary coexist?** Yes as distinct provider offers in memory and persistence: equal references may coexist across different providers, while duplicate references within one provider are rejected. There is still no itinerary grouping identity.
 5. **Is there any dedup/grouping logic?** No.
 6. **Is ranking currently supplier-neutral?** No authoritative ranking exists. Fixture labels are manually assigned in frontend data.
 7. **Does ranking occur before or after HAJIZ authoritative pricing?** It does not occur in the server pipeline. The public mapper accepts an externally supplied server price, but no comparison/ranking stage follows it.
 8. **Does frontend code depend on supplier-specific fields?** Active frontend code does not depend on supplier/provider fields. It does depend on a fixture presentation shape not yet supplied by the backend public mapper.
-9. **Is supplier identity safely internal while still available to backend operations?** It is hidden correctly from public offers and present in adapter results. It is not durably modeled on `offers` or `bookings`; booking metadata can carry it, but that is not a typed selection boundary.
+9. **Is supplier identity safely internal while still available to backend operations?** Yes at the schema and projection boundaries: it is hidden from public offers and `get_my_bookings`, while typed provider identity is durable on offers and bookings. Runtime supplier-operation execution is not yet wired.
 10. **What supplier identifiers must be persisted?** Provider name, provider offer reference, opaque provider repricing context (Travelport transaction/offering/product identifiers), expiry, HAJIZ offer ID, selected provider at booking, provider booking reference, and stable operation/idempotency identity. Raw provider payloads should not become public records.
 11. **What breaks with multiple processes?** Travelport search references disappear because they live in a process-local `Map()`. Mock booking/idempotency and status-read state also live in process-local maps. A reprice, booking retry, or status poll routed to another process cannot resolve the prior identity.
 12. **What prevents one failing/slow supplier from blocking all search?** Nothing, because no multi-supplier orchestration exists.
@@ -42,9 +42,9 @@ The active customer flight UI remains fixture-driven and does not consume the se
 | MS-01 | P0 | Partial | Multi-provider capability resolution exists; no multi-adapter search orchestrator | Multi-Supplier Search Core |
 | MS-02 | P0 | Partial | Durable replacement is designed but Travelport still uses a process-local `Map()` | Pre-supplier persistence |
 | MS-03 | P0 | Open | No per-supplier timeout, cancellation, or failure isolation | Multi-Supplier Search Core |
-| MS-04 | P0 | Partial | Durable operation/idempotency ledger is designed but unapplied and unwired | Booking Provider Selection |
+| MS-04 | P0 | Partial | Durable operation/idempotency foundation is applied and runtime-validated; supplier-operation execution remains unwired | Booking Provider Selection |
 | MS-05 | P1 | Closed | Canonical versioned private-offer validator and HAJIZ offer identity are implemented | Canonical Normalization |
-| MS-06 | P1 | Partial | Provider-aware offer and booking identity migration is designed but unapplied | Additive persistence migration |
+| MS-06 | P1 | Closed | Provider-aware offer and booking persistence/schema passed the Staging runtime gate; runtime supplier wiring remains tracked by MS-02/MS-04 | Additive persistence migration |
 | MS-07 | P1 | Open | No itinerary/fare deduplication or grouping | Deduplication |
 | MS-08 | P1 | Open | No authoritative pricing -> FX -> final price -> ranking pipeline | Pricing and Ranking |
 | MS-09 | P1 | Partial | Versioned public projection and opaque selection key exist; frontend remains unreconciled | Public Search Boundary |

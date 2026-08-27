@@ -20,3 +20,7 @@ These items are deliberately recorded without implementation in the Backend Core
 - Decide whether checkout return URLs may contain query strings or fragments.
 - Define Bankak checkout UI scope against the trusted receipt/review contracts.
 - Remove or externalize the inactive legacy public Supabase configuration.
+
+## Performance follow-up
+
+- `app_private.supplier_operations.offer_id` covering index. The Supabase performance advisor reports that the foreign key lacks a covering index. Do not add it until an application query path uses `offer_id` and `EXPLAIN` or observed query behavior justifies it. This item does not block Multi-Supplier Batch 2.
