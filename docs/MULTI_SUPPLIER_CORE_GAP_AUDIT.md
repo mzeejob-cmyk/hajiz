@@ -39,9 +39,9 @@ The active customer flight UI remains fixture-driven and does not consume the se
 
 | ID | Severity | Status after Batch 1 | Gap | Required phase |
 |---|---|---|---|---|
-| MS-01 | P0 | Closed (search scope) | Server-owned bounded multi-adapter search fan-out is implemented and behaviorally tested | Multi-Supplier Search Core |
+| MS-01 | P0 | Closed (search fan-out scope) | Server-owned bounded multi-provider search orchestration is implemented and behaviorally tested; booking-side provider selection is not implied | Multi-Supplier Search Core |
 | MS-02 | P0 | Partial | Durable replacement is designed but Travelport still uses a process-local `Map()` | Pre-supplier persistence |
-| MS-03 | P0 | Closed (search scope) | Per-supplier timeout, AbortSignal, bounded concurrency, failure isolation, late-result safety, and partial-result policy are tested | Multi-Supplier Search Core |
+| MS-03 | P0 | Closed (search timeout/failure-isolation scope) | Per-supplier timeout, AbortSignal, late-settlement safety, failure isolation, and partial-result policy are tested; circuit breakers, health scoring, and production SLA policy remain absent | Multi-Supplier Search Core |
 | MS-04 | P0 | Partial | Durable operation/idempotency foundation is applied and runtime-validated; supplier-operation execution remains unwired | Booking Provider Selection |
 | MS-05 | P1 | Closed | Canonical versioned private-offer validator and HAJIZ offer identity are implemented | Canonical Normalization |
 | MS-06 | P1 | Closed | Provider-aware offer and booking persistence/schema passed the Staging runtime gate; runtime supplier wiring remains tracked by MS-02/MS-04 | Additive persistence migration |
