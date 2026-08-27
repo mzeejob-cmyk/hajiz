@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import React from "react"
 import { MemoryRouter } from "react-router-dom"
 import { runSupplierAdapterTests } from "./supplier-adapter-tests.mjs"
+import { runTravelportAdapterTests } from "./travelport-adapter-tests.mjs"
 
 let passed = 0
 const test = async (name, fn) => { await fn(); passed += 1; process.stdout.write(`✓ ${name}\n`) }
@@ -142,5 +143,6 @@ try {
   await test("My Trips source has no network persistence or auth", async () => { const files = ["components/MyTripsPage.jsx", "data/tripFixtures.js", "AccountPage.jsx"]; const restricted = /supabase|localStorage|sessionStorage|indexedDB|document\.cookie|fetch\s*\(|axios|\.insert\s*\(|\.update\s*\(|signIn|signOut/i; for (const file of files) { const source = await fs.readFile(new URL(`../src/features/account/${file}`, import.meta.url), "utf8"); assert.equal(restricted.test(source), false, file) } })
   await test("document is Arabic-first RTL", async () => { const html = await fs.readFile(new URL("../index.html", import.meta.url), "utf8"); assert.match(html, /<html lang="ar" dir="rtl">/) })
   await runSupplierAdapterTests(vite, test)
+  await runTravelportAdapterTests(vite, test)
   process.stdout.write(`\n${passed} tests passed\n`)
 } finally { await vite.close() }
