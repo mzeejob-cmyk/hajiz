@@ -52,9 +52,13 @@ export function createPricingPolicyV1(input) {
   if (!input || typeof input !== "object") throw new TypeError("trusted pricing policy is required")
   if (input.contractVersion !== PRICING_POLICY_CONTRACT_VERSION) throw new TypeError("unsupported pricing policy version")
   const margin = positive(input.marginPct, "marginPct")
+  const maxMargin = positive(input.maxMarginPct, "maxMarginPct")
   const commission = nonNegative(input.partnerCommissionRatePct, "partnerCommissionRatePct")
   if (compareDecimal(commission, HUNDRED) > 0) throw new TypeError("partnerCommissionRatePct cannot exceed 100")
   const uplift = nonNegative(input.agentUpliftAmountUsd, "agentUpliftAmountUsd")
+  const maxUplift = nonNegative(input.maxAgentUpliftAmountUsd, "maxAgentUpliftAmountUsd")
+  if (compareDecimal(margin, maxMargin) > 0) throw new TypeError("marginPct exceeds trusted policy maximum")
+  if (compareDecimal(uplift, maxUplift) > 0) throw new TypeError("agentUpliftAmountUsd exceeds trusted policy maximum")
   const validFrom = date(input.validFrom, "pricing policy validFrom")
   const validUntil = date(input.validUntil, "pricing policy validUntil")
   if (Date.parse(validUntil) <= Date.parse(validFrom)) throw new TypeError("pricing policy validity is invalid")
@@ -62,8 +66,10 @@ export function createPricingPolicyV1(input) {
     contractVersion: PRICING_POLICY_CONTRACT_VERSION,
     pricingPolicyVersion: text(input.pricingPolicyVersion, "pricingPolicyVersion"),
     marginPct: formatDecimal(margin, 8, { trim: true }),
+    maxMarginPct: formatDecimal(maxMargin, 8, { trim: true }),
     partnerCommissionRatePct: formatDecimal(commission, 8, { trim: true }),
     agentUpliftAmountUsd: formatDecimal(uplift, 8, { trim: true }),
+    maxAgentUpliftAmountUsd: formatDecimal(maxUplift, 8, { trim: true }),
     validFrom, validUntil,
   })
 }

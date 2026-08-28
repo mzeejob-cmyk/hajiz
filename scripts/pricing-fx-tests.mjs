@@ -23,7 +23,8 @@ const offer = (changes = {}) => createFlightOfferV1({
 })
 const policy = (changes = {}) => createPricingPolicyV1({
   contractVersion: "pricing-policy/v1", pricingPolicyVersion: "pricing-test-v1",
-  marginPct: "10", partnerCommissionRatePct: "20", agentUpliftAmountUsd: "5",
+  marginPct: "10", maxMarginPct: "25", partnerCommissionRatePct: "20",
+  agentUpliftAmountUsd: "5", maxAgentUpliftAmountUsd: "20",
   validFrom: "2026-09-15T00:00:00.000Z", validUntil: "2026-09-15T07:00:00.000Z",
   ...changes,
 })
@@ -63,6 +64,32 @@ test("F invalid zero or negative margin policy fails closed", () => {
 
 test("G missing pricing policy fails closed", () => {
   assert.throws(() => priceFlightOfferV1(offer(), { supplierFxSnapshot: fx("USD", "USD"), now: NOW }), /pricing policy/)
+})
+
+test("F-03 margin below or exactly at trusted maximum is accepted", () => {
+  assert.equal(policy({ marginPct: "24.99", maxMarginPct: "25" }).marginPct, "24.99")
+  assert.equal(policy({ marginPct: "25", maxMarginPct: "25" }).marginPct, "25")
+})
+
+test("F-03 margin above trusted maximum is rejected", () => {
+  assert.throws(() => policy({ marginPct: "25.01", maxMarginPct: "25" }), /exceeds trusted policy maximum/)
+})
+
+test("F-03 uplift below or exactly at trusted maximum is accepted", () => {
+  assert.equal(policy({ agentUpliftAmountUsd: "19.99", maxAgentUpliftAmountUsd: "20" }).agentUpliftAmountUsd, "19.99")
+  assert.equal(policy({ agentUpliftAmountUsd: "20", maxAgentUpliftAmountUsd: "20" }).agentUpliftAmountUsd, "20")
+})
+
+test("F-03 uplift above trusted maximum is rejected", () => {
+  assert.throws(() => policy({ agentUpliftAmountUsd: "20.01", maxAgentUpliftAmountUsd: "20" }), /exceeds trusted policy maximum/)
+})
+
+test("F-03 missing, negative, or malformed maxima fail closed", () => {
+  assert.throws(() => policy({ maxMarginPct: undefined }), /maxMarginPct/)
+  assert.throws(() => policy({ maxAgentUpliftAmountUsd: undefined }), /maxAgentUpliftAmountUsd/)
+  assert.throws(() => policy({ maxMarginPct: "-1" }), /positive/)
+  assert.throws(() => policy({ maxAgentUpliftAmountUsd: "-1" }), /cannot be negative/)
+  assert.throws(() => policy({ maxMarginPct: "not-a-decimal" }), /decimal/)
 })
 
 test("H non-USD supplier amount converts to canonical USD before pricing", () => {
