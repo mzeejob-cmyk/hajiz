@@ -159,18 +159,22 @@ export function assertPricedFlightOfferV1(value) {
   if (!value || typeof value !== "object" || value.contractVersion !== PRICED_FLIGHT_OFFER_VERSION) throw new TypeError("valid PricedFlightOfferV1 is required")
   if (typeof value.internalOfferId !== "string" || value.canonicalCurrency !== "USD") throw new TypeError("priced offer identity is invalid")
   positive(value.finalSellingAmount, "finalSellingAmount")
-  fromFractionRecord(value.finalSellingAmountExact, "finalSellingAmountExact")
+  const exactFinalSelling = fromFractionRecord(value.finalSellingAmountExact, "finalSellingAmountExact")
+  const canonicalFinalSelling = formatDecimal(exactFinalSelling, 8, { trim: true })
+  if (value.finalSellingAmount !== canonicalFinalSelling) throw new TypeError("finalSellingAmount does not match its exact canonical value")
   date(value.calculatedAt, "priced calculatedAt")
   date(value.validUntil, "priced validUntil")
   return value
 }
 
-export function createCustomerPriceV1(pricedInput, { displayFxSnapshot, now }) {
+export function createCustomerPriceV1(pricedInput, { displayFxSnapshot, customerCurrency, now }) {
   const priced = assertPricedFlightOfferV1(pricedInput)
   const calculatedAt = date(now, "customer price calculatedAt")
   if (Date.parse(priced.validUntil) <= Date.parse(calculatedAt)) throw new TypeError("priced offer is expired")
   if (!displayFxSnapshot || typeof displayFxSnapshot !== "object") throw new TypeError("display FX snapshot is required")
-  const displayFx = assertActiveFxSnapshotV1(displayFxSnapshot, { baseCurrency: "USD", quoteCurrency: displayFxSnapshot.quoteCurrency, now: calculatedAt })
+  const requestedCurrency = currency(customerCurrency, "customerCurrency")
+  if (displayFxSnapshot.baseCurrency !== "USD" || displayFxSnapshot.quoteCurrency !== requestedCurrency) throw new TypeError("display FX snapshot does not match requested customer currency")
+  const displayFx = assertActiveFxSnapshotV1(displayFxSnapshot, { baseCurrency: "USD", quoteCurrency: requestedCurrency, now: calculatedAt })
   const exactDisplay = multiplyDecimal(fromFractionRecord(priced.finalSellingAmountExact), fromFractionRecord(displayFx.effectiveRateExact))
   const validUntil = [priced.validUntil, displayFx.expiresAt].sort((a, b) => Date.parse(a) - Date.parse(b))[0]
   return deepFreeze({

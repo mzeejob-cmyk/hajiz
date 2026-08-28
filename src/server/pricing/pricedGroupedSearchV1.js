@@ -32,6 +32,7 @@ export function priceGroupedFlightSearchV1(groupedResult, { pricingPolicy, fxSna
         })
         const customerPrice = createCustomerPriceV1(pricedOffer, {
           displayFxSnapshot: snapshotFor(fxSnapshotsByPair, "USD", customerCurrency),
+          customerCurrency,
           now,
         })
         customerPriceByInternalOfferId[offer.internalOfferId] = customerPrice

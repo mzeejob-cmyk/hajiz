@@ -3,7 +3,7 @@ import { createFlightOfferV1 } from "../src/server/suppliers/flightOfferV1.js"
 import { createMockFlightSupplier } from "../src/server/suppliers/mockFlightSupplier.js"
 import { groupFlightSearchResultV1, toPublicGroupedFlightSearchV1 } from "../src/server/suppliers/flightOfferGrouping.js"
 import {
-  createCustomerPriceV1, createFxSnapshotV1, createPricingPolicyV1, priceFlightOfferV1,
+  assertPricedFlightOfferV1, createCustomerPriceV1, createFxSnapshotV1, createPricingPolicyV1, priceFlightOfferV1,
 } from "../src/server/pricing/pricingFxV1.js"
 import { priceGroupedFlightSearchV1, toPublicPricedGroupedFlightSearchV1 } from "../src/server/pricing/pricedGroupedSearchV1.js"
 
@@ -76,30 +76,30 @@ test("H non-USD supplier amount converts to canonical USD before pricing", () =>
 
 test("I USD to AED applies explicit buffer once", () => {
   const snapshot = fx("USD", "AED", { referenceRate: "3.6", bufferPct: "2", effectiveRate: "3.672" })
-  const customer = createCustomerPriceV1(priced(), { displayFxSnapshot: snapshot, now: NOW })
+  const customer = createCustomerPriceV1(priced(), { displayFxSnapshot: snapshot, customerCurrency: "AED", now: NOW })
   assert.equal(snapshot.referenceRate, "3.6")
   assert.equal(snapshot.effectiveRate, "3.672")
   assert.equal(customer.amount, "422.28")
   assert.equal(customer.currency, "AED")
 })
 
-test("J USD to SDG supports trusted finance override, buffer, and whole-unit rounding", () => {
+test("J trusted SDG snapshot may carry finance-override provenance", () => {
   const snapshot = fx("USD", "SDG", { referenceRate: "600", bufferPct: "5", source: "finance_override", effectiveRate: "630" })
-  const customer = createCustomerPriceV1(priced(), { displayFxSnapshot: snapshot, now: NOW })
+  const customer = createCustomerPriceV1(priced(), { displayFxSnapshot: snapshot, customerCurrency: "SDG", now: NOW })
   assert.equal(snapshot.roundingPolicy, "SDG-0dp-half-up-once")
   assert.equal(customer.amount, "72450")
 })
 
 test("K USD identity conversion is explicit", () => {
   const snapshot = fx("USD", "USD")
-  const customer = createCustomerPriceV1(priced(), { displayFxSnapshot: snapshot, now: NOW })
+  const customer = createCustomerPriceV1(priced(), { displayFxSnapshot: snapshot, customerCurrency: "USD", now: NOW })
   assert.equal(snapshot.effectiveRate, "1")
   assert.equal(customer.amount, "115.00")
 })
 
 test("L stale or expired FX snapshot fails closed", () => {
   const stale = fx("USD", "AED", { referenceRate: "3.67", expiresAt: "2026-09-15T00:30:00.000Z" })
-  assert.throws(() => createCustomerPriceV1(priced(), { displayFxSnapshot: stale, now: NOW }), /not active/)
+  assert.throws(() => createCustomerPriceV1(priced(), { displayFxSnapshot: stale, customerCurrency: "AED", now: NOW }), /not active/)
 })
 
 test("M zero FX rate fails closed", () => {
@@ -120,13 +120,54 @@ test("P Q deterministic final rounding occurs once without intermediate money ro
   const noUplift = policy({ agentUpliftAmountUsd: "0" })
   const exact = priced(tiny, { pricingPolicy: noUplift })
   assert.equal(exact.marketSellingAmount, "0.055")
-  const customer = createCustomerPriceV1(exact, { displayFxSnapshot: fx("USD", "AED", { referenceRate: "3.5" }), now: NOW })
+  const customer = createCustomerPriceV1(exact, { displayFxSnapshot: fx("USD", "AED", { referenceRate: "3.5" }), customerCurrency: "AED", now: NOW })
   assert.equal(customer.amount, "0.19")
 })
 
 test("R CustomerPrice validUntil is the earliest dependency expiry", () => {
-  const customer = createCustomerPriceV1(priced(), { displayFxSnapshot: fx("USD", "AED", { referenceRate: "3.67", expiresAt: "2026-09-15T05:00:00.000Z" }), now: NOW })
+  const customer = createCustomerPriceV1(priced(), { displayFxSnapshot: fx("USD", "AED", { referenceRate: "3.67", expiresAt: "2026-09-15T05:00:00.000Z" }), customerCurrency: "AED", now: NOW })
   assert.equal(customer.validUntil, "2026-09-15T05:00:00.000Z")
+})
+
+test("F-01 real and canonical exact-priced offers pass the trust boundary", () => {
+  const real = priced()
+  assert.equal(assertPricedFlightOfferV1(real), real)
+  const repeating = { ...real, finalSellingAmount: "0.33333333", finalSellingAmountExact: { numerator: "1", denominator: "3" } }
+  assert.equal(assertPricedFlightOfferV1(repeating), repeating)
+})
+
+test("F-01 forged exact/display mismatch fails closed", () => {
+  const forged = { ...priced(), finalSellingAmount: "112", finalSellingAmountExact: { numerator: "1", denominator: "1" } }
+  assert.throws(() => assertPricedFlightOfferV1(forged), /does not match/)
+})
+
+test("F-01 non-canonical trailing display format fails closed", () => {
+  const forged = { ...priced(), finalSellingAmount: "115.0" }
+  assert.throws(() => assertPricedFlightOfferV1(forged), /does not match/)
+})
+
+test("F-01 forged priced offer cannot produce CustomerPriceV1", () => {
+  const forged = { ...priced(), finalSellingAmount: "112", finalSellingAmountExact: { numerator: "1", denominator: "1" } }
+  assert.throws(() => createCustomerPriceV1(forged, { displayFxSnapshot: fx("USD", "AED", { referenceRate: "3.67" }), customerCurrency: "AED", now: NOW }), /does not match/)
+})
+
+test("F-02 requested AED and SDG reject opposite display snapshots", () => {
+  assert.throws(() => createCustomerPriceV1(priced(), { displayFxSnapshot: fx("USD", "SDG", { referenceRate: "600" }), customerCurrency: "AED", now: NOW }), /requested customer currency/)
+  assert.throws(() => createCustomerPriceV1(priced(), { displayFxSnapshot: fx("USD", "AED", { referenceRate: "3.67" }), customerCurrency: "SDG", now: NOW }), /requested customer currency/)
+})
+
+test("F-02 requested USD rejects non-identity quote", () => {
+  assert.throws(() => createCustomerPriceV1(priced(), { displayFxSnapshot: fx("USD", "AED", { referenceRate: "3.67" }), customerCurrency: "USD", now: NOW }), /requested customer currency/)
+})
+
+test("F-02 wrong snapshot under correct lookup key fails by snapshot content", () => {
+  const privateOffer = offer()
+  const grouped = groupFlightSearchResultV1(searchResult([privateOffer]))
+  assert.throws(() => priceGroupedFlightSearchV1(grouped, {
+    pricingPolicy: policy(),
+    fxSnapshotsByPair: { USD_USD: fx("USD", "USD"), USD_AED: fx("USD", "SDG", { referenceRate: "600" }) },
+    customerCurrency: "AED", now: NOW,
+  }), /requested customer currency/)
 })
 
 test("S inherited and prototype-related price properties cannot satisfy public lookup", () => {
@@ -140,7 +181,7 @@ test("S inherited and prototype-related price properties cannot satisfy public l
 
 test("T valid own CustomerPriceV1 property succeeds", () => {
   const privateOffer = offer()
-  const customer = createCustomerPriceV1(priced(privateOffer), { displayFxSnapshot: fx("USD", "AED", { referenceRate: "3.67" }), now: NOW })
+  const customer = createCustomerPriceV1(priced(privateOffer), { displayFxSnapshot: fx("USD", "AED", { referenceRate: "3.67" }), customerCurrency: "AED", now: NOW })
   const publicResult = toPublicGroupedFlightSearchV1(groupFlightSearchResultV1(searchResult([privateOffer])), { [privateOffer.internalOfferId]: customer })
   assert.equal(publicResult.itineraryGroups[0].fareGroups[0].alternatives[0].sellingAmount, customer.amount)
 })
@@ -156,7 +197,7 @@ test("U V conflicting provider duplicate is isolated while good provider survive
   assert.equal(grouped.status, "PARTIAL")
   assert.deepEqual(grouped.itineraryGroups[0].fareGroups[0].alternatives.map(({ provider }) => provider), ["travelport"])
   assert.equal(grouped.supplierOutcomes[0].status, "invalid_response")
-  const customer = createCustomerPriceV1(priced(good), { displayFxSnapshot: fx("USD", "USD"), now: NOW })
+  const customer = createCustomerPriceV1(priced(good), { displayFxSnapshot: fx("USD", "USD"), customerCurrency: "USD", now: NOW })
   const serialized = JSON.stringify(toPublicGroupedFlightSearchV1(grouped, { [good.internalOfferId]: customer }))
   assert.equal(serialized.includes("SUPPLIER_DUPLICATE_CONFLICT"), false)
   assert.equal(serialized.includes("mock"), false)
