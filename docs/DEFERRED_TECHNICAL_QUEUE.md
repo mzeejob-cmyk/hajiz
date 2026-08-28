@@ -19,8 +19,8 @@ These items are deliberately recorded without implementation in the Backend Core
 
 ## Batch 3 review follow-ups
 
-- **B3-02 — REQUIRED BEFORE ENDPOINT WIRING:** isolate or drop a conflicting duplicate identity/provider attempt so it cannot destroy valid alternatives from unaffected providers; degrade the internal provider/search outcome and never silently choose conflicting content.
-- **B3-03 — REQUIRED IN PRICING/FX BATCH:** replace raw `customerPriceByInternalOfferId[id]` access with an own-property-safe lookup such as `Object.hasOwn` when hardening the authoritative price resolver.
+- **B3-02 — CLOSED IN BATCH 4:** conflicting duplicate identities are isolated without destroying unaffected alternatives; internal status degrades and conflict details remain private.
+- **B3-03 — CLOSED IN BATCH 4:** authoritative customer-price resolution requires an own property through `Object.hasOwn` and validates `CustomerPriceV1` identity.
 
 ## Pre-production
 
