@@ -164,10 +164,9 @@ export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now })
     }
   }
 
-  const usableCount = groups.reduce((count, group) => count + group.alternatives.length, 0)
   return deepFreeze({
     contractVersion: CUSTOMER_FLIGHT_SEARCH_VERSION,
-    searchStatus: usableCount ? ranked.searchStatus : "UNAVAILABLE",
+    searchStatus: ranked.searchStatus,
     currency: expectedCurrency,
     groups,
   })

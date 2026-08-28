@@ -46,9 +46,11 @@ HTTP 200 wraps `customer-flight-search/v1` as:
 
 `{ contractVersion: "customer-flight-search-http/v1", data }`
 
-COMPLETE and PARTIAL are successful responses. PARTIAL never identifies the
-failed/timed-out supplier. A search with no usable customer result returns 503
-`SEARCH_UNAVAILABLE`. Exhausted global request budget returns 504
+COMPLETE and PARTIAL are successful responses, including a genuinely completed
+search with zero matches (`200`, COMPLETE, `groups: []`). PARTIAL never identifies
+the failed/timed-out supplier. `503 SEARCH_UNAVAILABLE` means search execution or
+the application could not produce a usable search answer; it is not inferred
+from an empty result count. Exhausted global request budget returns 504
 `REQUEST_TIMEOUT`. Invalid requests return 400 `VALIDATION_ERROR`. Unexpected
 failures return 500 `INTERNAL_ERROR`. Error bodies contain only the version,
 stable code, and generic customer message—never stacks, provider causes,
@@ -128,6 +130,15 @@ from the first retained customer-visible alternative. **B6-04 remains expected:*
 if a preferred alternative is stale at projection it is removed and survivors
 remain UNRANKED; projection never silently promotes without fresh ranking.
 
+An offer whose supplier validity has naturally expired at the trusted request
+time is isolated during per-alternative pricing. It does not abort another
+alternative, fare group, itinerary group, or provider result, and no raw/net/
+native price fallback is used. If every offer from an otherwise COMPLETE search
+expires, the customer receives the same successful empty result semantics.
+Only this explicit offer-local expiry classification is recoverable: malformed
+trusted pricing policy, FX snapshot, internal contract, identity, or invariant
+still fails hard and maps to the generic internal-error boundary.
+
 ## Deployment boundary and gaps
 
 Trusted pricing policy, ranking policy, FX snapshots, supplier registry, clock,
@@ -144,3 +155,9 @@ React integration, or provider action.
 - B2-03: **CLOSED**
 - B2-05/B5-03: **DEFERRED**
 - MS-09: **PARTIAL — HTTP CUSTOMER SEARCH ENDPOINT COMPLETE; FRONTEND NOT WIRED**
+
+## Review remediation status
+
+The two merge-blocking B7 review findings—offer-local expiry isolation and
+successful empty-search semantics—are implemented and tested. B7 remains
+**PENDING INDEPENDENT RE-REVIEW**. No canonical closeout document is created.

@@ -96,11 +96,50 @@ test("L COMPLETE and M PARTIAL are HTTP 200 without supplier cause", async () =>
   assert.ok(!JSON.stringify(partial.body).includes("travelport"))
 })
 
-test("N no usable search result maps to customer-safe 503", async () => {
+test("E1 successful empty search is HTTP 200 COMPLETE with no groups", async () => {
   const empty = adapter("mock", async () => [])
   const result = await invoke(handlerFor([empty]))
+  assert.equal(result.status, 200)
+  assert.equal(result.body.data.searchStatus, "COMPLETE")
+  assert.deepEqual(result.body.data.groups, [])
+})
+
+test("E2 multiple successful no-result suppliers remain HTTP 200 COMPLETE", async () => {
+  const result = await invoke(handlerFor([adapter("mock", async () => []), adapter("travelport", async () => [])]))
+  assert.equal(result.status, 200)
+  assert.equal(result.body.data.searchStatus, "COMPLETE")
+  assert.deepEqual(result.body.data.groups, [])
+})
+
+test("E3 genuine upstream search unavailability remains customer-safe 503", async () => {
+  const unavailable = Object.freeze({
+    policy: { requestTimeoutMs: 1_000 },
+    async searchFlightsAcrossSuppliers() { return { contractVersion: "multi-supplier-flight-search/v1", traceId: "htr_unavailable_test_01", status: "UNAVAILABLE", offers: [], supplierOutcomes: [{ provider: "mock", status: "error", durationMs: 1, offerCount: 0, errorCode: "PRIVATE" }], startedAt: NOW, completedAt: NOW, durationMs: 1 } },
+  })
+  const result = await invoke(handlerFor([], { orchestrator: unavailable }))
   assert.equal(result.status, 503)
   assert.equal(result.body.error.code, "SEARCH_UNAVAILABLE")
+})
+
+test("P1 expired supplier offer is isolated while valid provider result survives", async () => {
+  const [base] = await mock.searchFlights(request())
+  const expired = createFlightOfferV1({ ...base, internalOfferId: "hfo_http_expired_offer", providerOfferRef: "EXPIRED_SUPPLIER_REF", validity: { expiresAt: NOW, repriceRequired: true }, economics: { supplierAmount: "9999.99", supplierCurrency: "AED" } })
+  const valid = createFlightOfferV1({ ...base, internalOfferId: "hfo_http_valid_offer_01", provider: "travelport", providerOfferRef: "VALID_PRIVATE_REF" })
+  const result = await invoke(handlerFor([adapter("mock", async () => [expired]), adapter("travelport", async () => [valid])]))
+  assert.equal(result.status, 200)
+  assert.equal(result.body.data.searchStatus, "COMPLETE")
+  assert.equal(result.body.data.groups[0].alternatives.length, 1)
+  const serialized = JSON.stringify(result.body)
+  for (const forbidden of ["EXPIRED_SUPPLIER_REF", "VALID_PRIVATE_REF", "9999.99", "travelport", "providerOfferRef", "supplierAmount"]) assert.ok(!serialized.includes(forbidden), forbidden)
+})
+
+test("E5 COMPLETE search with only expired offers is successful empty result", async () => {
+  const [base] = await mock.searchFlights(request())
+  const expired = createFlightOfferV1({ ...base, internalOfferId: "hfo_http_all_expired_1", providerOfferRef: "expired-only", validity: { expiresAt: NOW, repriceRequired: true } })
+  const result = await invoke(handlerFor([adapter("mock", async () => [expired])]))
+  assert.equal(result.status, 200)
+  assert.equal(result.body.data.searchStatus, "COMPLETE")
+  assert.deepEqual(result.body.data.groups, [])
 })
 
 test("O endpoint maps global deadline to safe 504", async () => {
