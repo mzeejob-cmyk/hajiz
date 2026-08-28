@@ -38,7 +38,12 @@ const searchResult = (offers, status = "COMPLETE") => Object.freeze({
 })
 const grouped = (offers, status) => groupFlightSearchResultV1(searchResult(offers, status))
 const completeFare = (source, extra = {}) => fareOf(source, { fareBrand: "ECONOMY-SAVER", ...extra })
-const priceMap = (offers) => Object.fromEntries(offers.map((item, index) => [item.internalOfferId, { sellingAmount: `${1200 + index}.00`, currency: "AED" }]))
+const priceMap = (offers) => Object.fromEntries(offers.map((item, index) => [item.internalOfferId, {
+  contractVersion: "customer-price/v1", internalOfferId: item.internalOfferId,
+  amount: `${1200 + index}.00`, currency: "AED", canonicalUsdAmount: "326.80",
+  fxSnapshotId: "hfx_group_test_0001", pricingPolicyVersion: "pricing-test-v1", fxPolicyVersion: "fx-test-v1",
+  calculatedAt: "2026-09-15T00:00:00.000Z", validUntil: "2026-09-15T06:00:00.000Z",
+}]))
 
 test("A same itinerary and fare preserves two provider alternatives", () => {
   const a = completeFare(offer())
@@ -170,10 +175,12 @@ test("N exact duplicate provider offer identity keeps first", () => {
   assert.equal(alternatives[0].internalOfferId, a.internalOfferId)
 })
 
-test("O conflicting duplicate provider offer identity fails closed", () => {
+test("O conflicting duplicate provider offer identity is isolated", () => {
   const a = completeFare(offer())
   const conflict = withOffer(a, { internalOfferId: "hfo_group_conflict", economics: { ...a.economics, supplierAmount: "999.00" } })
-  assert.throws(() => grouped([a, conflict]), /conflicting duplicate/)
+  const result = grouped([a, conflict])
+  assert.equal(result.status, "UNAVAILABLE")
+  assert.equal(result.itineraryGroups.length, 0)
 })
 
 test("P Q R group, fare, and alternative order remain first-seen", () => {
