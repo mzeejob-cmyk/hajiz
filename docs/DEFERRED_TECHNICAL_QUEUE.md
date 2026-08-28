@@ -22,6 +22,11 @@ These items are deliberately recorded without implementation in the Backend Core
 - **B3-02 — CLOSED IN BATCH 4:** conflicting duplicate identities are isolated without destroying unaffected alternatives; internal status degrades and conflict details remain private.
 - **B3-03 — CLOSED IN BATCH 4:** authoritative customer-price resolution requires an own property through `Object.hasOwn` and validates `CustomerPriceV1` identity.
 
+## Pricing policy and currency follow-ups
+
+- **F-03 — PRICING POLICY HARDENING / REQUIRED BEFORE CUSTOMER ENDPOINT OR REAL PRODUCTION POLICY ENABLEMENT:** define business-approved maximum bounds for `marginPct` and `agentUpliftAmountUsd`; a trusted configuration typo must not be able to generate an absurd customer price. No bounds are invented in Batch 4.
+- **SUPPLIER CURRENCY COVERAGE — PRE-REAL-SUPPLIER-ENABLEMENT:** pricing currently supports only USD, AED, and SDG and fails closed for other supplier currencies. Extend coverage deliberately before enabling any supplier that may return EUR, GBP, or another currency.
+
 ## Pre-production
 
 - Define secure default privileges for `app_private`.

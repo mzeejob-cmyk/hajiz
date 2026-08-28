@@ -30,7 +30,9 @@ All arithmetic uses exact BigInt fractions parsed from bounded decimal strings. 
 
 `fx-snapshot/v1` records snapshot ID, base/quote currencies, reference and effective rates, source, explicit buffer, volatility observation/guard, rounding policy, fetched/effective/expiry times, and policy version. The effective rate is derived as `referenceRate × (1 + bufferPct / 100)` and a supplied effective rate must agree. Buffering therefore occurs exactly once and there is no hidden legacy percentage.
 
-Supplier-native FX and customer-display FX are separate snapshots with explicit directions; one cannot be reused in the wrong direction. Supported V1 currencies are USD, AED, and SDG. USD identity requires rate 1 and zero buffer. AED uses the same injected trusted snapshot contract. SDG supports an automated reference or Finance override through the declared source, an explicit safety buffer, expiry/stale guard, and a fail-closed volatility threshold. Batch 4 makes no live provider call.
+Supplier-native FX and customer-display FX are separate snapshots with explicit directions; one cannot be reused in the wrong direction. Supported V1 currencies are USD, AED, and SDG. USD identity requires rate 1 and zero buffer. Offers quoted in any other supplier currency fail closed.
+
+Implemented now for SDG is a trusted injected `FxSnapshotV1`: it carries a source/provenance label, explicit buffer, active/stale/expiry validation, a threshold comparison against trusted supplied `observedVolatilityPct`, and deterministic whole-unit rounding. A label such as `finance_override` records provenance only. Batch 4 does not implement automated SDG reference retrieval, Finance override precedence or selection, automatic volatility observation/calculation, snapshot refresh, or live FX provider integration.
 
 Snapshots fail closed for unsupported/malformed currencies, non-positive rates, missing metadata, direction mismatch, inactivity/expiry, invalid identity semantics, or volatility beyond the declared guard.
 
@@ -47,6 +49,12 @@ The grouped public projection accepts only an own `CustomerPriceV1` property mat
 - **B3-02 CLOSED:** conflicting repeated `provider + providerOfferRef` content is isolated and dropped as an unusable identity. Unaffected provider alternatives survive, internal provider/search outcome degrades, public status becomes `PARTIAL` where another source completed or a valid alternative remains, and raw conflict details never enter public output. Conflicting content is never silently selected.
 - **B3-03 CLOSED:** public price resolution uses `Object.hasOwn`; inherited, missing, and prototype-related properties cannot satisfy the lookup, while a valid own `CustomerPriceV1` succeeds.
 
+## Required fix-pack closures
+
+- **F-01 CLOSED:** `PricedFlightOfferV1` validation reconstructs the exact final fraction, formats it canonically at up to eight decimal places with trailing zeroes trimmed, and rejects any mismatch with `finalSellingAmount`.
+- **F-02 CLOSED:** customer pricing requires an explicit requested currency and validates snapshot contents as USD to that exact quote currency. A misleading lookup key cannot override the trusted request.
+- **F-04 CLOSED:** this document distinguishes injected provenance from unimplemented Finance/automated-source selection and identifies volatility observation as trusted supplied input.
+
 ## Intentionally unsolved
 
 - Ranking, scoring, recommendation, cheapest/best selection, or a primary/winning alternative
@@ -55,5 +63,7 @@ The grouped public projection accepts only an own `CustomerPriceV1` property mat
 - Persistence of pricing/FX snapshots
 - Travelport enablement and supplier network execution
 - Hotel pricing
+- Business-approved maximum bounds for margin and agent uplift (F-03)
+- Supplier-native currency coverage beyond USD, AED, and SDG before enabling a real supplier that may return other currencies
 
 MS-08 is partial: authoritative pricing, FX, and final customer price contracts exist and are behaviorally tested, but ranking is deliberately absent.
