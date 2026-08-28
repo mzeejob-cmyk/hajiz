@@ -1,5 +1,5 @@
 import { GROUPED_FLIGHT_SEARCH_VERSION, toPublicGroupedFlightSearchV1 } from "../suppliers/flightOfferGrouping.js"
-import { createCustomerPriceV1, priceFlightOfferV1 } from "./pricingFxV1.js"
+import { createCustomerPriceV1, OfferPricingUnavailableError, priceFlightOfferV1 } from "./pricingFxV1.js"
 
 export const PRICED_GROUPED_FLIGHT_SEARCH_VERSION = "priced-grouped-flight-search/v1"
 
@@ -24,22 +24,27 @@ export function priceGroupedFlightSearchV1(groupedResult, { pricingPolicy, fxSna
     itineraryFingerprint: itineraryGroup.itineraryFingerprint,
     fareGroups: itineraryGroup.fareGroups.map((fareGroup) => ({
       fareFingerprint: fareGroup.fareFingerprint,
-      alternatives: fareGroup.alternatives.map((offer) => {
-        const pricedOffer = priceFlightOfferV1(offer, {
-          pricingPolicy,
-          supplierFxSnapshot: snapshotFor(fxSnapshotsByPair, offer.economics.supplierCurrency, "USD"),
-          now,
-        })
-        const customerPrice = createCustomerPriceV1(pricedOffer, {
-          displayFxSnapshot: snapshotFor(fxSnapshotsByPair, "USD", customerCurrency),
-          customerCurrency,
-          now,
-        })
-        customerPriceByInternalOfferId[offer.internalOfferId] = customerPrice
-        return { offer, pricedOffer, customerPrice }
+      alternatives: fareGroup.alternatives.flatMap((offer) => {
+        try {
+          const pricedOffer = priceFlightOfferV1(offer, {
+            pricingPolicy,
+            supplierFxSnapshot: snapshotFor(fxSnapshotsByPair, offer.economics.supplierCurrency, "USD"),
+            now,
+          })
+          const customerPrice = createCustomerPriceV1(pricedOffer, {
+            displayFxSnapshot: snapshotFor(fxSnapshotsByPair, "USD", customerCurrency),
+            customerCurrency,
+            now,
+          })
+          customerPriceByInternalOfferId[offer.internalOfferId] = customerPrice
+          return [{ offer, pricedOffer, customerPrice }]
+        } catch (error) {
+          if (error instanceof OfferPricingUnavailableError) return []
+          throw error
+        }
       }),
-    })),
-  }))
+    })).filter(({ alternatives }) => alternatives.length > 0),
+  })).filter(({ fareGroups }) => fareGroups.length > 0)
   return deepFreeze({
     contractVersion: PRICED_GROUPED_FLIGHT_SEARCH_VERSION,
     status: groupedResult.status,

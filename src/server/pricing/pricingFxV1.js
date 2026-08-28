@@ -11,6 +11,14 @@ export const CUSTOMER_PRICE_CONTRACT_VERSION = "customer-price/v1"
 export const SUPPORTED_PRICING_CURRENCIES = Object.freeze(["USD", "AED", "SDG"])
 export const CURRENCY_ROUNDING_PLACES = Object.freeze({ USD: 2, AED: 2, SDG: 0 })
 
+export class OfferPricingUnavailableError extends Error {
+  constructor() {
+    super("supplier offer is no longer valid for pricing")
+    this.name = "OfferPricingUnavailableError"
+    this.code = "OFFER_PRICING_UNAVAILABLE"
+  }
+}
+
 const ZERO = parseDecimal("0")
 const ONE = parseDecimal("1")
 const HUNDRED = parseDecimal("100")
@@ -122,7 +130,7 @@ export function priceFlightOfferV1(privateOffer, { pricingPolicy, supplierFxSnap
   const calculatedAt = date(now, "pricing calculatedAt")
   activeAt(policy.validFrom, policy.validUntil, calculatedAt, "pricing policy")
   const supplierFx = assertActiveFxSnapshotV1(supplierFxSnapshot, { baseCurrency: offer.economics.supplierCurrency, quoteCurrency: "USD", now: calculatedAt })
-  if (offer.validity.expiresAt && Date.parse(offer.validity.expiresAt) <= Date.parse(calculatedAt)) throw new TypeError("supplier offer is expired")
+  if (offer.validity.expiresAt && Date.parse(offer.validity.expiresAt) <= Date.parse(calculatedAt)) throw new OfferPricingUnavailableError()
 
   const supplierNative = positive(offer.economics.supplierAmount, "supplierAmount")
   const supplierNet = multiplyDecimal(supplierNative, fromFractionRecord(supplierFx.effectiveRateExact, "supplier FX effective rate"))

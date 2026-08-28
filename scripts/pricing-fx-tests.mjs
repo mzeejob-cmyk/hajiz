@@ -271,6 +271,44 @@ test("Y public serialization excludes supplier economics and private pricing int
   for (const forbidden of ["supplierNet", "marketSelling", "partnerCommission", "hajizNetMargin", "supplierAmount", "supplierCurrency", "providerOfferRef", "pricingPolicyVersion", "fxSnapshotId"]) assert.equal(serialized.includes(forbidden), false, forbidden)
 })
 
+test("P1 expired offer is isolated while a valid alternative remains priced", () => {
+  const expired = offer({ internalOfferId: "hfo_pricing_expired_01", providerOfferRef: "expired-1", validity: { expiresAt: NOW, repriceRequired: true } })
+  const valid = offer({ internalOfferId: "hfo_pricing_valid_0001", providerOfferRef: "valid-1" })
+  const result = priceGroupedFlightSearchV1(groupFlightSearchResultV1(searchResult([expired, valid])), {
+    pricingPolicy: policy(), fxSnapshotsByPair: { USD_USD: fx("USD", "USD") }, customerCurrency: "USD", now: NOW,
+  })
+  assert.deepEqual(result.itineraryGroups[0].fareGroups[0].alternatives.map(({ offer: item }) => item.internalOfferId), [valid.internalOfferId])
+  assert.equal(Object.hasOwn(result.customerPriceByInternalOfferId, expired.internalOfferId), false)
+})
+
+test("P3 expired itinerary group does not destroy a separate valid itinerary group", () => {
+  const expired = offer({ internalOfferId: "hfo_pricing_expired_02", providerOfferRef: "expired-2", validity: { expiresAt: NOW, repriceRequired: true } })
+  const valid = createFlightOfferV1({
+    ...offer({ internalOfferId: "hfo_pricing_valid_0002", providerOfferRef: "valid-2" }),
+    itinerary: { ...mockOffer.itinerary, destination: "CAI", arrivalAt: "2026-09-15T11:50:00+02:00", segments: [{ ...mockOffer.itinerary.segments[0], destination: "CAI", arrivalAt: "2026-09-15T11:50:00+02:00" }] },
+  })
+  const result = priceGroupedFlightSearchV1(groupFlightSearchResultV1(searchResult([expired, valid])), {
+    pricingPolicy: policy(), fxSnapshotsByPair: { USD_USD: fx("USD", "USD") }, customerCurrency: "USD", now: NOW,
+  })
+  assert.equal(result.itineraryGroups.length, 1)
+  assert.equal(result.itineraryGroups[0].fareGroups[0].alternatives[0].offer.internalOfferId, valid.internalOfferId)
+})
+
+test("P4 trusted pricing and FX failures remain hard failures", () => {
+  const groupedResult = groupFlightSearchResultV1(searchResult([offer()]))
+  assert.throws(() => priceGroupedFlightSearchV1(groupedResult, { pricingPolicy: { ...policy(), marginPct: "999" }, fxSnapshotsByPair: { USD_USD: fx("USD", "USD") }, customerCurrency: "USD", now: NOW }))
+  assert.throws(() => priceGroupedFlightSearchV1(groupedResult, { pricingPolicy: policy(), fxSnapshotsByPair: {}, customerCurrency: "USD", now: NOW }))
+})
+
+test("E5 all naturally expired offers preserve COMPLETE with no priced groups", () => {
+  const expired = offer({ internalOfferId: "hfo_pricing_expired_all", providerOfferRef: "expired-all", validity: { expiresAt: NOW, repriceRequired: true } })
+  const result = priceGroupedFlightSearchV1(groupFlightSearchResultV1(searchResult([expired])), {
+    pricingPolicy: policy(), fxSnapshotsByPair: { USD_USD: fx("USD", "USD") }, customerCurrency: "USD", now: NOW,
+  })
+  assert.equal(result.status, "COMPLETE")
+  assert.deepEqual(result.itineraryGroups, [])
+})
+
 let failures = 0
 for (const { name, fn } of tests) {
   try { await fn(); console.log(`ok - ${name}`) }
