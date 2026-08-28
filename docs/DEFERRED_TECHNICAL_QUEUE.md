@@ -36,6 +36,15 @@ These items are deliberately recorded without implementation in the Backend Core
 
 ## Pre-production
 
+- **N-1 — LOW / HOST INTEGRATION:** remove or formally bind the handler-clock/orchestrator-`now` coupling when the real HTTP host is integrated.
+- **N-2 — LOW:** define the canonical customer-ID serializer behavior for Date objects; current reviewed ID inputs are JSON-safe primitives and plain structures.
+- **N-3 — LOW:** revisit the exact 503-vs-504 nuance for hung suppliers when production host/runtime behavior is known.
+- **N-4 — LOW:** the framework-neutral handler returns 400 rather than 405 for non-POST input; decide at host/router integration.
+- **N-5 — LOW:** reconcile server UTC calendar-date validation with Gulf customer timezone semantics before public launch.
+- **N-6 — POLICY REQUIRED:** no approved total-passenger maximum exists; do not invent one before product/provider-neutral policy approval.
+- **N-7 — LOW / TELEMETRY:** client disconnect currently shares timeout-classified internal handling; refine telemetry without changing public errors when host disconnect semantics exist.
+- **PRE-PUBLIC-PRODUCTION HOST/INFRA:** enforce raw transport byte limits before JSON parsing, edge rate limiting, cross-request admission control, a host-supplied disconnect signal, and actual router/host deployment.
+
 - Define secure default privileges for `app_private`.
 - Seed and verify environment-specific checkout return origins.
 - Define the refund-to-booking lifecycle.
