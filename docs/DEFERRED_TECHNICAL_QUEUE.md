@@ -25,6 +25,9 @@ These items are deliberately recorded without implementation in the Backend Core
 ## Pricing policy and currency follow-ups
 
 - **F-03 — CLOSED IN BATCH 5:** versioned pricing policy now requires trusted maximum bounds for `marginPct` and `agentUpliftAmountUsd` and fails closed when either value exceeds its configured maximum.
+- **B5-01 — REQUIRED BEFORE CUSTOMER ENDPOINT WIRING / MIXED-CURRENCY RANKING BLAST RADIUS:** if one ranking operation contains mixed customer currencies, the current implementation throws for the whole call. This is fail-closed and unreachable through the normal Batch 4 path, which prices under one `customerCurrency`, but it does not yet isolate only the affected fare group. Before endpoint wiring, retain every affected alternative, mark that group UNRANKED with `preferredInternalOfferId = null` and alternatives unrankable as appropriate, and continue ranking unaffected fare groups.
+- **B5-02 — LOW:** the final internal-offer-ID tie-break uses `localeCompare`, creating a theoretical ICU dependency. Replace it later with plain deterministic lexical comparison.
+- **B5-03 — LOW / OBSERVABILITY:** the per-alternative bare catch does not retain an unrankable reason. Fold safe reason reporting into the diagnostics work.
 - **SUPPLIER CURRENCY COVERAGE — PRE-REAL-SUPPLIER-ENABLEMENT:** pricing currently supports only USD, AED, and SDG and fails closed for other supplier currencies. Extend coverage deliberately before enabling any supplier that may return EUR, GBP, or another currency.
 
 ## Pre-production

@@ -2,7 +2,7 @@
 
 ## Scope and target
 
-This audit records the runtime-validated Batch 1 persistence boundary, Batch 2 search orchestration, and Batch 3 application-layer marketed-itinerary/fare grouping and public projection boundary. It does not enable Travelport, change pricing or FX, add a supplier, rank offers, or wire a customer endpoint.
+This audit records the runtime-validated Batch 1 persistence boundary and the application-layer search, grouping, authoritative pricing/FX, and private price-only ranking boundaries through Batch 5. It does not enable Travelport, add a supplier, activate quality-aware scoring, or wire a customer endpoint.
 
 Target flow:
 
@@ -21,8 +21,8 @@ The active customer flight UI remains fixture-driven and does not consume the se
 3. **Is there a canonical `FlightOffer` contract independent of provider?** Yes. `FlightOfferV1` strictly validates version, identity, itinerary, segments, fare, economics, validity, capabilities, and bounded private metadata; its persistence boundary passed the Staging runtime gate.
 4. **Can two supplier offers for the same marketed itinerary coexist?** Yes. Batch 3 groups matching marketed segment sequences but preserves distinct provider alternatives. It does not claim physical-flight reconciliation across codeshares.
 5. **Is there any dedup/grouping logic?** Yes for validated flight offers: provider-neutral marketed-itinerary fingerprints, conservative fare fingerprints, and exact duplicate supplier-offer handling. Unknown comparison-critical fare semantics remain deliberately unmerged.
-6. **Is ranking currently supplier-neutral?** No authoritative ranking exists. Fixture labels are manually assigned in frontend data.
-7. **Does ranking occur before or after HAJIZ authoritative pricing?** It does not occur in the server pipeline. The public mapper accepts an externally supplied server price, but no comparison/ranking stage follows it.
+6. **Is ranking currently supplier-neutral?** Yes within the private Batch 5 contract: exact final customer price is the only active dimension, and provider identity/economics do not participate. The active frontend remains fixture-driven and is not wired to this contract.
+7. **Does ranking occur before or after HAJIZ authoritative pricing?** After canonical grouping, HAJIZ pricing, FX, and authoritative `CustomerPriceV1` creation. No public endpoint currently exposes the ranked result.
 8. **Does frontend code depend on supplier-specific fields?** Active frontend code does not depend on supplier/provider fields. It does depend on a fixture presentation shape not yet supplied by the backend public mapper.
 9. **Is supplier identity safely internal while still available to backend operations?** Yes at the schema and projection boundaries: it is hidden from public offers and `get_my_bookings`, while typed provider identity is durable on offers and bookings. Runtime supplier-operation execution is not yet wired.
 10. **What supplier identifiers must be persisted?** Provider name, provider offer reference, opaque provider repricing context (Travelport transaction/offering/product identifiers), expiry, HAJIZ offer ID, selected provider at booking, provider booking reference, and stable operation/idempotency identity. Raw provider payloads should not become public records.
