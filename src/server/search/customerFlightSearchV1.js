@@ -74,6 +74,7 @@ function assertRankedResult(input) {
   exactKeys(result, RESULT_FIELDS, "ranked search result")
   if (result.contractVersion !== RANKED_GROUPED_FLIGHT_SEARCH_VERSION) throw new TypeError("unsupported ranked search result version")
   if (!CUSTOMER_SEARCH_STATUSES.includes(result.searchStatus)) throw new TypeError("ranked search status is invalid")
+  if (!CUSTOMER_GROUP_STATUSES.slice(0, 2).includes(result.rankingStatus)) throw new TypeError("overall ranking status is invalid")
   if (!Array.isArray(result.itineraryGroups)) throw new TypeError("ranked itinerary groups are required")
   iso(result.rankedAt, "rankedAt")
   return result
@@ -130,7 +131,7 @@ export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now })
       const groupIdentity = [itineraryGroup.itineraryFingerprint, fareGroup.fareFingerprint]
       const unique = new Map()
       for (const input of fareGroup.alternatives) {
-        const projected = projectAlternative(input, expectedCurrency, projectedAt, groupIdentity)
+        const projected = ranked.searchStatus === "UNAVAILABLE" ? null : projectAlternative(input, expectedCurrency, projectedAt, groupIdentity)
         if (!projected) continue
         const existing = unique.get(projected.identity)
         if (existing) existing.internalOfferIds.push(projected.internalOfferId)

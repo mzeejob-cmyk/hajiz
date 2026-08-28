@@ -59,7 +59,7 @@ test("B PARTIAL remains customer-safe without supplier outcomes", () => {
 
 test("C no usable results maps to UNAVAILABLE", () => {
   const item = offer()
-  const result = project(ranked([fareGroup([alternative(item, "100", "AED", { customerPrice: null })], { rankingStatus: "UNRANKED", preferredInternalOfferId: null, cheapestInternalOfferId: null })], "UNAVAILABLE"))
+  const result = project(ranked([fareGroup([alternative(item)])], "UNAVAILABLE"))
   assert.equal(result.searchStatus, "UNAVAILABLE")
   assert.equal(result.groups[0].status, "UNAVAILABLE")
 })
