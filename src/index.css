@@ -319,6 +319,11 @@ button { border: 0; cursor: pointer; }
 .show-results { width: 100%; margin-block-start: 1rem; }
 @media (max-width: 900px) { .flights-layout { grid-template-columns: 1fr; } .filters-sidebar { display: none; } .mobile-filter-trigger { display: inline-flex; align-items: center; } .state-gallery { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .flights-page { padding-block: 1rem 3rem; } .flights-page > .container { width: min(calc(100% - 2rem), var(--container-max)); } .flights-summary { min-height: 6rem; padding: .8rem 1rem; } .desktop-summary, .results-count > strong { display: none; } .mobile-results-label { display: block; margin-inline-end: auto; font-weight: 700; } .flights-title { display: none; } .results-count { margin-block-start: 1rem; } .results-count label { font-size: 0; } .results-count label select { font-size: .85rem; } .result-chips { overflow-x: auto; } .feedback-alert { font-size: .85rem; } .flight-offer-card { width: 100%; } .offer-airline { padding: .8rem 1rem; } .flight-segment { min-height: 7rem; padding: 1rem; grid-template-columns: 4.25rem minmax(5rem, 1fr) 4.25rem; } .segment-end strong { font-size: 1.2rem; } .offer-details { min-height: auto; padding: .8rem 1rem; align-items: flex-start; flex-direction: column; gap: .5rem; } .offer-purchase { align-items: stretch; flex-direction: column; } .offer-purchase > button { width: 100%; } .price > b:first-child { font-size: 1.35rem; } .state-gallery { margin-block-start: 3rem; } }
+
+.flight-results-state, .flight-loading { padding: 2rem; border: 1px solid #e2e6ec; border-radius: .85rem; background: #fff; text-align: center; }
+.flight-results-state button { min-height: var(--touch-target); padding-inline: 1.25rem; border: 0; border-radius: .6rem; background: #0c1b2e; color: #fff; font-weight: 700; }
+.flight-card-skeleton { min-height: 9rem; margin-block-start: 1rem; border-radius: .8rem; background: linear-gradient(90deg, #f4f2ed, #faf9f6, #f4f2ed); }
+.flight-partial-notice, .selection-notice { margin-block: 1rem; padding: .85rem 1rem; border-inline-start: .25rem solid #b68a32; border-radius: .5rem; background: #fffaf0; color: #26354a; }
 .flights-filters--mobile .desktop-only { display: none; }
 
 /* Figma 70:3728 / 70:3793 — checkout review boundary */
