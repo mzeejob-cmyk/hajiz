@@ -17,6 +17,11 @@ These items are deliberately recorded without implementation in the Backend Core
 - **B2-05 — PRE-REAL-SUPPLIER-ENABLEMENT:** add safe server-only provider diagnostics without leaking raw supplier errors to telemetry or clients.
 - **B2-07 — CLOSED FOR APPLICATION PROJECTION BOUNDARY IN BATCH 3:** the grouped public projection maps every alternative through `toPublicFlightOffer`, requires authoritative customer prices, and has leakage tests. Frontend/customer endpoint reconciliation remains tracked by MS-09.
 
+## Batch 3 review follow-ups
+
+- **B3-02 — REQUIRED BEFORE ENDPOINT WIRING:** isolate or drop a conflicting duplicate identity/provider attempt so it cannot destroy valid alternatives from unaffected providers; degrade the internal provider/search outcome and never silently choose conflicting content.
+- **B3-03 — REQUIRED IN PRICING/FX BATCH:** replace raw `customerPriceByInternalOfferId[id]` access with an own-property-safe lookup such as `Object.hasOwn` when hardening the authoritative price resolver.
+
 ## Pre-production
 
 - Define secure default privileges for `app_private`.

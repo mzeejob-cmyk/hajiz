@@ -131,6 +131,37 @@ test("M unknown or missing critical fare semantics never merge", () => {
   assert.equal(grouped([a, b]).itineraryGroups[0].fareGroups.length, 2)
 })
 
+test("B3-01 unknown baggage placeholders remain isolated", () => {
+  const a = completeFare(offer(), { baggage: "unknown" })
+  const b = withOffer(a, { internalOfferId: "hfo_group_unknown_bag", provider: "travelport", providerOfferRef: "unknown-bag" })
+  assert.equal(grouped([a, b]).itineraryGroups[0].fareGroups.length, 2)
+})
+
+test("B3-01 subject-to-terms baggage placeholders remain isolated", () => {
+  const a = completeFare(offer(), { baggage: "Subject to fare terms" })
+  const b = withOffer(a, { internalOfferId: "hfo_group_terms_bag", provider: "travelport", providerOfferRef: "terms-bag" })
+  assert.equal(grouped([a, b]).itineraryGroups[0].fareGroups.length, 2)
+})
+
+test("B3-01 unspecified fare or segment cabin remains isolated", () => {
+  const fareCabin = completeFare(offer(), { cabin: "Unspecified" })
+  const fareCabinPeer = withOffer(fareCabin, { internalOfferId: "hfo_group_unspecified_fare", provider: "travelport", providerOfferRef: "unspecified-fare" })
+  assert.equal(grouped([fareCabin, fareCabinPeer]).itineraryGroups[0].fareGroups.length, 2)
+
+  const source = completeFare(offer())
+  const segmentCabin = itineraryOf(source, [{ cabin: "Unspecified" }])
+  const segmentCabinPeer = withOffer(segmentCabin, { internalOfferId: "hfo_group_unspecified_segment", provider: "travelport", providerOfferRef: "unspecified-segment" })
+  assert.equal(grouped([segmentCabin, segmentCabinPeer]).itineraryGroups[0].fareGroups.length, 2)
+})
+
+test("B3-01 complete equivalent cabin and baggage still group safely", () => {
+  const a = completeFare(offer(), { cabin: "Economy", baggage: "Checked bag 23 kg" })
+  const b = withOffer(a, { internalOfferId: "hfo_group_complete_peer", provider: "travelport", providerOfferRef: "complete-peer" })
+  const result = grouped([a, b])
+  assert.equal(result.itineraryGroups[0].fareGroups.length, 1)
+  assert.equal(result.itineraryGroups[0].fareGroups[0].alternatives.length, 2)
+})
+
 test("N exact duplicate provider offer identity keeps first", () => {
   const a = completeFare(offer())
   const duplicate = withOffer(a, { internalOfferId: "hfo_group_duplicate" })

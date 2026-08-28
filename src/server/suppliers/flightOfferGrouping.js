@@ -7,6 +7,11 @@ export const ITINERARY_FINGERPRINT_VERSION = "itinerary-fingerprint/v1"
 export const FARE_FINGERPRINT_VERSION = "fare-fingerprint/v1"
 export const GROUPED_FLIGHT_SEARCH_VERSION = "grouped-flight-search/v1"
 export const PUBLIC_GROUPED_FLIGHT_SEARCH_VERSION = "public-grouped-flight-search/v1"
+export const INCOMPLETE_FARE_TEXT_MARKERS = Object.freeze({
+  fareBrand: Object.freeze(["unknown"]),
+  baggage: Object.freeze(["subject to fare terms", "unknown"]),
+  cabin: Object.freeze(["unspecified", "unknown"]),
+})
 
 const deepFreeze = (value) => {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
@@ -44,9 +49,15 @@ const fareIdentity = (offer) => [
   offer.fare.changeability,
 ]
 
-const hasCompleteFareSemantics = (offer) => offer.fare.fareBrand !== null
+const isIncompleteFareText = (value, field) => typeof value !== "string"
+  || INCOMPLETE_FARE_TEXT_MARKERS[field].includes(value.trim().toLowerCase())
+
+const hasCompleteFareSemantics = (offer) => !isIncompleteFareText(offer.fare.fareBrand, "fareBrand")
   && offer.fare.refundability !== "unknown"
   && offer.fare.changeability !== "unknown"
+  && !isIncompleteFareText(offer.fare.cabin, "cabin")
+  && !isIncompleteFareText(offer.fare.baggage, "baggage")
+  && offer.itinerary.segments.every(({ cabin }) => !isIncompleteFareText(cabin, "cabin"))
 
 export function itineraryFingerprintV1(privateOffer) {
   const offer = assertFlightOfferV1(privateOffer)
