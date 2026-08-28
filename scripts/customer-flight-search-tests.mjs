@@ -121,7 +121,7 @@ test("I J K customer serialization excludes supplier and ranking private data", 
   })
   const serialized = JSON.stringify(project(ranked([fareGroup([alternative(item)])])))
   for (const value of leakValues) assert.ok(!serialized.includes(value), `leaked forbidden value ${value}`)
-  for (const key of ["provider", "providerOfferRef", "economics", "pricedOffer", "canonicalUsdAmount", "rankingPolicyVersion", "rank", "rankable", "isPreferred"]) assert.ok(!serialized.includes(`\"${key}\"`), `leaked forbidden key ${key}`)
+  for (const key of ["provider", "providerOfferRef", "economics", "pricedOffer", "canonicalUsdAmount", "rankingPolicyVersion", "rank", "rankable", "isPreferred"]) assert.ok(!serialized.includes(`"${key}"`), `leaked forbidden key ${key}`)
 })
 
 test("customer IDs are opaque and contain no provider or supplier reference text", () => {
