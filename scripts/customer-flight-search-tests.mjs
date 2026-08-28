@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { rankPricedGroupedFlightSearchV1 } from "../src/server/pricing/flightRankingV1.js"
-import { toCustomerFlightSearchV1 } from "../src/server/search/customerFlightSearchV1.js"
+import { canonicalCustomerIdJsonV1, customerOpaqueIdV1, toCustomerFlightSearchV1 } from "../src/server/search/customerFlightSearchV1.js"
 import { createFlightOfferV1 } from "../src/server/suppliers/flightOfferV1.js"
 import { createMockFlightSupplier } from "../src/server/suppliers/mockFlightSupplier.js"
 
@@ -130,6 +130,24 @@ test("customer IDs are opaque and contain no provider or supplier reference text
   const ids = [result.groups[0].groupId, result.groups[0].alternatives[0].alternativeId]
   assert.ok(ids.every((id) => /^hc[ag]_v1_[a-f0-9]{32}$/.test(id)))
   assert.ok(ids.every((id) => !/travelport|duffel|tbo|mock|supplier/i.test(id)))
+})
+
+test("B6-01 B6-02 customer IDs use canonical key ordering and domain separation", () => {
+  const left = { fare: { cabin: "Economy", baggage: "23kg" }, price: { amount: "100", currency: "AED" } }
+  const right = { price: { currency: "AED", amount: "100" }, fare: { baggage: "23kg", cabin: "Economy" } }
+  assert.equal(canonicalCustomerIdJsonV1(left), canonicalCustomerIdJsonV1(right))
+  assert.equal(customerOpaqueIdV1("hca_v1", left), customerOpaqueIdV1("hca_v1", right))
+  assert.notEqual(customerOpaqueIdV1("hca_v1", left).slice("hca_v1_".length), customerOpaqueIdV1("hcg_v1", left).slice("hcg_v1_".length))
+})
+
+test("B6-03 itinerary comes from first retained customer-visible alternative", () => {
+  const excluded = offer({ itinerary: { ...baseOffer.itinerary, marketingCarrierName: "EXCLUDED DISPLAY" } })
+  const retained = offer({ itinerary: { ...baseOffer.itinerary, marketingCarrierName: "RETAINED DISPLAY" } })
+  const result = project(ranked([fareGroup([
+    alternative(excluded, "100", "SDG", { ranking: { rankable: false, rank: null, isPreferred: false } }),
+    alternative(retained, "101", "AED", { ranking: { rankable: false, rank: null, isPreferred: false } }),
+  ], { rankingStatus: "UNRANKED", preferredInternalOfferId: null, cheapestInternalOfferId: null })]))
+  assert.equal(result.groups[0].itinerary.marketingCarrierName, "RETAINED DISPLAY")
 })
 
 test("L projection serialization and order are deterministic", () => {

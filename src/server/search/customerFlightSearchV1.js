@@ -29,10 +29,18 @@ const currency = (value) => {
   if (typeof value !== "string" || !/^[A-Z]{3}$/.test(value)) throw new TypeError("customerCurrency must be an ISO currency")
   return value
 }
-const opaqueId = (prefix, ...identity) => {
+const canonicalObject = (value) => {
+  if (Array.isArray(value)) return value.map(canonicalObject)
+  if (value && typeof value === "object") return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalObject(value[key])]))
+  if (value === null || typeof value === "string" || typeof value === "boolean" || (typeof value === "number" && Number.isFinite(value))) return value
+  throw new TypeError("customer ID input must contain only JSON-safe values")
+}
+export const canonicalCustomerIdJsonV1 = (value) => JSON.stringify(canonicalObject(value))
+export const customerOpaqueIdV1 = (domain, identity) => {
+  if (!["hcg_v1", "hca_v1"].includes(domain)) throw new TypeError("customer ID domain is invalid")
   const hash = createHash("sha256")
-  hash["update"](JSON.stringify(identity))
-  return `${prefix}_${hash.digest("hex").slice(0, 32)}`
+  hash["update"](canonicalCustomerIdJsonV1([domain, identity]))
+  return `${domain}_${hash.digest("hex").slice(0, 32)}`
 }
 const deepFreeze = (value) => {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
@@ -98,12 +106,13 @@ function projectAlternative(input, expectedCurrency, projectedAt, groupIdentity)
 
   const fare = customerFare(offer)
   const publicPrice = { amount: price.amount, currency: price.currency, validUntil: price.validUntil }
-  const identity = JSON.stringify({ fare, price: publicPrice })
+  const identity = { fare, price: publicPrice }
   return {
-    identity,
+    identity: canonicalCustomerIdJsonV1(identity),
     internalOfferId: offer.internalOfferId,
+    itinerary: customerItinerary(offer),
     customer: {
-      alternativeId: opaqueId("hca_v1", groupIdentity, identity),
+      alternativeId: customerOpaqueIdV1("hca_v1", { groupIdentity, customerIdentity: identity }),
       fare,
       price: publicPrice,
       recommended: false,
@@ -135,7 +144,7 @@ export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now })
         if (!projected) continue
         const existing = unique.get(projected.identity)
         if (existing) existing.internalOfferIds.push(projected.internalOfferId)
-        else unique.set(projected.identity, { customer: projected.customer, internalOfferIds: [projected.internalOfferId] })
+        else unique.set(projected.identity, { customer: projected.customer, itinerary: projected.itinerary, internalOfferIds: [projected.internalOfferId] })
       }
 
       const retained = [...unique.values()]
@@ -145,11 +154,11 @@ export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now })
       const alternatives = retained.map(({ customer }) => ({ ...customer, recommended: customer.alternativeId === preferred?.customer.alternativeId }))
       const groupStatus = alternatives.length === 0 ? "UNAVAILABLE" : preferred ? "RANKED" : "UNRANKED"
       groups.push({
-        groupId: opaqueId("hcg_v1", ...groupIdentity),
+        groupId: customerOpaqueIdV1("hcg_v1", groupIdentity),
         status: groupStatus,
         recommendationAvailable: groupStatus === "RANKED",
         preferredAlternativeId: preferred?.customer.alternativeId ?? null,
-        itinerary: firstOffer ? customerItinerary(firstOffer) : null,
+        itinerary: retained[0]?.itinerary ?? (firstOffer && alternatives.length ? customerItinerary(firstOffer) : null),
         alternatives,
       })
     }
