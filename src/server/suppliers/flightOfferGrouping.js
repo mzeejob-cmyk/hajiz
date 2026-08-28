@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { assertFlightOfferV1 } from "./flightOfferV1.js"
 import { toPublicFlightOffer } from "./publicOfferMapper.js"
 import { MULTI_SUPPLIER_SEARCH_CONTRACT_VERSION, MULTI_SUPPLIER_SEARCH_STATUSES } from "./multiSupplierSearchOrchestrator.js"
+import { assertCustomerPriceV1 } from "../pricing/pricingFxV1.js"
 
 export const ITINERARY_FINGERPRINT_VERSION = "itinerary-fingerprint/v1"
 export const FARE_FINGERPRINT_VERSION = "fare-fingerprint/v1"
@@ -93,17 +94,26 @@ export function groupFlightSearchResultV1(privateSearchResult) {
   const result = assertPrivateSearchResult(privateSearchResult)
   const offers = result.offers.map(assertFlightOfferV1)
   const exactIdentities = new Map()
+  const conflictingIdentities = new Set()
+  const conflictingProviders = new Set()
+  for (const offer of offers) {
+    const exactIdentity = `${offer.provider}\u0000${offer.providerOfferRef}`
+    const content = duplicateContent(offer)
+    if (exactIdentities.has(exactIdentity) && exactIdentities.get(exactIdentity) !== content) {
+      conflictingIdentities.add(exactIdentity)
+      conflictingProviders.add(offer.provider)
+    } else if (!exactIdentities.has(exactIdentity)) {
+      exactIdentities.set(exactIdentity, content)
+    }
+  }
+  const retainedIdentities = new Set()
   const itineraryGroups = []
   const itineraryByFingerprint = new Map()
 
   for (const offer of offers) {
     const exactIdentity = `${offer.provider}\u0000${offer.providerOfferRef}`
-    const content = duplicateContent(offer)
-    if (exactIdentities.has(exactIdentity)) {
-      if (exactIdentities.get(exactIdentity) !== content) throw new TypeError("conflicting duplicate supplier offer identity")
-      continue
-    }
-    exactIdentities.set(exactIdentity, content)
+    if (conflictingIdentities.has(exactIdentity) || retainedIdentities.has(exactIdentity)) continue
+    retainedIdentities.add(exactIdentity)
 
     const itineraryFingerprint = itineraryFingerprintV1(offer)
     let itineraryGroup = itineraryByFingerprint.get(itineraryFingerprint)
@@ -128,12 +138,22 @@ export function groupFlightSearchResultV1(privateSearchResult) {
     fareGroup.alternatives.push(offer)
   }
 
+  const retainedOffers = itineraryGroups.flatMap(({ fareGroups }) => fareGroups.flatMap(({ alternatives }) => alternatives))
+  const supplierOutcomes = result.supplierOutcomes.map((outcome) => conflictingProviders.has(outcome.provider) ? {
+    ...outcome,
+    status: "invalid_response",
+    offerCount: retainedOffers.filter(({ provider }) => provider === outcome.provider).length,
+    errorCode: "SUPPLIER_DUPLICATE_CONFLICT",
+  } : outcome)
+  const unaffectedCompleted = result.supplierOutcomes.some(({ provider, status: outcomeStatus }) => !conflictingProviders.has(provider) && (outcomeStatus === "success" || outcomeStatus === "no_results"))
+  const status = conflictingIdentities.size ? (retainedOffers.length || unaffectedCompleted ? "PARTIAL" : "UNAVAILABLE") : result.status
+
   return deepFreeze({
     contractVersion: GROUPED_FLIGHT_SEARCH_VERSION,
     traceId: result.traceId,
-    status: result.status,
+    status,
     itineraryGroups: itineraryGroups.map(({ itineraryFingerprint, fareGroups }) => ({ itineraryFingerprint, fareGroups })),
-    supplierOutcomes: [...result.supplierOutcomes],
+    supplierOutcomes,
     startedAt: result.startedAt,
     completedAt: result.completedAt,
     durationMs: result.durationMs,
@@ -165,9 +185,9 @@ export function toPublicGroupedFlightSearchV1(groupedResult, customerPriceByInte
     fareGroups: itineraryGroup.fareGroups.map((fareGroup) => ({
       fareKey: publicKey("hfg", itineraryGroup.itineraryFingerprint, fareGroup.fareFingerprint),
       alternatives: fareGroup.alternatives.map((offer) => {
-        const price = customerPriceByInternalOfferId[offer.internalOfferId]
-        if (!price) throw new TypeError("authoritative customer price is missing")
-        return toPublicFlightOffer(offer, price)
+        if (!Object.hasOwn(customerPriceByInternalOfferId, offer.internalOfferId)) throw new TypeError("authoritative customer price is missing")
+        const price = assertCustomerPriceV1(customerPriceByInternalOfferId[offer.internalOfferId], offer.internalOfferId)
+        return toPublicFlightOffer(offer, { sellingAmount: price.amount, currency: price.currency })
       }),
     })),
   }))
