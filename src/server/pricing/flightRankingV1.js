@@ -62,6 +62,7 @@ const preserveUnranked = (pricedResult, rankedAt, policyVersion = null) => deepF
     itineraryFingerprint: itineraryGroup.itineraryFingerprint,
     fareGroups: itineraryGroup.fareGroups.map((fareGroup) => ({
       fareFingerprint: fareGroup.fareFingerprint,
+      rankingStatus: "UNRANKED",
       preferredInternalOfferId: null,
       cheapestInternalOfferId: null,
       alternatives: fareGroup.alternatives.map((alternative) => ({ ...alternative, ranking: { rankable: false, rank: null, isPreferred: false } })),
@@ -97,8 +98,15 @@ export function rankPricedGroupedFlightSearchV1(pricedResult, { rankingPolicy, n
           // Invalid or stale prices remain retained but cannot become preferred.
         }
       })
-      if (currencies.size > 1) throw new TypeError("ranked alternatives must share one customer currency")
-      rankable.sort((left, right) => compareDecimal(left.exactAmount, right.exactAmount) || left.firstSeen - right.firstSeen || left.alternative.offer.internalOfferId.localeCompare(right.alternative.offer.internalOfferId))
+      if (currencies.size > 1) return {
+        fareFingerprint: fareGroup.fareFingerprint,
+        rankingStatus: "UNRANKED",
+        preferredInternalOfferId: null,
+        cheapestInternalOfferId: null,
+        alternatives: fareGroup.alternatives.map((alternative) => ({ ...alternative, ranking: { rankable: false, rank: null, isPreferred: false } })),
+      }
+      const lexical = (left, right) => left < right ? -1 : left > right ? 1 : 0
+      rankable.sort((left, right) => compareDecimal(left.exactAmount, right.exactAmount) || left.firstSeen - right.firstSeen || lexical(left.alternative.offer.internalOfferId, right.alternative.offer.internalOfferId))
       const ranks = new Map(rankable.map((entry, index) => [entry.alternative.offer.internalOfferId, index + 1]))
       const preferredInternalOfferId = rankable[0]?.alternative.offer.internalOfferId ?? null
       if (preferredInternalOfferId) anyRanked = true
@@ -106,6 +114,7 @@ export function rankPricedGroupedFlightSearchV1(pricedResult, { rankingPolicy, n
       if (preferredInternalOfferId && !retainedIds.has(preferredInternalOfferId)) throw new Error("preferred alternative invariant violated")
       return {
         fareFingerprint: fareGroup.fareFingerprint,
+        rankingStatus: preferredInternalOfferId ? "RANKED" : "UNRANKED",
         preferredInternalOfferId,
         cheapestInternalOfferId: preferredInternalOfferId,
         alternatives: fareGroup.alternatives.map((alternative) => {

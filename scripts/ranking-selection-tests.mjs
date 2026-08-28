@@ -94,8 +94,36 @@ test("L every supplier alternative remains in first-seen order", () => {
   assert.deepEqual(fare(result).alternatives.map(({ offer }) => offer.internalOfferId), alternatives.map(({ offer }) => offer.internalOfferId))
 })
 
-test("mixed customer currencies fail closed", () => {
-  assert.throws(() => rank([alternative("hfo_rank_aed", "100", "AED"), alternative("hfo_rank_sdg", "100", "SDG")]), /share one customer currency/)
+test("mixed customer currencies isolate the fare group without comparing prices", () => {
+  const alternatives = [alternative("hfo_rank_aed", "100", "AED"), alternative("hfo_rank_sdg", "1", "SDG")]
+  const result = rank(alternatives)
+  assert.equal(fare(result).rankingStatus, "UNRANKED")
+  assert.equal(fare(result).preferredInternalOfferId, null)
+  assert.equal(fare(result).cheapestInternalOfferId, null)
+  assert.deepEqual(fare(result).alternatives.map(({ offer }) => offer.internalOfferId), alternatives.map(({ offer }) => offer.internalOfferId))
+  assert.ok(fare(result).alternatives.every(({ ranking }) => !ranking.rankable && !ranking.isPreferred && ranking.rank === null))
+})
+
+test("valid mixed valid fare groups rank independently", () => {
+  const fareGroup = (fingerprint, alternatives) => ({ fareFingerprint: fingerprint, alternatives })
+  const input = {
+    contractVersion: "priced-grouped-flight-search/v1", status: "COMPLETE", customerPriceByInternalOfferId: {},
+    itineraryGroups: [{ itineraryFingerprint: "ifp_v1_isolation", fareGroups: [
+      fareGroup("ffp_v1_valid_a", [alternative("hfo_rank_valid_a2", "102"), alternative("hfo_rank_valid_a1", "101")]),
+      fareGroup("ffp_v1_mixed", [alternative("hfo_rank_mixed_aed", "2", "AED"), alternative("hfo_rank_mixed_sdg", "1", "SDG")]),
+      fareGroup("ffp_v1_valid_c", [alternative("hfo_rank_valid_c2", "202"), alternative("hfo_rank_valid_c1", "201")]),
+    ]}],
+  }
+  const result = rankPricedGroupedFlightSearchV1(input, { rankingPolicy: policy(), now: NOW })
+  const [groupA, groupB, groupC] = result.itineraryGroups[0].fareGroups
+  assert.equal(groupA.preferredInternalOfferId, "hfo_rank_valid_a1")
+  assert.equal(groupA.rankingStatus, "RANKED")
+  assert.equal(groupB.preferredInternalOfferId, null)
+  assert.equal(groupB.rankingStatus, "UNRANKED")
+  assert.equal(groupB.alternatives.length, 2)
+  assert.equal(groupC.preferredInternalOfferId, "hfo_rank_valid_c1")
+  assert.equal(groupC.rankingStatus, "RANKED")
+  assert.equal(result.rankingStatus, "RANKED")
 })
 
 test("missing malformed or inactive ranking policy preserves offers as UNRANKED", () => {
