@@ -24,7 +24,7 @@ These items are deliberately recorded without implementation in the Backend Core
 
 ## Pricing policy and currency follow-ups
 
-- **F-03 — PRICING POLICY HARDENING / REQUIRED BEFORE CUSTOMER ENDPOINT OR REAL PRODUCTION POLICY ENABLEMENT:** define business-approved maximum bounds for `marginPct` and `agentUpliftAmountUsd`; a trusted configuration typo must not be able to generate an absurd customer price. No bounds are invented in Batch 4.
+- **F-03 — CLOSED IN BATCH 5:** versioned pricing policy now requires trusted maximum bounds for `marginPct` and `agentUpliftAmountUsd` and fails closed when either value exceeds its configured maximum.
 - **SUPPLIER CURRENCY COVERAGE — PRE-REAL-SUPPLIER-ENABLEMENT:** pricing currently supports only USD, AED, and SDG and fails closed for other supplier currencies. Extend coverage deliberately before enabling any supplier that may return EUR, GBP, or another currency.
 
 ## Pre-production

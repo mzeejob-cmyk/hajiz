@@ -46,7 +46,7 @@ The active customer flight UI remains fixture-driven and does not consume the se
 | MS-05 | P1 | Closed | Canonical versioned private-offer validator and HAJIZ offer identity are implemented | Canonical Normalization |
 | MS-06 | P1 | Closed | Provider-aware offer and booking persistence/schema passed the Staging runtime gate; runtime supplier wiring remains tracked by MS-02/MS-04 | Additive persistence migration |
 | MS-07 | P1 | Closed (flight marketed-itinerary/fare grouping scope) | Provider-neutral itinerary grouping, conservative fare grouping, alternative preservation, and exact duplicate handling are behaviorally tested; codeshare physical-flight reconciliation is not claimed | Deduplication |
-| MS-08 | P1 | Partial | Decimal-safe canonical USD pricing, purpose-specific FX snapshots, and authoritative final customer prices are behaviorally tested; ranking is deliberately absent | Pricing and Ranking |
+| MS-08 | P1 | Closed (flight pricing/FX/ranking-selection scope) | Decimal-safe canonical USD pricing, purpose-specific FX, authoritative customer prices, exact price-only ranking, and preferred selection are behaviorally tested; trusted supplier-quality weighting is not active | Pricing and Ranking |
 | MS-09 | P1 | Partial | Versioned grouped public projection requires authoritative prices, maps every alternative through the public mapper, and excludes supplier details; frontend/customer endpoint remains unreconciled | Public Search Boundary |
 | MS-10 | P1 | Partial | Search concurrency, timeout, failure, and telemetry policy exist; market/content scope and non-search operation policy remain absent | Provider Policy |
 | MS-11 | P2 | Open | No hotel canonical supplier contract | Hotel Multi-Supplier phase |
