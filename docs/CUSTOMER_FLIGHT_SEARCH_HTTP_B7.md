@@ -144,4 +144,3 @@ React integration, or provider action.
 - B2-03: **CLOSED**
 - B2-05/B5-03: **DEFERRED**
 - MS-09: **PARTIAL — HTTP CUSTOMER SEARCH ENDPOINT COMPLETE; FRONTEND NOT WIRED**
-
