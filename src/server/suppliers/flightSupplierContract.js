@@ -21,7 +21,15 @@ export function validateSearchRequest(request) {
   requireString(request.destination, "destination")
   requireString(request.departureDate, "departureDate")
   if (!Number.isInteger(request.adults) || request.adults < 1) throw new TypeError("adults must be a positive integer")
-  return Object.freeze({ origin: request.origin, destination: request.destination, departureDate: request.departureDate, adults: request.adults })
+  const tripType = request.tripType ?? "one_way"
+  const returnDate = request.returnDate ?? null
+  const children = request.children ?? 0
+  const infants = request.infants ?? 0
+  const cabinClass = request.cabinClass ?? "economy"
+  if (!["one_way", "round_trip"].includes(tripType) || (returnDate !== null && typeof returnDate !== "string")) throw new TypeError("trip details are invalid")
+  if (!Number.isInteger(children) || children < 0 || !Number.isInteger(infants) || infants < 0) throw new TypeError("passenger counts are invalid")
+  if (!["economy", "premium_economy", "business", "first"].includes(cabinClass)) throw new TypeError("cabinClass is invalid")
+  return Object.freeze({ origin: request.origin, destination: request.destination, departureDate: request.departureDate, returnDate, tripType, adults: request.adults, children, infants, cabinClass })
 }
 
 export function validateBookingRequest(request) {
