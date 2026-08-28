@@ -41,7 +41,7 @@ const orchestratorFor = (adapters, options = {}) => {
     memory,
     orchestrator: createMultiSupplierFlightSearchOrchestrator({
       registry: options.registry ?? registryFor(adapters, options.enabledProviderNames),
-      policy: { maxConcurrency: options.maxConcurrency ?? 3, supplierTimeoutMs: options.supplierTimeoutMs ?? 100 },
+      policy: { maxConcurrency: options.maxConcurrency ?? 3, supplierTimeoutMs: options.supplierTimeoutMs ?? 100, requestTimeoutMs: options.requestTimeoutMs ?? 1_000 },
       telemetry: memory.sink,
       traceIdFactory: () => "htr_test_trace_0001",
     }),
@@ -272,10 +272,69 @@ test("S malformed non-array supplier response fails FlightOffer boundary", async
 })
 
 test("server policy is bounded, centrally defaulted, and rejects malformed values", () => {
-  assert.deepEqual(createMultiSupplierSearchPolicy(), { maxConcurrency: 3, supplierTimeoutMs: 5_000 })
-  for (const policy of [{ maxConcurrency: 0 }, { maxConcurrency: 17 }, { maxConcurrency: 1.5 }, { supplierTimeoutMs: 0 }, { supplierTimeoutMs: "10" }, { clientDeadline: 10 }]) {
+  assert.deepEqual(createMultiSupplierSearchPolicy(), { maxConcurrency: 3, supplierTimeoutMs: 5_000, requestTimeoutMs: 10_000 })
+  for (const policy of [{ maxConcurrency: 0 }, { maxConcurrency: 17 }, { maxConcurrency: 1.5 }, { supplierTimeoutMs: 0 }, { supplierTimeoutMs: "10" }, { requestTimeoutMs: 0 }, { requestTimeoutMs: 120_001 }, { clientDeadline: 10 }]) {
     assert.throws(() => createMultiSupplierSearchPolicy(policy))
   }
+})
+
+test("B2-03 global deadline preserves completed results as PARTIAL", async () => {
+  const { orchestrator } = orchestratorFor([
+    fakeAdapter("mock", async () => [offerFor("mock", "global-success")]),
+    fakeAdapter("travelport", () => new Promise(() => {})),
+  ], { maxConcurrency: 2, supplierTimeoutMs: 100, requestTimeoutMs: 25 })
+  const started = Date.now()
+  const result = await orchestrator.searchFlightsAcrossSuppliers(searchInput)
+  assert.equal(result.status, "PARTIAL")
+  assert.equal(result.offers.length, 1)
+  assert.ok(Date.now() - started < 150)
+})
+
+test("B2-02 abort-ignoring I/O keeps its capacity lease and prevents queued launch", async () => {
+  let calls = 0
+  let active = 0
+  let observedMax = 0
+  const ignoring = fakeAdapter("mock", async () => {
+    calls += 1; active += 1; observedMax = Math.max(observedMax, active)
+    await sleep(60)
+    active -= 1
+    return []
+  })
+  const queued = fakeAdapter("travelport", async () => { calls += 1; return [] })
+  const { orchestrator } = orchestratorFor([ignoring, queued], { maxConcurrency: 1, supplierTimeoutMs: 10, requestTimeoutMs: 25 })
+  const started = Date.now()
+  await assert.rejects(() => orchestrator.searchFlightsAcrossSuppliers(searchInput), (error) => error?.code === "FLIGHT_SEARCH_TIMEOUT")
+  assert.ok(Date.now() - started < 150)
+  assert.equal(calls, 1)
+  assert.equal(observedMax, 1)
+  await sleep(70)
+  assert.equal(active, 0)
+})
+
+test("global deadline absorbs late rejection without unhandled rejection", async () => {
+  let unhandled = 0
+  const listener = () => { unhandled += 1 }
+  process.on("unhandledRejection", listener)
+  try {
+    const { orchestrator } = orchestratorFor([fakeAdapter("mock", async () => { await sleep(45); throw new Error("late private") })], { supplierTimeoutMs: 100, requestTimeoutMs: 10 })
+    await assert.rejects(() => orchestrator.searchFlightsAcrossSuppliers(searchInput), (error) => error?.code === "FLIGHT_SEARCH_TIMEOUT")
+    await sleep(60)
+    assert.equal(unhandled, 0)
+  } finally {
+    process.off("unhandledRejection", listener)
+  }
+})
+
+test("trusted client disconnect signal stops waiting and launching work", async () => {
+  let calls = 0
+  const controller = new AbortController()
+  const { orchestrator } = orchestratorFor([
+    fakeAdapter("mock", () => { calls += 1; return new Promise(() => {}) }),
+    fakeAdapter("travelport", async () => { calls += 1; return [] }),
+  ], { maxConcurrency: 1, supplierTimeoutMs: 100, requestTimeoutMs: 500 })
+  setTimeout(() => controller.abort(), 10)
+  await assert.rejects(() => orchestrator.searchFlightsAcrossSuppliers(searchInput, { signal: controller.signal }), (error) => error?.code === "FLIGHT_SEARCH_TIMEOUT")
+  assert.equal(calls, 1)
 })
 
 let failures = 0
