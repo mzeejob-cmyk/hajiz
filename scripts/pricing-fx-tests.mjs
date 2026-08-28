@@ -175,7 +175,7 @@ test("B3-02 unaffected no-results provider preserves PARTIAL empty semantics", (
   assert.deepEqual(toPublicGroupedFlightSearchV1(grouped, {}), { contractVersion: "public-grouped-flight-search/v1", status: "PARTIAL", itineraryGroups: [] })
 })
 
-test("W grouped alternatives are independently priced without winner or sorting", () => {
+test("W grouped alternatives are independently priced without selection or sorting", () => {
   const a = offer({ internalOfferId: "hfo_price_alt_a", providerOfferRef: "alt-a", economics: { supplierAmount: "100", supplierCurrency: "USD" } })
   const b = createFlightOfferV1({ ...a, internalOfferId: "hfo_price_alt_b", provider: "travelport", providerOfferRef: "alt-b", economics: { supplierAmount: "90", supplierCurrency: "USD" } })
   const grouped = groupFlightSearchResultV1(searchResult([a, b]))

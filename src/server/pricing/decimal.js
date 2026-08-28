@@ -14,7 +14,7 @@ const fraction = (numerator, denominator = 1n) => {
 }
 
 export function parseDecimal(value, field = "decimal") {
-  if (typeof value !== "string" || !DECIMAL.test(value)) throw new TypeError(`${field} must be a decimal string with at most 8 places`)
+  if (typeof value !== "string" || value.length > 40 || !DECIMAL.test(value)) throw new TypeError(`${field} must be a bounded decimal string with at most 8 places`)
   const negative = value.startsWith("-")
   const unsigned = negative ? value.slice(1) : value
   const [whole, decimals = ""] = unsigned.split(".")

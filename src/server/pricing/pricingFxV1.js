@@ -193,7 +193,11 @@ export function assertCustomerPriceV1(value, expectedInternalOfferId) {
   positive(value.amount, "customer price amount")
   currency(value.currency, "customer price currency")
   positive(value.canonicalUsdAmount, "canonicalUsdAmount")
-  date(value.calculatedAt, "customer price calculatedAt")
-  date(value.validUntil, "customer price validUntil")
+  text(value.fxSnapshotId, "customer price fxSnapshotId", /^hfx_[A-Za-z0-9_-]{8,100}$/)
+  text(value.pricingPolicyVersion, "customer price pricingPolicyVersion")
+  text(value.fxPolicyVersion, "customer price fxPolicyVersion")
+  const calculatedAt = date(value.calculatedAt, "customer price calculatedAt")
+  const validUntil = date(value.validUntil, "customer price validUntil")
+  if (Date.parse(validUntil) <= Date.parse(calculatedAt)) throw new TypeError("customer price validity is invalid")
   return value
 }
