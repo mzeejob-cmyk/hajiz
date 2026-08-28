@@ -116,7 +116,7 @@ async function executeSupplierAttempt({ adapter, searchInput, timeoutMs, traceId
   return { outcome, offers, settlement: supplierPromise.then(() => undefined), leasePending: !supplierSettled }
 }
 
-const waitForDeadlineOrAbort = (deadlineAtMs, signal, now) => new Promise((resolve) => {
+const waitForSettlementDeadlineOrAbort = (settlement, deadlineAtMs, signal, now) => new Promise((resolve) => {
   let timer
   const done = () => {
     if (timer) clearTimeout(timer)
@@ -126,6 +126,7 @@ const waitForDeadlineOrAbort = (deadlineAtMs, signal, now) => new Promise((resol
   if (signal?.aborted || now() >= deadlineAtMs) return done()
   signal?.addEventListener("abort", done, { once: true })
   timer = setTimeout(done, Math.max(1, deadlineAtMs - now()))
+  settlement.then(done)
 })
 
 export function createMultiSupplierFlightSearchOrchestrator({
@@ -173,10 +174,7 @@ export function createMultiSupplierFlightSearchOrchestrator({
             requestSignal: context.signal,
           })
           attempts[index] = attempt
-          if (attempt.leasePending && nextIndex < suppliers.length) await Promise.race([
-            attempt.settlement,
-            waitForDeadlineOrAbort(configuredDeadlineAtMs, context.signal, now),
-          ])
+          if (attempt.leasePending && nextIndex < suppliers.length) await waitForSettlementDeadlineOrAbort(attempt.settlement, configuredDeadlineAtMs, context.signal, now)
         }
       }
       const workers = new Array(Math.min(policy.maxConcurrency, suppliers.length)).fill(null).map(() => worker())
