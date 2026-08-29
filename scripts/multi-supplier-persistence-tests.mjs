@@ -73,13 +73,14 @@ test('operation ledger is private and exposes no browser grants', () => {
   assert.doesNotMatch(sql, /grant .* to (anon|authenticated)/);
 });
 
-test('historical migrations are untouched by the Batch 1 branch', () => {
-  const changed = execFileSync(
+test('historical migrations remain untouched while later additive migrations are allowed', () => {
+  const changes = execFileSync(
     'git',
-    ['diff', '--name-only', 'a12f5a2293d35c6a36ef994a26a4f0c4f2d5b3d4..HEAD', '--', 'supabase/migrations'],
+    ['diff', '--name-status', 'a12f5a2293d35c6a36ef994a26a4f0c4f2d5b3d4..HEAD', '--', 'supabase/migrations'],
     { encoding: 'utf8' },
-  ).trim().split(/\r?\n/).filter(Boolean);
-  assert.deepEqual(changed, [`supabase/migrations/${migrationName}`]);
+  ).trim().split(/\r?\n/).filter(Boolean).map((line) => line.split(/\s+/, 2));
+  assert.ok(changes.some(([status, path]) => status === 'A' && path === `supabase/migrations/${migrationName}`));
+  assert.equal(changes.every(([status]) => status === 'A'), true);
 });
 
 let failures = 0;
