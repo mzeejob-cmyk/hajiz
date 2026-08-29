@@ -110,6 +110,7 @@ function projectAlternative(input, expectedCurrency, projectedAt, groupIdentity)
   return {
     identity: canonicalCustomerIdJsonV1(identity),
     internalOfferId: offer.internalOfferId,
+    offer,
     itinerary: customerItinerary(offer),
     customer: {
       alternativeId: customerOpaqueIdV1("hca_v1", { groupIdentity, customerIdentity: identity }),
@@ -120,7 +121,8 @@ function projectAlternative(input, expectedCurrency, projectedAt, groupIdentity)
   }
 }
 
-export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now }) {
+export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now, collectResolutionEntry }) {
+  if (collectResolutionEntry !== undefined && typeof collectResolutionEntry !== "function") throw new TypeError("resolution collector must be a function")
   const ranked = assertRankedResult(rankedInput)
   const expectedCurrency = currency(customerCurrency)
   const projectedAt = iso(now, "projection time")
@@ -143,8 +145,8 @@ export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now })
         const projected = ranked.searchStatus === "UNAVAILABLE" ? null : projectAlternative(input, expectedCurrency, projectedAt, groupIdentity)
         if (!projected) continue
         const existing = unique.get(projected.identity)
-        if (existing) existing.internalOfferIds.push(projected.internalOfferId)
-        else unique.set(projected.identity, { customer: projected.customer, itinerary: projected.itinerary, internalOfferIds: [projected.internalOfferId] })
+        if (existing) { existing.internalOfferIds.push(projected.internalOfferId); existing.offers.push(projected.offer) }
+        else unique.set(projected.identity, { customer: projected.customer, itinerary: projected.itinerary, internalOfferIds: [projected.internalOfferId], offers: [projected.offer] })
       }
 
       const retained = [...unique.values()]
@@ -152,6 +154,7 @@ export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now })
         ? retained.find(({ internalOfferIds }) => internalOfferIds.includes(fareGroup.preferredInternalOfferId))
         : null
       const alternatives = retained.map(({ customer }) => ({ ...customer, recommended: customer.alternativeId === preferred?.customer.alternativeId }))
+      retained.forEach((entry, index) => collectResolutionEntry?.(Object.freeze({ alternativeId: alternatives[index].alternativeId, offer: entry.offers[0], previousCustomerPrice: entry.customer.price, itinerary: entry.itinerary, fare: entry.customer.fare })))
       const groupStatus = alternatives.length === 0 ? "UNAVAILABLE" : preferred ? "RANKED" : "UNRANKED"
       groups.push({
         groupId: customerOpaqueIdV1("hcg_v1", groupIdentity),

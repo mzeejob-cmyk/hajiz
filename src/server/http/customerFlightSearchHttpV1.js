@@ -65,7 +65,7 @@ const errorResponse = (status, code, message) => response(status, {
 
 export function createCustomerFlightSearchHttpHandlerV1({
   orchestrator, pricingPolicy, fxSnapshotsByPair, rankingPolicy,
-  requestTimeoutMs = 10_000, clock = Date.now,
+  requestTimeoutMs = 10_000, clock = Date.now, selectionResolver,
 }) {
   if (!orchestrator || typeof orchestrator.searchFlightsAcrossSuppliers !== "function" || !orchestrator.policy) throw new TypeError("trusted search orchestrator is required")
   if (!Number.isInteger(requestTimeoutMs) || requestTimeoutMs < 1 || requestTimeoutMs > 120_000 || requestTimeoutMs > orchestrator.policy.requestTimeoutMs) throw new TypeError("trusted HTTP request budget is invalid")
@@ -91,7 +91,7 @@ export function createCustomerFlightSearchHttpHandlerV1({
       const grouped = groupFlightSearchResultV1(privateSearch)
       const priced = priceGroupedFlightSearchV1(grouped, { pricingPolicy, fxSnapshotsByPair, customerCurrency: publicRequest.customerCurrency, now: requestNow })
       const ranked = rankPricedGroupedFlightSearchV1(priced, { rankingPolicy, now: requestNow })
-      const customer = toCustomerFlightSearchV1(ranked, { customerCurrency: publicRequest.customerCurrency, now: requestNow })
+      const customer = toCustomerFlightSearchV1(ranked, { customerCurrency: publicRequest.customerCurrency, now: requestNow, collectResolutionEntry: selectionResolver ? (entry) => selectionResolver.remember(entry) : undefined })
       if (customer.searchStatus === "UNAVAILABLE") return errorResponse(503, "SEARCH_UNAVAILABLE", "Flight search is temporarily unavailable.")
       return response(200, { contractVersion: CUSTOMER_FLIGHT_SEARCH_HTTP_VERSION, data: customer })
     } catch (error) {
