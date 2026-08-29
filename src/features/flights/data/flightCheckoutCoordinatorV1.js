@@ -1,0 +1,4 @@
+export function createFlightCheckoutCoordinatorV1({ client, onState }) {
+  let sequence = 0; let controller
+  return Object.freeze({ async prepare(pricedSelectionId) { controller?.abort(); const id = ++sequence; const current = new AbortController(); controller = current; onState(Object.freeze({ status: "preparing" })); try { const result = await client.prepare({ pricedSelectionId }, { signal: current.signal }); if (id !== sequence || current.signal.aborted) return; const status = result.checkoutStatus === "READY" ? "ready" : result.checkoutStatus === "PRICE_CHANGED" ? "price_changed" : "unavailable"; onState(Object.freeze({ status, result })) } catch (error) { if (id !== sequence || current.signal.aborted) return; onState(Object.freeze({ status: error?.kind ?? "internal_error" })) } }, cancel() { sequence += 1; controller?.abort() } })
+}
