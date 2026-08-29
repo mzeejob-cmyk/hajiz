@@ -43,7 +43,7 @@ The database `prepare_flight_payment_initiation_v1` RPC performs a second fail-c
 
 ## Atomicity and idempotency
 
-Migration `20260829183000_flight_payment_initiation_v1.sql` adds the private, forced-RLS `app_private.flight_payment_initiations` ledger. It claims each B11 intent once and reserves stable booking/payment IDs and references without creating either business row.
+Migration `20260829183000_flight_payment_initiation_v1.sql` adds the private, RLS-enabled non-forced `app_private.flight_payment_initiations` ledger. It claims each B11 intent once and reserves stable booking/payment IDs and references without creating either business row.
 
 The server flow is:
 
@@ -96,7 +96,7 @@ Wallet is deferred. The requested canonical `create_booking_from_wallet()` funct
 
 Traveler/contact PII is resolved from the private B11 intent and is never resubmitted by the browser or returned in the handoff. It is copied only into the existing canonical booking traveler snapshot during atomic materialization. No PII is written to URLs, logs, IDs, idempotency keys, PSP public responses, or generic errors. If a future PSP requires contact data, a server adapter may receive the minimum required private values; the current PSP contract does not receive them.
 
-The new table has RLS enabled and forced, an explicit deny policy for browser roles, and no direct table grant to `anon`, `authenticated`, or `service_role`. The two RPCs are `SECURITY DEFINER`, pin an empty `search_path`, fully qualify relations, revoke default/browser execution, and grant execution only to `service_role`. This follows current Supabase guidance on separate grants and RLS controls, pinned `search_path`, and explicit function privileges: [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security), [Database Functions](https://supabase.com/docs/guides/database/functions), and [Securing the Data API](https://supabase.com/docs/guides/api/securing-your-api).
+The new table has RLS enabled without `FORCE RLS`, an explicit deny policy for browser roles, and no direct table grant to `anon`, `authenticated`, or `service_role`. A Gate A compatibility guard requires the B11 intent table, the B12 initiation table, and both B12 RPCs to share one owner. The RPCs are `SECURITY DEFINER`, pin an empty `search_path`, fully qualify relations, revoke default/browser execution, and grant execution only to `service_role`. This preserves the final B11 table-owner security model without depending on a `BYPASSRLS` role attribute. It follows current Supabase guidance on separate grants and RLS controls, pinned `search_path`, and explicit function privileges: [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security), [Database Functions](https://supabase.com/docs/guides/database/functions), and [Securing the Data API](https://supabase.com/docs/guides/api/securing-your-api).
 
 ## Frontend behavior
 

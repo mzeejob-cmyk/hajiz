@@ -44,7 +44,7 @@ create index flight_payment_initiations_owner_created_idx
   on app_private.flight_payment_initiations(owner_id, created_at desc);
 
 alter table app_private.flight_payment_initiations enable row level security;
-alter table app_private.flight_payment_initiations force row level security;
+alter table app_private.flight_payment_initiations no force row level security;
 
 create policy flight_payment_initiations_direct_access_denied
 on app_private.flight_payment_initiations
@@ -561,3 +561,58 @@ grant execute on function public.materialize_flight_payment_initiation_v1(
   uuid, text, text, text, text, text, text, text, boolean, timestamptz,
   text, text, text
 ) to service_role;
+
+-- Gate A compatibility: both SECURITY DEFINER RPCs access the B11 and B12
+-- private tables. Keep their ownership identical so NO FORCE RLS uses the
+-- documented table-owner path without depending on a BYPASSRLS role attribute.
+do $migration$
+declare
+  item record;
+  booking_intents_table regclass :=
+    to_regclass('app_private.flight_booking_intents');
+  payment_initiations_table regclass :=
+    to_regclass('app_private.flight_payment_initiations');
+  booking_intents_owner oid;
+  payment_initiations_owner oid;
+  function_oid regprocedure;
+  function_owner oid;
+begin
+  select table_row.relowner
+    into strict booking_intents_owner
+    from pg_catalog.pg_class as table_row
+   where table_row.oid = booking_intents_table;
+
+  select table_row.relowner
+    into strict payment_initiations_owner
+    from pg_catalog.pg_class as table_row
+   where table_row.oid = payment_initiations_table;
+
+  if booking_intents_owner is distinct from payment_initiations_owner then
+    raise exception
+      'B11 booking intents and B12 payment initiations must have the same owner';
+  end if;
+
+  for item in
+    select * from (values
+      ('public.prepare_flight_payment_initiation_v1(uuid,text,public.payment_method,text,text)'),
+      ('public.materialize_flight_payment_initiation_v1(uuid,text,text,text,text,text,text,text,boolean,timestamptz,text,text,text)')
+    ) as functions(signature)
+  loop
+    function_oid := pg_catalog.to_regprocedure(item.signature);
+    if function_oid is null then
+      raise exception 'required payment initiation RPC % is missing', item.signature;
+    end if;
+
+    select function_row.proowner
+      into strict function_owner
+      from pg_catalog.pg_proc as function_row
+     where function_row.oid = function_oid;
+
+    if function_owner is distinct from payment_initiations_owner then
+      raise exception
+        'payment initiation RPC % and private tables must have the same owner',
+        item.signature;
+    end if;
+  end loop;
+end
+$migration$;
