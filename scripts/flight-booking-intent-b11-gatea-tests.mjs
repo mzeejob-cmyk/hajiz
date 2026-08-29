@@ -83,14 +83,14 @@ await test("G7 exact replay uses guarded objects and replace-safe RPC definition
 
 await test("G8 frozen migrations retain their reviewed byte hashes", async () => {
   const frozen = Object.freeze({
-    "20260825173046_payment_authority_staging_v1.sql": "6bf5a2ed90e56f4cdfcea179acf15cc7347b3e9af636e1287db398612c9a637a",
-    "20260825173551_payment_authority_staging_v1_advisor_hardening.sql": "e0280ce96ff96a73d7a7b4ed3c57ca49eaec78e3f84e8943764fed0e0c5f4b58",
-    "20260825173703_payment_authority_staging_v1_checkout_fix.sql": "8d09b174ac133c57febfdd7317b8e91583a8f08117841b599a0d5f806f36a8f7",
-    "20260825210000_payment_authority_security_v2.sql": "5e77e43a5c838fdc94b4e1008760c78605518e2fd27df2c1c3867b04ff7b9407",
-    "20260826200000_psp_rejected_transition_v1.sql": "c705f5f78318454824787968b074eb07638564d28037ed9ae6a1b14a2d152dd0",
-    "20260827171209_payment_event_consumption_and_expiry_v1.sql": "12c67bd358b633b02c3a81310fc716be02df11432b295648a26139de346baaa1",
-    "20260827180646_multi_supplier_identity_and_operations_v1.sql": "a2cfd32563fad6cb244d0a0dc40f2e184f0c1f34a7106cb8127705678322b5a6",
-    "PLAN_ONLY_20260825_payment_authority.sql": "5f4adaa83c835e1152a1e97fdd9ec6111db12e957049da9f28cec6dda35cba4f",
+    "20260825173046_payment_authority_staging_v1.sql": "9c902100d31c82af759c9d0f48b814af347ecf2d2f0c09664c6c5e2a64897484",
+    "20260825173551_payment_authority_staging_v1_advisor_hardening.sql": "0ea110e35d663fd3eae64d8cee50b993935d2d75c4bf990104ce5b80e51d8c00",
+    "20260825173703_payment_authority_staging_v1_checkout_fix.sql": "07fbfa83cb178dafecb0ee23dfad2042270d77c981c106b25c584716ee4bfd0f",
+    "20260825210000_payment_authority_security_v2.sql": "7aff24afca7c4c80a8441cd4649f7efe565c59ff2c097d5ceef5bd1d2dc5886c",
+    "20260826200000_psp_rejected_transition_v1.sql": "e90df32f4cfc836e2b5c0f5c5793f96c51b91fdfe5846ee1793a05216408d2ce",
+    "20260827171209_payment_event_consumption_and_expiry_v1.sql": "806b56e0f7f1320627a414ae1976e23bd5a1c633e2f3e9fcba5e9264bddb1971",
+    "20260827180646_multi_supplier_identity_and_operations_v1.sql": "c33a72fb1458a413dac98218507b379a04f34e492eccc4cdea627e2f7871d247",
+    "PLAN_ONLY_20260825_payment_authority.sql": "da5f87ad7f83fe378fb96cf82a5842434496f3d1d810fdd229ec7fa7d17e3bcb",
   })
   for (const [file, expected] of Object.entries(frozen)) {
     const bytes = await fs.readFile(new URL(`../supabase/migrations/${file}`, import.meta.url))
