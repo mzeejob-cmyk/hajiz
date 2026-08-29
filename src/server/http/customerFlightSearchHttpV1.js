@@ -91,7 +91,9 @@ export function createCustomerFlightSearchHttpHandlerV1({
       const grouped = groupFlightSearchResultV1(privateSearch)
       const priced = priceGroupedFlightSearchV1(grouped, { pricingPolicy, fxSnapshotsByPair, customerCurrency: publicRequest.customerCurrency, now: requestNow })
       const ranked = rankPricedGroupedFlightSearchV1(priced, { rankingPolicy, now: requestNow })
-      const customer = toCustomerFlightSearchV1(ranked, { customerCurrency: publicRequest.customerCurrency, now: requestNow, collectResolutionEntry: selectionResolver ? (entry) => selectionResolver.remember(entry) : undefined })
+      const resolutionEntries = []
+      const customer = toCustomerFlightSearchV1(ranked, { customerCurrency: publicRequest.customerCurrency, now: requestNow, collectResolutionEntry: selectionResolver ? (entry) => resolutionEntries.push(entry) : undefined })
+      if (selectionResolver) selectionResolver.rememberSearch(resolutionEntries)
       if (customer.searchStatus === "UNAVAILABLE") return errorResponse(503, "SEARCH_UNAVAILABLE", "Flight search is temporarily unavailable.")
       return response(200, { contractVersion: CUSTOMER_FLIGHT_SEARCH_HTTP_VERSION, data: customer })
     } catch (error) {
