@@ -23,11 +23,11 @@ The client accepts only an injected `transport(request, { signal })`. It validat
 
 The flattened view model retains backend group and alternative order. It contains opaque `alternativeId`, server recommendation, public itinerary/carrier/times/duration/stops/segment count, public fare summaries, authoritative price string/currency, and `validUntil`. It contains no provider, supplier reference, supplier economics, FX snapshot, ranking score/policy, or internal offer ID.
 
-Cards show route, UTC contract times, stop count, carrier display, cabin, baggage, public change/refund summary, exact customer price, a neutral `موصى به` badge only when the server contract is consistent, and an `اختيار` button. USD, AED, and SDG are labels only; there is no browser-side conversion or arithmetic.
+Cards show route, the wall-clock `HH:MM` carried by each contract ISO timestamp and offset, stop count, carrier display, cabin, baggage, public change/refund summary, exact customer price, a neutral `موصى به` badge only when the server contract is consistent, and an `اختيار` button. The frontend does not convert flight times to UTC or the browser timezone, infer timezone from IATA codes, or use an airport timezone database. Regression coverage includes non-`Z` offsets, `Z`, and millisecond timestamps. USD, AED, and SDG are labels only; there is no browser-side conversion or arithmetic.
 
 ## States, race safety, and selection
 
-The explicit UI states are `idle`, `loading`, `success`, `empty`, `partial`, `unavailable`, `timeout`, `validation_error`, and `internal_error`. `COMPLETE` with no groups is an empty result, not an outage. `PARTIAL` keeps valid results visible without supplier diagnostics. HTTP 503, 504, 400, and 500 have distinct safe Arabic copy.
+The explicit UI states are `idle`, `loading`, `success`, `empty`, `partial`, `partial_empty`, `unavailable`, `timeout`, `validation_error`, and `internal_error`. `COMPLETE` with no groups is an empty result, not an outage. `PARTIAL` keeps valid results visible without supplier diagnostics; `PARTIAL` with zero groups keeps its partial contract status while presenting a safe retry message. HTTP 503, 504, 400, and 500 have distinct safe Arabic copy. A contradictory HTTP 200 payload with `searchStatus: UNAVAILABLE` fails closed at the parser boundary.
 
 Each new request aborts the previous frontend signal and advances a sequence number. A late response cannot replace a newer result, even if the transport ignores abort. Unmount cancels/invalidate the active UI request; this does not claim cancellation of server-side supplier work.
 

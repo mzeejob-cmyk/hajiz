@@ -64,7 +64,7 @@ export function parseFlightSearchHttpResponseV1(input) {
   const envelope = exact(input, ["contractVersion", "data"], "HTTP response")
   if (envelope.contractVersion !== FLIGHT_SEARCH_HTTP_VERSION) throw new TypeError("unsupported HTTP contract")
   const data = exact(envelope.data, ["contractVersion", "searchStatus", "currency", "groups"], "search result")
-  if (data.contractVersion !== FLIGHT_SEARCH_VERSION || !["COMPLETE", "PARTIAL", "UNAVAILABLE"].includes(data.searchStatus) || !/^(USD|AED|SDG)$/.test(data.currency) || !Array.isArray(data.groups)) throw new TypeError("search result is invalid")
+  if (data.contractVersion !== FLIGHT_SEARCH_VERSION || !["COMPLETE", "PARTIAL"].includes(data.searchStatus) || !/^(USD|AED|SDG)$/.test(data.currency) || !Array.isArray(data.groups)) throw new TypeError("search result is invalid")
   return Object.freeze({ contractVersion: data.contractVersion, searchStatus: data.searchStatus, currency: data.currency, groups: Object.freeze(data.groups.map((group) => parseGroup(group, data.currency))) })
 }
 

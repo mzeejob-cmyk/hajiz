@@ -1,5 +1,9 @@
 const duration = (minutes) => `${Math.floor(minutes / 60)}س ${minutes % 60 ? `${minutes % 60}د` : ""}`.trim()
-const time = (value) => new Intl.DateTimeFormat("ar-AE", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" }).format(new Date(value))
+const time = (value) => {
+  const match = typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2}):\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/)
+  if (!match) throw new TypeError("flight time is invalid")
+  return `${match[1]}:${match[2]}`
+}
 export function toFlightResultsViewModelV1(result) {
   return Object.freeze(result.groups.flatMap((group) => group.alternatives.map((alternative) => {
     const itinerary = group.itinerary

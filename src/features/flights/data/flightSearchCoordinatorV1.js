@@ -6,14 +6,15 @@ export function createFlightSearchCoordinatorV1({ client, onState }) {
     async search(request) {
       controller?.abort()
       const id = ++sequence
-      controller = new AbortController()
+      const requestController = new AbortController()
+      controller = requestController
       publish(id, { status: "loading", request })
       try {
-        const result = await client.search(request, { signal: controller.signal })
-        const status = result.searchStatus === "PARTIAL" ? "partial" : result.groups.length === 0 ? "empty" : "success"
+        const result = await client.search(request, { signal: requestController.signal })
+        const status = result.searchStatus === "PARTIAL" ? (result.groups.length === 0 ? "partial_empty" : "partial") : result.groups.length === 0 ? "empty" : "success"
         publish(id, { status, request, result })
       } catch (error) {
-        if (controller.signal.aborted || id !== sequence) return
+        if (requestController.signal.aborted || id !== sequence) return
         publish(id, { status: error?.kind ?? "internal_error", request })
       }
     },

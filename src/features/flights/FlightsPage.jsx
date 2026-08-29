@@ -18,13 +18,14 @@ const COPY = Object.freeze({
   idle: ["ابدأ البحث", "اختر تفاصيل رحلتك لعرض الخيارات المتاحة."],
   loading: ["نبحث عن أفضل الخيارات المتاحة", "قد يستغرق البحث لحظات قليلة."],
   empty: ["ما لقينا رحلات مطابقة لبحثك", "جرّب تغيير التاريخ أو المطار."],
+  partial_empty: ["لم نتمكن من عرض نتائج الرحلات كاملة حالياً", "جرّب إعادة البحث بعد قليل."],
   unavailable: ["تعذر إكمال البحث حالياً", "حاول مرة أخرى بعد قليل."],
   timeout: ["استغرق البحث وقتاً أطول من المتوقع", "أعد المحاولة."],
   validation_error: ["راجع تفاصيل البحث", "بعض بيانات الرحلة غير صالحة."],
   internal_error: ["حدث خطأ غير متوقع", "حاول مرة أخرى."],
 })
 
-function ResultsState({ state, onRetry }) {
+export function ResultsState({ state, onRetry }) {
   if (state.status === "loading") return <div className="flight-loading" role="status" aria-live="polite"><h2>{COPY.loading[0]}</h2><p>{COPY.loading[1]}</p><div className="flight-card-skeleton" aria-hidden="true"/><div className="flight-card-skeleton" aria-hidden="true"/></div>
   const copy = COPY[state.status]
   if (!copy) return null
@@ -58,5 +59,5 @@ export default function FlightsPage() {
   const retry = () => request && coordinator?.search(request)
   const options = searchState.result ? toFlightResultsViewModelV1(searchState.result) : []
   const hasResults = searchState.status === "success" || searchState.status === "partial"
-  return <div className="flights-page"><Container><FlightsSearchSummary query={searchState.request ?? request ?? query} onEdit={() => navigate("/", { state: { editSearch: true } })}/><header className="flights-title"><h1>رحلات من {query.fromLabel} إلى {query.toLabel}</h1><p>الأسعار المعروضة هي السعر النهائي للعميل بالعملة المختارة</p></header><main className="flights-results" aria-live="polite">{searchState.status === "partial" && <div className="flight-partial-notice" role="status">بعض النتائج قد لا تكون متاحة حالياً</div>}<ResultsState state={searchState} onRetry={retry}/>{hasResults && <div className="flight-card-list">{options.map((offer) => <FlightOfferCard key={offer.alternativeId} offer={offer} onSelect={setSelectedAlternativeId}/>)}</div>}{selectedAlternativeId && <div className="selection-notice" role="status">تم اختيار الخيار مبدئياً. يلزم التحقق من السعر والتوفر في خطوة إعادة التسعير التالية.</div>}</main></Container></div>
+  return <div className="flights-page"><Container><FlightsSearchSummary query={searchState.request ?? request ?? query} onEdit={() => navigate("/", { state: { editSearch: true } })}/><header className="flights-title"><h1>رحلات من {query.fromLabel} إلى {query.toLabel}</h1><p>الأسعار المعروضة هي السعر النهائي للعميل بالعملة المختارة</p></header><main className="flights-results" aria-live="polite">{["partial", "partial_empty"].includes(searchState.status) && <div className="flight-partial-notice" role="status">بعض النتائج قد لا تكون متاحة حالياً</div>}<ResultsState state={searchState} onRetry={retry}/>{hasResults && <div className="flight-card-list">{options.map((offer) => <FlightOfferCard key={offer.alternativeId} offer={offer} onSelect={setSelectedAlternativeId}/>)}</div>}{selectedAlternativeId && <div className="selection-notice" role="status">تم اختيار الخيار مبدئياً. يلزم التحقق من السعر والتوفر في خطوة إعادة التسعير التالية.</div>}</main></Container></div>
 }
