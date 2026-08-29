@@ -44,11 +44,15 @@ Migration `20260829120000_flight_booking_intents_v1.sql` therefore adds a narrow
 
 Supplier net, commission, margin, payment state, supplier booking reference, and ticket state are not stored by B11.
 
-The migration has not been applied. The Supabase CLI was unavailable in the build environment, so verification is structural/local only and the migration requires a separate Staging review and runtime gate before application.
+The migration has not been applied. It is registered in `MIGRATION_CANONICAL_STATE.md` as code-only and not yet applied. Its catalog and canonical-signature guards make the first apply create the intended table, constraints, index, and policy; an exact replay succeeds without duplicates; and an incompatible same-name table, constraint, index, or policy fails clearly instead of hiding drift. The Supabase CLI and a local PostgreSQL runtime were unavailable in the build environment, so verification is structural/local only and the migration requires a separate Staging first-apply and exact-replay runtime gate before application.
 
 ## RLS and privileges
 
-The PII table is in `app_private`, has RLS enabled and forced, has a direct-deny policy for `anon` and `authenticated`, and revokes direct table privileges from public API roles and `service_role`. The only persistence/resolution functions are `public.create_flight_booking_intent_v1` and `public.get_flight_booking_intent_v1`; both are `SECURITY DEFINER` with an empty `search_path`, fully qualified relations, and EXECUTE granted only to `service_role`. The browser never receives or uses that credential.
+The PII table is in `app_private` and has RLS enabled without `FORCE RLS`. This is deliberate: the table and both `SECURITY DEFINER` RPCs must share the migration owner, which uses PostgreSQL's documented table-owner RLS behavior and removes any implicit dependency on an undocumented `BYPASSRLS` role attribute. The migration rejects ownership drift. A direct-deny policy remains for `anon` and `authenticated`, and direct table privileges are revoked from public API roles and `service_role`.
+
+The only persistence/resolution functions are `public.create_flight_booking_intent_v1` and `public.get_flight_booking_intent_v1`; both are `SECURITY DEFINER` with an empty `search_path`, fully qualified relations, and EXECUTE granted only to `service_role`. The browser never receives or uses that credential. `get_flight_booking_intent_v1` still requires both the trusted `owner_id` and opaque `bookingIntentId`, so removing `FORCE RLS` does not create a caller-controlled ownership policy or an IDOR path.
+
+The required Staging proof remains explicit because no local PostgreSQL runtime was available: apply the migration once and replay the exact SQL; verify `relrowsecurity = true` and `relforcerowsecurity = false`; verify the table and both RPCs have the same owner; prove `anon` and `authenticated` have neither table access nor RPC execution; prove `service_role` can create and resolve only through the RPCs despite having no direct table grant; and prove a mismatched trusted owner cannot resolve another owner's intent. This code-only batch does not claim that runtime evidence.
 
 This follows Supabase's current guidance that grants and RLS are separate controls, new exposed tables require explicit grants, and privileged functions must pin `search_path` and revoke default execution: [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security), [Database Functions](https://supabase.com/docs/guides/database/functions), and [Data API exposure change](https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically).
 
@@ -80,9 +84,19 @@ The B10 form now creates an in-memory review draft. The customer reviews the saf
 
 After success, the UI displays “جاهز لاختيار طريقة الدفع”, the authoritative server-returned price, and the opaque intent ID. The B12 control is disabled and the copy states that no payment, confirmed booking, or seat hold exists. Price change returns to explicit B10 acceptance/re-entry; it is never silently accepted.
 
+## Persisted state is not current payability
+
+`READY_FOR_PAYMENT` is a persisted B11 intent state, not proof that the intent is still payable. The row may remain `READY_FOR_PAYMENT` after `valid_until` has passed; B11 does not mutate the status merely because trusted server time crosses that deadline.
+
+Before creating any booking or payment, B12 must resolve the intent under trusted owner context, compare `valid_until` with trusted server time, reject expired commercial authority, and revalidate or reprice the exact protected supplier offer. It must compare the current authoritative customer price with the accepted snapshot. An expired intent must return `INTENT_EXPIRED`; a stale or changed price must be rejected or return `REPRICE_REQUIRED`. A stale price can never initiate payment, and B12 must never silently update the accepted amount.
+
+When the current authoritative price changes, the customer must explicitly accept it through the existing B9/B10 repricing and checkout flow before a new payable intent can be used.
+
 ## B12 handoff
 
-B12 should accept only `bookingIntentId` plus the selected payment method. The server must resolve the intent under the trusted owner context. The browser must not resubmit traveler PII, price, FX, itinerary, or supplier identity. B12 owns payment initiation and must not infer supplier confirmation from payment state.
+B12 should accept only `bookingIntentId` plus the selected payment method. The server must resolve the intent under the trusted owner context. `READY_FOR_PAYMENT` alone is insufficient: B12 must enforce `valid_until` using trusted server time, revalidate or reprice the exact protected supplier offer, compare the current authoritative customer price, and return `REPRICE_REQUIRED` or `INTENT_EXPIRED` when appropriate. It must never initiate from stale pricing, silently update a price, or bypass explicit customer acceptance through B9/B10.
+
+The browser must not resubmit traveler PII, price, FX, itinerary, or supplier identity. B12 owns payment initiation and must not infer supplier confirmation from payment state.
 
 ## Current limitations and Review Gate A
 
