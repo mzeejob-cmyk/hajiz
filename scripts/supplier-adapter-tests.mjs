@@ -98,10 +98,15 @@ export async function runSupplierAdapterTests(vite, test) {
   await test("supplier layer has no network or direct persistence authority", async () => {
     const files = await fs.readdir(new URL("../src/server/suppliers", import.meta.url))
     const restricted = /axios|XMLHttpRequest|WebSocket|supabase|service_role|\.from\s*\(|\.insert\s*\(|\.update\s*\(/i
-    for (const file of files.filter((name) => name.endsWith(".js"))) {
+    const durableBoundary = "flightSupplierBookingExecutionStoreV1.js"
+    for (const file of files.filter((name) => name.endsWith(".js") && name !== durableBoundary)) {
       const source = await fs.readFile(new URL(`../src/server/suppliers/${file}`, import.meta.url), "utf8")
       assert.equal(restricted.test(source), false, file)
     }
+    const durableSource = await fs.readFile(new URL(`../src/server/suppliers/${durableBoundary}`, import.meta.url), "utf8")
+    assert.match(durableSource, /durability: "supabase-private-persistence"/)
+    assert.match(durableSource, /client\.rpc\(name, parameters\)/)
+    assert.doesNotMatch(durableSource, /axios|XMLHttpRequest|WebSocket|fetch\s*\(|fetchImpl\s*\(|\.from\s*\(|\.insert\s*\(|\.update\s*\(|service[_-]?role.{0,24}(key|secret)/i)
     const networkCallers = files.filter((name) => name.endsWith(".js") && name !== "travelportClient.js")
     for (const file of networkCallers) {
       const source = await fs.readFile(new URL(`../src/server/suppliers/${file}`, import.meta.url), "utf8")
