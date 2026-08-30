@@ -1,57 +1,378 @@
 -- HAJIZ B12: private payment-initiation reservation and atomic canonical
 -- booking/payment materialization. Additive only; not applied by this batch.
 
-create table app_private.flight_payment_initiations (
-  id uuid primary key default gen_random_uuid(),
-  booking_intent_id uuid not null unique
-    references app_private.flight_booking_intents(id) on delete restrict,
-  owner_id uuid not null references auth.users(id) on delete restrict,
-  payment_method public.payment_method not null
-    check (payment_method in ('bankak', 'card')),
-  idempotency_key text not null
-    check (idempotency_key ~ '^hpi_req_[A-Za-z0-9_-]{16,80}$'),
-  request_digest text not null
-    check (request_digest ~ '^[0-9a-f]{64}$'),
-  booking_id uuid not null unique,
-  booking_ref text not null unique
-    check (booking_ref ~ '^HJZ-[0-9A-F]{12}$'),
-  payment_id uuid not null unique,
-  payment_reference text not null unique
-    check (payment_reference ~ '^PAY-[0-9A-F]{12}$'),
-  state text not null default 'PREPARED'
-    check (state in ('PREPARED', 'MATERIALIZED')),
-  provider_name text,
-  provider_payment_id text,
-  provider_session_token text,
-  provider_redirect_url text,
-  psp_live boolean not null default false,
-  payment_expires_at timestamptz,
-  handoff_digest text
-    check (handoff_digest is null or handoff_digest ~ '^[0-9a-f]{64}$'),
-  created_at timestamptz not null default now(),
-  materialized_at timestamptz,
-  constraint flight_payment_initiations_owner_idempotency_unique
-    unique (owner_id, idempotency_key),
-  constraint flight_payment_initiations_materialized_shape_check
-    check (
-      (state = 'PREPARED' and materialized_at is null and handoff_digest is null) or
-      (state = 'MATERIALIZED' and materialized_at is not null and
-       payment_expires_at is not null and handoff_digest is not null)
-    )
-);
+-- Canonical signatures make exact replay safe while rejecting incompatible
+-- same-name objects before any privileged payment RPC can use them.
+do $migration$
+declare
+  canonical_table constant text :=
+    'hajiz:b12:flight_payment_initiations:table:v1';
+  item record;
+  existing_table regclass :=
+    pg_catalog.to_regclass('app_private.flight_payment_initiations');
+  existing_relkind "char";
+  existing_owner oid;
+  current_owner oid;
+  existing_signature text;
+  existing_column_count integer;
+  existing_type oid;
+  existing_not_null boolean;
+  existing_default text;
+  existing_constraint_oid oid;
+  existing_constraint_type "char";
+  existing_constraint_signature text;
+  created_now boolean := false;
+begin
+  select role_row.oid
+    into strict current_owner
+    from pg_catalog.pg_roles as role_row
+   where role_row.rolname = current_user;
 
-create index flight_payment_initiations_owner_created_idx
-  on app_private.flight_payment_initiations(owner_id, created_at desc);
+  if existing_table is null then
+    execute $ddl$
+      create table app_private.flight_payment_initiations (
+        id uuid not null default gen_random_uuid(),
+        booking_intent_id uuid not null,
+        owner_id uuid not null,
+        payment_method public.payment_method not null,
+        idempotency_key text not null,
+        request_digest text not null,
+        booking_id uuid not null,
+        booking_ref text not null,
+        payment_id uuid not null,
+        payment_reference text not null,
+        state text not null default 'PREPARED',
+        provider_name text,
+        provider_payment_id text,
+        provider_session_token text,
+        provider_redirect_url text,
+        psp_live boolean not null default false,
+        payment_expires_at timestamptz,
+        handoff_digest text,
+        created_at timestamptz not null default now(),
+        materialized_at timestamptz,
+        constraint flight_payment_initiations_pkey primary key (id),
+        constraint flight_payment_initiations_booking_intent_id_key
+          unique (booking_intent_id),
+        constraint flight_payment_initiations_booking_intent_id_fkey
+          foreign key (booking_intent_id)
+          references app_private.flight_booking_intents(id) on delete restrict,
+        constraint flight_payment_initiations_owner_id_fkey
+          foreign key (owner_id) references auth.users(id) on delete restrict,
+        constraint flight_payment_initiations_payment_method_check
+          check (payment_method in ('bankak', 'card')),
+        constraint flight_payment_initiations_idempotency_key_check
+          check (idempotency_key ~ '^hpi_req_[A-Za-z0-9_-]{16,80}$'),
+        constraint flight_payment_initiations_request_digest_check
+          check (request_digest ~ '^[0-9a-f]{64}$'),
+        constraint flight_payment_initiations_booking_id_key unique (booking_id),
+        constraint flight_payment_initiations_booking_ref_key unique (booking_ref),
+        constraint flight_payment_initiations_booking_ref_check
+          check (booking_ref ~ '^HJZ-[0-9A-F]{12}$'),
+        constraint flight_payment_initiations_payment_id_key unique (payment_id),
+        constraint flight_payment_initiations_payment_reference_key
+          unique (payment_reference),
+        constraint flight_payment_initiations_payment_reference_check
+          check (payment_reference ~ '^PAY-[0-9A-F]{12}$'),
+        constraint flight_payment_initiations_state_check
+          check (state in ('PREPARED', 'MATERIALIZED')),
+        constraint flight_payment_initiations_handoff_digest_check
+          check (handoff_digest is null or handoff_digest ~ '^[0-9a-f]{64}$'),
+        constraint flight_payment_initiations_owner_idempotency_unique
+          unique (owner_id, idempotency_key),
+        constraint flight_payment_initiations_materialized_shape_check
+          check (
+            (state = 'PREPARED' and materialized_at is null and handoff_digest is null) or
+            (state = 'MATERIALIZED' and materialized_at is not null and
+             payment_expires_at is not null and handoff_digest is not null)
+          )
+      )
+    $ddl$;
+    execute format(
+      'comment on table app_private.flight_payment_initiations is %L',
+      canonical_table
+    );
+    existing_table :=
+      pg_catalog.to_regclass('app_private.flight_payment_initiations');
+    created_now := true;
+  else
+    select table_row.relkind,
+           table_row.relowner,
+           pg_catalog.obj_description(table_row.oid, 'pg_class')
+      into existing_relkind, existing_owner, existing_signature
+      from pg_catalog.pg_class as table_row
+     where table_row.oid = existing_table;
+
+    if existing_relkind <> 'r'
+       or existing_owner is distinct from current_owner
+       or existing_signature is distinct from canonical_table then
+      raise exception
+        'app_private.flight_payment_initiations exists with a non-canonical owner, kind, or signature';
+    end if;
+  end if;
+
+  select count(*)
+    into existing_column_count
+    from pg_catalog.pg_attribute as attribute
+   where attribute.attrelid = existing_table
+     and attribute.attnum > 0
+     and not attribute.attisdropped;
+
+  if existing_column_count <> 20 then
+    raise exception
+      'app_private.flight_payment_initiations has a non-canonical column count';
+  end if;
+
+  for item in
+    select * from (values
+      ('id', 'uuid', true, 'gen_random_uuid'),
+      ('booking_intent_id', 'uuid', true, null),
+      ('owner_id', 'uuid', true, null),
+      ('payment_method', 'public.payment_method', true, null),
+      ('idempotency_key', 'text', true, null),
+      ('request_digest', 'text', true, null),
+      ('booking_id', 'uuid', true, null),
+      ('booking_ref', 'text', true, null),
+      ('payment_id', 'uuid', true, null),
+      ('payment_reference', 'text', true, null),
+      ('state', 'text', true, 'PREPARED'),
+      ('provider_name', 'text', false, null),
+      ('provider_payment_id', 'text', false, null),
+      ('provider_session_token', 'text', false, null),
+      ('provider_redirect_url', 'text', false, null),
+      ('psp_live', 'boolean', true, 'false'),
+      ('payment_expires_at', 'timestamp with time zone', false, null),
+      ('handoff_digest', 'text', false, null),
+      ('created_at', 'timestamp with time zone', true, 'now()'),
+      ('materialized_at', 'timestamp with time zone', false, null)
+    ) as columns(column_name, type_name, is_not_null, default_token)
+  loop
+    select attribute.atttypid,
+           attribute.attnotnull,
+           pg_catalog.pg_get_expr(default_row.adbin, default_row.adrelid)
+      into existing_type, existing_not_null, existing_default
+      from pg_catalog.pg_attribute as attribute
+      left join pg_catalog.pg_attrdef as default_row
+        on default_row.adrelid = attribute.attrelid
+       and default_row.adnum = attribute.attnum
+     where attribute.attrelid = existing_table
+       and attribute.attname = item.column_name
+       and attribute.attnum > 0
+       and not attribute.attisdropped;
+
+    if not found
+       or existing_type is distinct from pg_catalog.to_regtype(item.type_name)::oid
+       or existing_not_null is distinct from item.is_not_null
+       or (item.default_token is null and existing_default is not null)
+       or (item.default_token is not null and
+           (existing_default is null or
+            position(item.default_token in existing_default) = 0)) then
+      raise exception
+        'column app_private.flight_payment_initiations.% has a non-canonical definition',
+        item.column_name;
+    end if;
+
+    existing_type := null;
+    existing_not_null := null;
+    existing_default := null;
+  end loop;
+
+  if (select count(*) from pg_catalog.pg_constraint as constraint_row
+       where constraint_row.conrelid = existing_table) <> 17 then
+    raise exception
+      'app_private.flight_payment_initiations has a non-canonical constraint count';
+  end if;
+
+  for item in
+    select * from (values
+      ('flight_payment_initiations_pkey', 'p', 'hajiz:b12:flight_payment_initiations:pkey:v1'),
+      ('flight_payment_initiations_booking_intent_id_key', 'u', 'hajiz:b12:flight_payment_initiations:booking_intent_id_unique:v1'),
+      ('flight_payment_initiations_booking_intent_id_fkey', 'f', 'hajiz:b12:flight_payment_initiations:booking_intent_id_fkey:v1'),
+      ('flight_payment_initiations_owner_id_fkey', 'f', 'hajiz:b12:flight_payment_initiations:owner_id_fkey:v1'),
+      ('flight_payment_initiations_payment_method_check', 'c', 'hajiz:b12:flight_payment_initiations:payment_method_check:v1'),
+      ('flight_payment_initiations_idempotency_key_check', 'c', 'hajiz:b12:flight_payment_initiations:idempotency_key_check:v1'),
+      ('flight_payment_initiations_request_digest_check', 'c', 'hajiz:b12:flight_payment_initiations:request_digest_check:v1'),
+      ('flight_payment_initiations_booking_id_key', 'u', 'hajiz:b12:flight_payment_initiations:booking_id_unique:v1'),
+      ('flight_payment_initiations_booking_ref_key', 'u', 'hajiz:b12:flight_payment_initiations:booking_ref_unique:v1'),
+      ('flight_payment_initiations_booking_ref_check', 'c', 'hajiz:b12:flight_payment_initiations:booking_ref_check:v1'),
+      ('flight_payment_initiations_payment_id_key', 'u', 'hajiz:b12:flight_payment_initiations:payment_id_unique:v1'),
+      ('flight_payment_initiations_payment_reference_key', 'u', 'hajiz:b12:flight_payment_initiations:payment_reference_unique:v1'),
+      ('flight_payment_initiations_payment_reference_check', 'c', 'hajiz:b12:flight_payment_initiations:payment_reference_check:v1'),
+      ('flight_payment_initiations_state_check', 'c', 'hajiz:b12:flight_payment_initiations:state_check:v1'),
+      ('flight_payment_initiations_handoff_digest_check', 'c', 'hajiz:b12:flight_payment_initiations:handoff_digest_check:v1'),
+      ('flight_payment_initiations_owner_idempotency_unique', 'u', 'hajiz:b12:flight_payment_initiations:owner_idempotency_unique:v1'),
+      ('flight_payment_initiations_materialized_shape_check', 'c', 'hajiz:b12:flight_payment_initiations:materialized_shape_check:v1')
+    ) as constraints(constraint_name, constraint_type, signature)
+  loop
+    select constraint_row.oid,
+           constraint_row.contype,
+           pg_catalog.obj_description(constraint_row.oid, 'pg_constraint')
+      into existing_constraint_oid,
+           existing_constraint_type,
+           existing_constraint_signature
+      from pg_catalog.pg_constraint as constraint_row
+     where constraint_row.conrelid = existing_table
+       and constraint_row.conname = item.constraint_name;
+
+    if existing_constraint_oid is null
+       or existing_constraint_type::text is distinct from item.constraint_type then
+      raise exception
+        'constraint % on app_private.flight_payment_initiations is missing or non-canonical',
+        item.constraint_name;
+    elsif created_now then
+      execute format(
+        'comment on constraint %I on app_private.flight_payment_initiations is %L',
+        item.constraint_name,
+        item.signature
+      );
+    elsif existing_constraint_signature is distinct from item.signature then
+      raise exception
+        'constraint % on app_private.flight_payment_initiations has a non-canonical signature',
+        item.constraint_name;
+    end if;
+
+    existing_constraint_oid := null;
+    existing_constraint_type := null;
+    existing_constraint_signature := null;
+  end loop;
+end
+$migration$;
+
+do $migration$
+declare
+  canonical_index constant text :=
+    'hajiz:b12:flight_payment_initiations:owner_created_idx:v1';
+  target_table regclass :=
+    pg_catalog.to_regclass('app_private.flight_payment_initiations');
+  existing_index regclass :=
+    pg_catalog.to_regclass('app_private.flight_payment_initiations_owner_created_idx');
+  existing_relation oid;
+  existing_unique boolean;
+  existing_valid boolean;
+  existing_ready boolean;
+  existing_key_count smallint;
+  existing_definition text;
+  existing_signature text;
+begin
+  if existing_index is null then
+    execute $ddl$
+      create index flight_payment_initiations_owner_created_idx
+        on app_private.flight_payment_initiations(owner_id, created_at desc)
+    $ddl$;
+    execute format(
+      'comment on index app_private.flight_payment_initiations_owner_created_idx is %L',
+      canonical_index
+    );
+  else
+    select index_row.indrelid,
+           index_row.indisunique,
+           index_row.indisvalid,
+           index_row.indisready,
+           index_row.indnkeyatts,
+           pg_catalog.pg_get_indexdef(index_row.indexrelid),
+           pg_catalog.obj_description(index_row.indexrelid, 'pg_class')
+      into existing_relation,
+           existing_unique,
+           existing_valid,
+           existing_ready,
+           existing_key_count,
+           existing_definition,
+           existing_signature
+      from pg_catalog.pg_index as index_row
+     where index_row.indexrelid = existing_index;
+
+    if existing_relation is distinct from target_table::oid
+       or existing_unique
+       or not existing_valid
+       or not existing_ready
+       or existing_key_count <> 2
+       or position('(owner_id, created_at DESC)' in existing_definition) = 0
+       or existing_signature is distinct from canonical_index then
+      raise exception
+        'index app_private.flight_payment_initiations_owner_created_idx has a non-canonical definition';
+    end if;
+  end if;
+end
+$migration$;
 
 alter table app_private.flight_payment_initiations enable row level security;
 alter table app_private.flight_payment_initiations no force row level security;
 
-create policy flight_payment_initiations_direct_access_denied
-on app_private.flight_payment_initiations
-for all
-to anon, authenticated
-using (false)
-with check (false);
+do $migration$
+declare
+  canonical_policy constant text :=
+    'hajiz:b12:flight_payment_initiations:direct_access_denied:v1';
+  target_table regclass :=
+    pg_catalog.to_regclass('app_private.flight_payment_initiations');
+  existing_policy_oid oid;
+  existing_command "char";
+  existing_permissive boolean;
+  existing_roles oid[];
+  existing_role_names text[];
+  existing_using text;
+  existing_check text;
+  existing_signature text;
+begin
+  select policy_row.oid,
+         policy_row.polcmd,
+         policy_row.polpermissive,
+         policy_row.polroles,
+         pg_catalog.pg_get_expr(policy_row.polqual, policy_row.polrelid),
+         pg_catalog.pg_get_expr(policy_row.polwithcheck, policy_row.polrelid),
+         pg_catalog.obj_description(policy_row.oid, 'pg_policy')
+    into existing_policy_oid,
+         existing_command,
+         existing_permissive,
+         existing_roles,
+         existing_using,
+         existing_check,
+         existing_signature
+    from pg_catalog.pg_policy as policy_row
+   where policy_row.polrelid = target_table
+     and policy_row.polname = 'flight_payment_initiations_direct_access_denied';
+
+  if existing_policy_oid is null then
+    execute $ddl$
+      create policy flight_payment_initiations_direct_access_denied
+      on app_private.flight_payment_initiations
+      for all
+      to anon, authenticated
+      using (false)
+      with check (false)
+    $ddl$;
+    execute format(
+      'comment on policy flight_payment_initiations_direct_access_denied on app_private.flight_payment_initiations is %L',
+      canonical_policy
+    );
+  else
+    select pg_catalog.array_agg(role_row.rolname order by role_row.rolname)
+      into existing_role_names
+      from pg_catalog.pg_roles as role_row
+     where role_row.oid = any(existing_roles);
+
+    if existing_command <> '*'
+       or not existing_permissive
+       or pg_catalog.cardinality(existing_roles) <> 2
+       or existing_role_names is distinct from array['anon', 'authenticated']::text[]
+       or pg_catalog.regexp_replace(
+            coalesce(existing_using, ''),
+            '[()[:space:]]',
+            '',
+            'g'
+          ) <> 'false'
+       or pg_catalog.regexp_replace(
+            coalesce(existing_check, ''),
+            '[()[:space:]]',
+            '',
+            'g'
+          ) <> 'false'
+       or existing_signature is distinct from canonical_policy then
+      raise exception
+        'policy flight_payment_initiations_direct_access_denied has a non-canonical definition';
+    end if;
+  end if;
+end
+$migration$;
 
 revoke all on table app_private.flight_payment_initiations
   from public, anon, authenticated, service_role;

@@ -92,8 +92,8 @@ export async function runSupplierAdapterTests(vite, test) {
     const disabled = { ...mock, capabilities: { ...mock.capabilities, cancel: false } }
     assert.throws(() => contract.requireCapability(disabled, "cancel"))
   })
-  await test("mock health declares synthetic no-network operation", async () => {
-    assert.deepEqual(await mock.health(), { providerName: mock.providerName, healthy: true, synthetic: true, network: false, capabilities: mock.capabilities })
+  await test("mock health declares synthetic non-production no-network operation", async () => {
+    assert.deepEqual(await mock.health(), { providerName: mock.providerName, healthy: true, synthetic: true, network: false, productionAllowed: false, capabilities: mock.capabilities })
   })
   await test("supplier layer has no network or direct persistence authority", async () => {
     const files = await fs.readdir(new URL("../src/server/suppliers", import.meta.url))

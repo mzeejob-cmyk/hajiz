@@ -138,7 +138,10 @@ await test("B13-58A migration indexes the non-unique booking-intent foreign key"
 
 const travelport=await fs.readFile(new URL("../src/server/suppliers/travelportFlightSupplier.js",import.meta.url),"utf8")
 await test("B13-59 Travelport booking remains fail-closed",()=>{assert.match(travelport,/create_booking:\s*false/);assert.match(travelport,/async createBooking\(\) \{ requireCapability\(adapter, "create_booking"\) \}/);assert.match(travelport,/get_booking_status:\s*false/)})
-await test("B13-60 deterministic mock remains explicitly non-network",async()=>{const health=await createMockFlightSupplier().health();assert.equal(health.synthetic,true);assert.equal(health.network,false)})
+await test("B13-60 deterministic mock remains explicitly non-live and non-network",async()=>{const adapter=createMockFlightSupplier();const health=await adapter.health();assert.equal(adapter.synthetic,true);assert.equal(adapter.productionAllowed,false);assert.equal(health.synthetic,true);assert.equal(health.network,false);assert.equal(health.productionAllowed,false)})
+await test("B13-60A synthetic booking adapter is forbidden in production",()=>assert.throws(()=>createMockFlightSupplier({env:{NODE_ENV:"production"}}),/synthetic booking supplier is forbidden in production/))
+await test("B13-60B production registry rejects a declared non-production supplier",()=>{const adapter=createMockFlightSupplier({env:{NODE_ENV:"test"}});assert.throws(()=>createSupplierRegistry({adapters:[adapter],enabledProviderNames:["mock"],defaultProviderName:"mock",env:{NODE_ENV:"production"}}),/non-production supplier is forbidden in production/)})
+await test("B13-60C non-production registry behavior remains available",()=>{const adapter=createMockFlightSupplier({env:{NODE_ENV:"test"}});const registry=createSupplierRegistry({adapters:[adapter],enabledProviderNames:["mock"],defaultProviderName:"mock",env:{NODE_ENV:"test"}});assert.equal(registry.getConfiguredFlightSupplier(),adapter)})
 
 const docs=await fs.readFile(new URL("../docs/FLIGHT_SUPPLIER_BOOKING_EXECUTION_B13.md",import.meta.url),"utf8")
 await test("B13-61 docs preserve payment supplier and ticketing separation",()=>{assert.match(docs,/Payment initiation[\s\S]*never supplier-booking authority/);assert.match(docs,/B13 success never means a ticket was issued/)})

@@ -1,10 +1,11 @@
 import { assertFlightSupplier } from "./flightSupplierContract.js"
 import { assertSupplierOperation } from "./supplierOperations.js"
 
-export function createSupplierRegistry({ adapters, enabledProviderNames, defaultProviderName }) {
+export function createSupplierRegistry({ adapters, enabledProviderNames, defaultProviderName, env = process.env }) {
   if (!Array.isArray(adapters) || !Array.isArray(enabledProviderNames)) throw new TypeError("server supplier configuration is required")
   const byName = new Map(adapters.map((adapter) => {
     assertFlightSupplier(adapter)
+    if (env?.NODE_ENV === "production" && (adapter.synthetic === true || adapter.productionAllowed === false)) throw new Error("non-production supplier is forbidden in production")
     return [adapter.providerName, adapter]
   }))
   if (new Set(adapters.map((adapter) => adapter.providerName)).size !== adapters.length) throw new Error("supplier providers must be unique")

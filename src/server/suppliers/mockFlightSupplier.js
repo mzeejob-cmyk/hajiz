@@ -5,7 +5,8 @@ const PROVIDER = "mock"
 const EXPIRES_AT = "2026-09-15T06:20:00.000Z"
 const freeze = (value) => Object.freeze(value)
 
-export function createMockFlightSupplier() {
+export function createMockFlightSupplier({ env = process.env } = {}) {
+  if (env?.NODE_ENV === "production") throw new Error("synthetic booking supplier is forbidden in production")
   const bookings = new Map()
   const statusReads = new Map()
   const capabilities = freeze({
@@ -35,8 +36,10 @@ export function createMockFlightSupplier() {
 
   const adapter = {
     providerName: PROVIDER,
+    synthetic: true,
+    productionAllowed: false,
     capabilities,
-    async health() { return freeze({ providerName: PROVIDER, healthy: true, synthetic: true, network: false, capabilities }) },
+    async health() { return freeze({ providerName: PROVIDER, healthy: true, synthetic: true, network: false, productionAllowed: false, capabilities }) },
     async searchFlights(request) {
       requireCapability(adapter, "search_flights")
       const safe = validateSearchRequest(request)
