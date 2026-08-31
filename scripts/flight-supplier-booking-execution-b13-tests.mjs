@@ -124,6 +124,8 @@ await test("B13-48 frontend makes no ticket-issued claim",()=>assert.doesNotMatc
 await vite.close()
 
 const migration=await fs.readFile(new URL("../supabase/migrations/20260829213000_flight_supplier_booking_execution_v1.sql",import.meta.url),"utf8")
+const rt01Migration=await fs.readFile(new URL("../supabase/migrations/20260831183000_fix_flight_supplier_booking_execution_accepted_persistence.sql",import.meta.url),"utf8")
+const rt01Runtime=await fs.readFile(new URL("./flight-runtime-rt01-staging-test.sql",import.meta.url),"utf8")
 await test("B13-49 migration creates a private one-execution-per-booking record",()=>{assert.match(migration,/create table app_private\.flight_supplier_booking_executions/);assert.match(migration,/booking_id uuid not null unique/);assert.match(migration,/owner_idempotency_unique/)})
 await test("B13-50 migration persists attempt acceptance and reconciliation timestamps",()=>{for(const field of ["request_sent_at","response_received_at","supplier_accepted_at","unknown_outcome_at","reconciled_at","reconciliation_required"])assert.match(migration,new RegExp(field))})
 await test("B13-51 migration verifies payment and booking authority",()=>{assert.match(migration,/payment\.status <> 'confirmed'/);assert.match(migration,/booking\.status <> 'payment_confirmed'/);assert.match(migration,/payment_row\.booking_id=booking\.id/)})
@@ -135,6 +137,8 @@ await test("B13-56 migration RPCs pin empty search_path and grant service only",
 await test("B13-57 migration has no undocumented BYPASSRLS dependency",()=>{assert.doesNotMatch(migration,/bypassrls/i);assert.match(migration,/B11\/B12\/B13 private tables must share one owner/)})
 await test("B13-58 migration registers drift signatures and safe metadata bounds",()=>{assert.match(migration,/non-canonical signature/);assert.match(migration,/pg_column_size\(safe_metadata\) <= 4096/);assert.match(migration,/flight_supplier_executions_provider_ref_idx:v1/)})
 await test("B13-58A migration indexes the non-unique booking-intent foreign key",()=>assert.match(migration,/create index flight_supplier_executions_booking_intent_idx[\s\S]*booking_intent_id/))
+await test("B13-58B RT-01 preserves the original migration and qualifies the accepted timestamp",()=>{assert.match(rt01Migration,/update app_private\.flight_supplier_booking_executions as target/);assert.match(rt01Migration,/else target\.supplier_accepted_at end/);assert.doesNotMatch(rt01Migration,/else supplier_accepted_at end/);assert.match(rt01Migration,/language plpgsql security definer set search_path = ''/);assert.match(rt01Migration,/grant execute[\s\S]*to service_role/);assert.match(rt01Migration,/revoke all[\s\S]*from public, anon, authenticated/)})
+await test("B13-58C RT-01 runtime regression executes the full accepted path with rollback",()=>{for(const pattern of [/mark_flight_supplier_booking_request_sent_v1/,/complete_flight_supplier_booking_execution_v1/,/'ACCEPTED'/,/execution\.supplier_accepted_at is not null/,/booking_status <> 'confirmed'/,/payment_status <> 'confirmed'/,/rollback;/])assert.match(rt01Runtime,pattern)})
 
 const travelport=await fs.readFile(new URL("../src/server/suppliers/travelportFlightSupplier.js",import.meta.url),"utf8")
 await test("B13-59 Travelport booking remains fail-closed",()=>{assert.match(travelport,/create_booking:\s*false/);assert.match(travelport,/async createBooking\(\) \{ requireCapability\(adapter, "create_booking"\) \}/);assert.match(travelport,/get_booking_status:\s*false/)})
