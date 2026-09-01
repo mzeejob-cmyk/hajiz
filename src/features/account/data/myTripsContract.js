@@ -13,6 +13,6 @@ export function toMyTripsPresentation(bookings, payments) {
     const createdAt = new Date(booking?.created_at)
     if (!reference || Number.isNaN(createdAt.valueOf())) throw new Error("MY_TRIPS_INVALID_RESPONSE")
     const amount = booking?.sold_price === null || booking?.sold_price === undefined ? null : Number(booking.sold_price)
-    return Object.freeze({ key: `account-booking-${index}`, bookingState: safeEnum(booking?.status, MY_TRIPS_BOOKING_STATES, "failed"), paymentState: safeEnum(payment?.status, MY_TRIPS_PAYMENT_STATES, "awaiting"), reference, createdAt: createdAt.toISOString(), amount: Number.isFinite(amount) ? amount : null, currency: safeText(booking?.currency, "—"), paymentMethod: safeText(booking?.pay_method, "—") })
+    return Object.freeze({ key: `account-booking-${index}`, bookingState: safeEnum(booking?.status, MY_TRIPS_BOOKING_STATES, "failed"), paymentState: safeEnum(payment?.status, MY_TRIPS_PAYMENT_STATES, "awaiting"), reference, createdAt: createdAt.toISOString(), amount: Number.isFinite(amount) ? amount : null, currency: safeText(booking?.currency, "—"), paymentMethod: safeText(booking?.pay_method, "—"), canDownloadTicket: false })
   })
 }
