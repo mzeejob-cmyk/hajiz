@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Container } from "../../../design-system/primitives/Container.jsx"
-import { HOTEL_FIXTURES } from "../data/hotelFixtures.js"
+import { HOTEL_FIXTURES } from "../data/hotelCanonicalFixtures.js"
 
 const GROUPS = [
   ["التصنيف", ["5 نجوم", "4 نجوم", "3 نجوم"]],
@@ -14,7 +14,7 @@ function Filters({ selected, onToggle, onClear }) {
 }
 
 function HotelCard({ hotel, onRooms }) {
-  return <article className="hotel-card" data-hotel-key={hotel.key} data-presentation-fixture="synthetic"><div className="hotel-image-placeholder" aria-hidden="true">▦</div><div className="hotel-card-copy"><div className="hotel-name-row"><h2>{hotel.name}</h2>{hotel.badge && <span className="hotel-badge">{hotel.badge}</span>}</div><div className="hotel-stars" aria-label={`${hotel.stars.length} نجوم`}>{hotel.stars}</div><p>{hotel.location}</p><p>{hotel.roomPreview}</p><div className="hotel-meta"><span>{hotel.meal}</span><span>{hotel.cancellation}</span></div></div><div className="hotel-price-block"><small>يبدأ من · 3 ليالٍ</small><strong className="latin-text" dir="ltr">{hotel.price} AED</strong><span>{hotel.tax}</span><button type="button" onClick={() => onRooms(hotel.key)}>عرض الغرف</button><small>{hotel.roomsCount}</small></div></article>
+  return <article className="hotel-card" data-hotel-key={hotel.key} data-canonical-hotel-id={hotel.canonicalHotelId} data-presentation-fixture="synthetic"><div className="hotel-image-placeholder" aria-hidden="true">▦</div><div className="hotel-card-copy"><div className="hotel-name-row"><h2>{hotel.name}</h2>{hotel.badge && <span className="hotel-badge">{hotel.badge}</span>}</div><div className="hotel-stars" aria-label={`${hotel.stars.length} نجوم`}>{hotel.stars}</div><p>{hotel.location}</p><p>{hotel.roomPreview}</p><div className="hotel-meta"><span>{hotel.meal}</span><span>{hotel.cancellation}</span></div></div><div className="hotel-price-block"><small>يبدأ من · 3 ليالٍ</small><strong className="latin-text" dir="ltr">{hotel.price} AED</strong><span>{hotel.tax}</span><button type="button" onClick={() => onRooms(hotel.canonicalHotelId)}>عرض الغرف</button><small>{hotel.roomsCount}</small></div></article>
 }
 
 export function HotelResults({ onRooms }) {
