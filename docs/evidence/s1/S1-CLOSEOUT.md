@@ -11,8 +11,8 @@ This document indexes original runtime artifacts for independent review. It does
 
 ## Gate record
 
-- S1-A: MATCH/PASS according to recorded runtime evidence.
-- S1-C0: PASS according to recorded direct PostgreSQL concurrency evidence. Two persistent sessions, distinct backend PIDs 1036690 and 1036692, overlapping read-only transactions, rollback and post-rollback probes passed with TLS verification enabled.
+- S1-A: MATCH/PASS according to the [original ground-truth report](s1-a/S1-A-STAGING-GROUND-TRUTH.md).
+- S1-C0: PASS according to the [original PowerShell output](s1-c0/S1-C0-POWERSHELL-OUTPUT.txt). Two persistent sessions, distinct backend PIDs 1036690 and 1036692, overlapping read-only transactions, rollback and post-rollback probes passed with TLS verification enabled.
 - Targeted EXPIRY: PASS — `S1B_EXPIRY_20260904T195546899Z_c5b8d5e5`.
 - Full S1-B: PASS — `S1B_20260904T195834511Z_ecc45498`.
 

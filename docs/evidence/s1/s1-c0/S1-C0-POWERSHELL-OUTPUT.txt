@@ -1,0 +1,14 @@
+TLS verified: YES
+PID A: 1036690
+Overlap A start: 2026-09-04 16:56:05.665992+00
+Overlap A end: 2026-09-04 16:56:08.669089+00
+PID B: 1036692
+Overlap B start: 2026-09-04 16:56:05.668678+00
+Overlap B end: 2026-09-04 16:56:08.669089+00
+Transaction overlap: YES
+Rollback A: PASS
+Post-rollback probe A: PASS
+Rollback B: PASS
+Post-rollback probe B: PASS
+Final S1-C0: PASS
+PS C:\Users\mzeep>
