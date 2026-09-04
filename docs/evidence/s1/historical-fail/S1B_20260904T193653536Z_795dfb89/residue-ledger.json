@@ -1,0 +1,1101 @@
+[
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "auth.users",
+    "id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "owner": null,
+    "aggregateId": null,
+    "parents": [],
+    "children": [
+      {
+        "table": "public.bookings",
+        "id": "86640509-54a4-41de-8714-7ea3afdc94b7"
+      },
+      {
+        "table": "public.bookings",
+        "id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18"
+      },
+      {
+        "table": "public.bookings",
+        "id": "249e7bc8-2e9a-4e65-81f8-57054af4999e"
+      },
+      {
+        "table": "public.bookings",
+        "id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289"
+      },
+      {
+        "table": "public.bookings",
+        "id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618"
+      },
+      {
+        "table": "public.payments",
+        "id": "dcdd0a01-6449-4786-9117-b7abd14267a2"
+      },
+      {
+        "table": "public.payments",
+        "id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5"
+      },
+      {
+        "table": "public.payments",
+        "id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458"
+      },
+      {
+        "table": "public.payments",
+        "id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d"
+      },
+      {
+        "table": "public.payments",
+        "id": "50c182d1-b854-402a-8280-93605bf9ed23"
+      },
+      {
+        "table": "public.payment_receipts",
+        "id": "eaf6fa2f-0037-4582-b620-d2b7dd4c7aa9"
+      }
+    ],
+    "reason": "required FK parent in immutable-row dependency closure",
+    "tests": [
+      "metadata",
+      "bankak",
+      "crash13",
+      "issued",
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "auth.users",
+    "id": "104512d8-0ded-4d23-a01d-cb96a13148e2",
+    "owner": null,
+    "aggregateId": null,
+    "parents": [],
+    "children": [
+      {
+        "table": "public.payments",
+        "id": "50c182d1-b854-402a-8280-93605bf9ed23"
+      }
+    ],
+    "reason": "required FK parent in immutable-row dependency closure",
+    "tests": [
+      "bankak"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "auth.users",
+    "id": "1f86d35c-1aa6-4759-b689-20b14196529a",
+    "owner": null,
+    "aggregateId": null,
+    "parents": [],
+    "children": [
+      {
+        "table": "public.bookings",
+        "id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f"
+      },
+      {
+        "table": "public.payments",
+        "id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb"
+      }
+    ],
+    "reason": "required FK parent in immutable-row dependency closure",
+    "tests": [
+      "ownerb"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.offers",
+    "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+    "owner": null,
+    "aggregateId": null,
+    "parents": [],
+    "children": [
+      {
+        "table": "public.bookings",
+        "id": "86640509-54a4-41de-8714-7ea3afdc94b7"
+      },
+      {
+        "table": "public.bookings",
+        "id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18"
+      },
+      {
+        "table": "public.bookings",
+        "id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f"
+      },
+      {
+        "table": "public.bookings",
+        "id": "249e7bc8-2e9a-4e65-81f8-57054af4999e"
+      },
+      {
+        "table": "public.bookings",
+        "id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289"
+      },
+      {
+        "table": "public.bookings",
+        "id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618"
+      }
+    ],
+    "reason": "required FK parent in immutable-row dependency closure",
+    "tests": [
+      "metadata",
+      "bankak",
+      "ownerb",
+      "crash13",
+      "issued",
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.bookings",
+    "id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "table": "public.offers",
+        "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payments",
+        "id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d"
+      }
+    ],
+    "reason": "required FK parent of retained payment",
+    "tests": [
+      "metadata"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.bookings",
+    "id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "table": "public.offers",
+        "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payments",
+        "id": "50c182d1-b854-402a-8280-93605bf9ed23"
+      }
+    ],
+    "reason": "required FK parent of retained payment",
+    "tests": [
+      "bankak"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.bookings",
+    "id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f",
+    "owner": "1f86d35c-1aa6-4759-b689-20b14196529a",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "auth.users",
+        "id": "1f86d35c-1aa6-4759-b689-20b14196529a"
+      },
+      {
+        "table": "public.offers",
+        "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payments",
+        "id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb"
+      }
+    ],
+    "reason": "required FK parent of retained payment",
+    "tests": [
+      "ownerb"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.bookings",
+    "id": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "table": "public.offers",
+        "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payments",
+        "id": "dcdd0a01-6449-4786-9117-b7abd14267a2"
+      }
+    ],
+    "reason": "required FK parent of retained payment",
+    "tests": [
+      "crash13"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.bookings",
+    "id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "table": "public.offers",
+        "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payments",
+        "id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5"
+      }
+    ],
+    "reason": "required FK parent of retained payment",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.bookings",
+    "id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "table": "public.offers",
+        "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payments",
+        "id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458"
+      }
+    ],
+    "reason": "required FK parent of retained payment",
+    "tests": [
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payments",
+    "id": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.bookings",
+        "id": "249e7bc8-2e9a-4e65-81f8-57054af4999e"
+      },
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payment_provider_events",
+        "id": "55"
+      }
+    ],
+    "reason": "required FK parent of immutable event/receipt",
+    "tests": [
+      "crash13"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payments",
+    "id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.bookings",
+        "id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289"
+      },
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payment_provider_events",
+        "id": "56"
+      }
+    ],
+    "reason": "required FK parent of immutable event/receipt",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payments",
+    "id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.bookings",
+        "id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618"
+      },
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payment_provider_events",
+        "id": "57"
+      }
+    ],
+    "reason": "required FK parent of immutable event/receipt",
+    "tests": [
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payments",
+    "id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.bookings",
+        "id": "86640509-54a4-41de-8714-7ea3afdc94b7"
+      },
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payment_provider_events",
+        "id": "58"
+      }
+    ],
+    "reason": "required FK parent of immutable event/receipt",
+    "tests": [
+      "metadata"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payments",
+    "id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+    "owner": "1f86d35c-1aa6-4759-b689-20b14196529a",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.bookings",
+        "id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f"
+      },
+      {
+        "table": "auth.users",
+        "id": "1f86d35c-1aa6-4759-b689-20b14196529a"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payment_provider_events",
+        "id": "59"
+      }
+    ],
+    "reason": "required FK parent of immutable event/receipt",
+    "tests": [
+      "ownerb"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payments",
+    "id": "50c182d1-b854-402a-8280-93605bf9ed23",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.bookings",
+        "id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18"
+      },
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "table": "auth.users",
+        "id": "104512d8-0ded-4d23-a01d-cb96a13148e2"
+      }
+    ],
+    "children": [
+      {
+        "table": "public.payment_receipts",
+        "id": "eaf6fa2f-0037-4582-b620-d2b7dd4c7aa9"
+      }
+    ],
+    "reason": "required FK parent of immutable event/receipt",
+    "tests": [
+      "bankak"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_provider_events",
+    "id": "55",
+    "owner": null,
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.payments",
+        "id": "dcdd0a01-6449-4786-9117-b7abd14267a2"
+      }
+    ],
+    "children": [],
+    "reason": "provider_events_immutable",
+    "tests": [
+      "crash13"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_provider_events",
+    "id": "56",
+    "owner": null,
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.payments",
+        "id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5"
+      }
+    ],
+    "children": [],
+    "reason": "provider_events_immutable",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_provider_events",
+    "id": "57",
+    "owner": null,
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.payments",
+        "id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458"
+      }
+    ],
+    "children": [],
+    "reason": "provider_events_immutable",
+    "tests": [
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_provider_events",
+    "id": "58",
+    "owner": null,
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.payments",
+        "id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d"
+      }
+    ],
+    "children": [],
+    "reason": "provider_events_immutable",
+    "tests": [
+      "metadata"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_provider_events",
+    "id": "59",
+    "owner": null,
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.payments",
+        "id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb"
+      }
+    ],
+    "children": [],
+    "reason": "provider_events_immutable",
+    "tests": [
+      "ownerb"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_receipts",
+    "id": "eaf6fa2f-0037-4582-b620-d2b7dd4c7aa9",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": null,
+    "parents": [
+      {
+        "table": "public.payments",
+        "id": "50c182d1-b854-402a-8280-93605bf9ed23"
+      },
+      {
+        "table": "auth.users",
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      }
+    ],
+    "children": [],
+    "reason": "receipts_immutable",
+    "tests": [
+      "bankak"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "242",
+    "owner": null,
+    "aggregateId": "50c182d1-b854-402a-8280-93605bf9ed23",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "bankak"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "212",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "crash13"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "213",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "214",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "215",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "metadata"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "216",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "50c182d1-b854-402a-8280-93605bf9ed23",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "bankak"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "217",
+    "owner": "1f86d35c-1aa6-4759-b689-20b14196529a",
+    "aggregateId": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "ownerb"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "218",
+    "owner": null,
+    "aggregateId": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "crash13"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "219",
+    "owner": null,
+    "aggregateId": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "220",
+    "owner": null,
+    "aggregateId": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "221",
+    "owner": null,
+    "aggregateId": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "metadata"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "222",
+    "owner": null,
+    "aggregateId": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "ownerb"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "226",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "crash13"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "227",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "crash13"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "228",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "229",
+    "owner": null,
+    "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "231",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "232",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "233",
+    "owner": null,
+    "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "issued"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "234",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "235",
+    "owner": null,
+    "aggregateId": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "236",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "237",
+    "owner": null,
+    "aggregateId": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "none"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "238",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "86640509-54a4-41de-8714-7ea3afdc94b7",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "metadata"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "239",
+    "owner": null,
+    "aggregateId": "86640509-54a4-41de-8714-7ea3afdc94b7",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "metadata"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "240",
+    "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+    "aggregateId": "86640509-54a4-41de-8714-7ea3afdc94b7",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "metadata"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "241",
+    "owner": null,
+    "aggregateId": "86640509-54a4-41de-8714-7ea3afdc94b7",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "metadata"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  },
+  {
+    "runId": "S1B_20260904T193653536Z_795dfb89",
+    "table": "public.payment_audit",
+    "id": "243",
+    "owner": "104512d8-0ded-4d23-a01d-cb96a13148e2",
+    "aggregateId": "50c182d1-b854-402a-8280-93605bf9ed23",
+    "parents": [],
+    "children": [],
+    "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+    "tests": [
+      "bankak"
+    ],
+    "supplierExecutionEligibility": "NO",
+    "productionRelevance": "NONE",
+    "containsRealPII": "NO"
+  }
+]

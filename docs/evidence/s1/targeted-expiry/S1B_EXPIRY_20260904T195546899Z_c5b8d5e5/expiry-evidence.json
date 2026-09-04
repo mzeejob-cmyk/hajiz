@@ -1,0 +1,86 @@
+{
+  "run": "S1B_EXPIRY_20260904T195546899Z_c5b8d5e5",
+  "result": "PASS",
+  "classification": null,
+  "evidence": [
+    {
+      "step": "TRANSACTION_BEGIN",
+      "status": "PASS",
+      "target": "HAJIZ STAGING",
+      "synthetic": true,
+      "realPII": false,
+      "liveSupplierEligible": false
+    },
+    {
+      "step": "FIXTURE_CREATED_IN_TRANSACTION",
+      "booking": "98d7d085-f061-4505-9b4f-77c95efcc6d0",
+      "payment": "b76b6c8a-93fd-4bf2-8d3c-260ba6a4e9f3",
+      "publicIntentToken": "hbi_v1_7566cc68ee324982a3e6770e46f95deb",
+      "internalIntentId": "b704ed8a-25cb-4beb-b312-19f8fe0575b7",
+      "provider": "mock",
+      "committed": false
+    },
+    {
+      "step": "PRE_CONFIRMATION_TIMING",
+      "transaction_timestamp": "2026-09-04 19:55:48.186266+00",
+      "clock_timestamp": "2026-09-04 19:55:50.197139+00",
+      "expires_at": "2026-09-04 19:55:47.186266+00",
+      "expired_predicate": true
+    },
+    {
+      "step": "FUTURE_CALLER_TIME_CONFIRMATION",
+      "callerOccurredAt": "2099-01-01T00:00:00Z",
+      "confirmationReturn": false
+    },
+    {
+      "step": "STATE_AFTER_REJECTED_CONFIRMATION",
+      "paymentStatus": "awaiting",
+      "bookingStatus": "pending_payment",
+      "supplierProgression": {
+        "b13": 0,
+        "b14": 0,
+        "operations": 0
+      }
+    },
+    {
+      "step": "LEGITIMATE_EXPIRY_TRANSITION",
+      "expiryReturn": true
+    },
+    {
+      "step": "FINAL_STATE_BEFORE_ROLLBACK",
+      "paymentStatus": "expired",
+      "bookingStatus": "pending_payment"
+    },
+    {
+      "step": "ROLLBACK",
+      "status": "PASS"
+    },
+    {
+      "step": "POST_ROLLBACK_RESIDUE",
+      "counts": {
+        "bookings": 0,
+        "payments": 0,
+        "flightBookingIntents": 0,
+        "flightPaymentInitiations": 0,
+        "providerEvents": 0,
+        "paymentAudit": 0,
+        "paymentReceipts": 0,
+        "storageObjects": 0
+      }
+    },
+    {
+      "step": "POST_ROLLBACK_RESIDUE_FINAL",
+      "counts": {
+        "bookings": 0,
+        "payments": 0,
+        "flightBookingIntents": 0,
+        "flightPaymentInitiations": 0,
+        "providerEvents": 0,
+        "paymentAudit": 0,
+        "paymentReceipts": 0,
+        "storageObjects": 0
+      }
+    }
+  ],
+  "error": null
+}

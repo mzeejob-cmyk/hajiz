@@ -1,0 +1,622 @@
+{
+  "run": "S1B_20260904T195834511Z_ecc45498",
+  "result": "PASS",
+  "sections": {
+    "PAYMENT AUTHORITY": {
+      "status": "PASS",
+      "objective": "PAYMENT CONFIRMED != SUPPLIER BOOKING CONFIRMED; B11/B12 lineage and Model B",
+      "expected": "PAYMENT CONFIRMED != SUPPLIER BOOKING CONFIRMED; B11/B12 lineage and Model B",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [
+        {
+          "label": "crash13",
+          "owner": "064ea040-a5c2-4b92-afbd-015c6a23091e",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26",
+          "ref": "HJZ-8653BE769617",
+          "intent": "hbi_v1_fe1856f8d393450598b44f64ac906b29",
+          "method": "card",
+          "b13": "hsb_req_S1B_20260904T195834511Z_ecc45498_crash13",
+          "b14": "hst_req_S1B_20260904T195834511Z_ecc45498_crash13",
+          "digest": "d8e4fe724e290908f0352d30a9b07f381305b73a25b8ac05b8335df22a1e0784",
+          "committed": true
+        },
+        {
+          "label": "issued",
+          "owner": "064ea040-a5c2-4b92-afbd-015c6a23091e",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4",
+          "ref": "HJZ-B8F9DD856806",
+          "intent": "hbi_v1_594990b8209840c7af3057639cff98a4",
+          "method": "card",
+          "b13": "hsb_req_S1B_20260904T195834511Z_ecc45498_issued",
+          "b14": "hst_req_S1B_20260904T195834511Z_ecc45498_issued",
+          "digest": "566e80c081e9e3881b472e37d4bb53907856412284465b9d0c2ed74e5929cced",
+          "committed": true
+        },
+        {
+          "label": "none",
+          "owner": "064ea040-a5c2-4b92-afbd-015c6a23091e",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf",
+          "ref": "HJZ-CB28EB2379DE",
+          "intent": "hbi_v1_f7c2fe1ebf884b4d808fd80f3ca06a01",
+          "method": "card",
+          "b13": "hsb_req_S1B_20260904T195834511Z_ecc45498_none",
+          "b14": "hst_req_S1B_20260904T195834511Z_ecc45498_none",
+          "digest": "0bc56ddaf465af2a48cbeb60b691e704e2926d67c112e0a71506a37c13bcd2b3",
+          "committed": true
+        },
+        {
+          "label": "metadata",
+          "owner": "064ea040-a5c2-4b92-afbd-015c6a23091e",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456",
+          "ref": "HJZ-9B55D4D2806A",
+          "intent": "hbi_v1_3be6c82a1d074f2a9166ca51c7d1501d",
+          "method": "card",
+          "b13": "hsb_req_S1B_20260904T195834511Z_ecc45498_metadata",
+          "b14": "hst_req_S1B_20260904T195834511Z_ecc45498_metadata",
+          "digest": "06d26ca21910d5b00f69f0cdd547f7393e581cea3701a8dcf30a051481456219",
+          "committed": true
+        },
+        {
+          "label": "bankak",
+          "owner": "064ea040-a5c2-4b92-afbd-015c6a23091e",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7",
+          "ref": "HJZ-DBE0742F6245",
+          "intent": "hbi_v1_bc636ff3a0554574a31516109d27fd9b",
+          "method": "bankak",
+          "b13": "hsb_req_S1B_20260904T195834511Z_ecc45498_bankak",
+          "b14": "hst_req_S1B_20260904T195834511Z_ecc45498_bankak",
+          "digest": "3cd89346906f0de52b5f8b29f50d756ec83b16b873fc9258809b297990da6fd4",
+          "committed": true
+        },
+        {
+          "label": "ownerb",
+          "owner": "c73f6b30-a5fe-4e63-bb2d-99586d7ed355",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8",
+          "ref": "HJZ-6CD3AA2101F4",
+          "intent": "hbi_v1_010a0b9132f846b99859050206c8d8f5",
+          "method": "card",
+          "b13": "hsb_req_S1B_20260904T195834511Z_ecc45498_ownerb",
+          "b14": "hst_req_S1B_20260904T195834511Z_ecc45498_ownerb",
+          "digest": "0d0f718b3323c06792562bcf8f183424d0df5c4b6dacd69c20dfcd618a2e49f8",
+          "committed": true
+        }
+      ],
+      "usedFixtures": [],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "PAYMENT CONFIRMED != SUPPLIER BOOKING CONFIRMED; B11/B12 lineage and Model B"
+    },
+    "PSP": {
+      "status": "PASS",
+      "objective": "Confirmed/rejected; same provider event cannot have duplicate financial effects",
+      "expected": "Confirmed/rejected; same provider event cannot have duplicate financial effects",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [
+        {
+          "label": "rejected",
+          "owner": "064ea040-a5c2-4b92-afbd-015c6a23091e",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4",
+          "ref": "HJZ-3FFF01D449EC",
+          "intent": "hbi_v1_f04c754c3eeb49a4b9ce74ecb26c4e3f",
+          "method": "card",
+          "b13": "hsb_req_S1B_20260904T195834511Z_ecc45498_rejected",
+          "b14": "hst_req_S1B_20260904T195834511Z_ecc45498_rejected",
+          "digest": "0ef6098255e1f0a4a46b1640be10c4153c8e1cab2026ccd9da33e2a3c4f511f1"
+        }
+      ],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "Confirmed/rejected; same provider event cannot have duplicate financial effects"
+    },
+    "B13 CONCURRENCY": {
+      "status": "PASS",
+      "objective": "Real lock competition across prepare/mark; no duplicate execution/operation/send",
+      "expected": "Real lock competition across prepare/mark; no duplicate execution/operation/send",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        },
+        {
+          "label": "rejected",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "Real lock competition across prepare/mark; no duplicate execution/operation/send"
+    },
+    "B13 CRASH WINDOW": {
+      "status": "PASS",
+      "objective": "Committed REQUEST_SENT survives session loss; recovery never grants a blind second send",
+      "expected": "Committed REQUEST_SENT survives session loss; recovery never grants a blind second send",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        },
+        {
+          "label": "rejected",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "Committed REQUEST_SENT survives session loss; recovery never grants a blind second send"
+    },
+    "B14 CONCURRENCY": {
+      "status": "PASS",
+      "objective": "B13 completion and B14 prepare/mark use real competing sessions",
+      "expected": "B13 completion and B14 prepare/mark use real competing sessions",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        },
+        {
+          "label": "rejected",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "B13 completion and B14 prepare/mark use real competing sessions"
+    },
+    "B14 CRASH WINDOW": {
+      "status": "PASS",
+      "objective": "Committed request -> closed sender -> UNKNOWN recovery -> durable issued evidence, no reissue",
+      "expected": "Committed request -> closed sender -> UNKNOWN recovery -> durable issued evidence, no reissue",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        },
+        {
+          "label": "rejected",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "Committed request -> closed sender -> UNKNOWN recovery -> durable issued evidence, no reissue"
+    },
+    "TICKET ARTIFACT GATE": {
+      "status": "PASS",
+      "objective": "Only trusted AVAILABLE artifact grants download; payment/PNR/reference/NONE/METADATA_ONLY do not",
+      "expected": "Only trusted AVAILABLE artifact grants download; payment/PNR/reference/NONE/METADATA_ONLY do not",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        },
+        {
+          "label": "rejected",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "Only trusted AVAILABLE artifact grants download; payment/PNR/reference/NONE/METADATA_ONLY do not"
+    },
+    "BANKAK": {
+      "status": "PASS",
+      "objective": "Receipt ownership, consumption/reuse/expiry; finance review cannot supplier-confirm",
+      "expected": "Receipt ownership, consumption/reuse/expiry; finance review cannot supplier-confirm",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        },
+        {
+          "label": "rejected",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "Receipt ownership, consumption/reuse/expiry; finance review cannot supplier-confirm"
+    },
+    "RLS / IDOR": {
+      "status": "PASS",
+      "objective": "Normal authenticated A/B and anonymous paths; never postgres as user evidence",
+      "expected": "Normal authenticated A/B and anonymous paths; never postgres as user evidence",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        },
+        {
+          "label": "rejected",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "Normal authenticated A/B and anonymous paths; never postgres as user evidence"
+    },
+    "MY TRIPS": {
+      "status": "PASS",
+      "objective": "Owner-scoped real projections and no internal financial/storage/operation leakage",
+      "expected": "Owner-scoped real projections and no internal financial/storage/operation leakage",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        },
+        {
+          "label": "rejected",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "Owner-scoped real projections and no internal financial/storage/operation leakage"
+    },
+    "EXPIRY": {
+      "status": "PASS",
+      "objective": "Server-time expiry cannot be bypassed by caller-supplied event time",
+      "expected": "Server-time expiry cannot be bypassed by caller-supplied event time",
+      "setup": "unique mock-provider fixtures; real Auth identities; normal existing RPCs",
+      "records": [
+        {
+          "label": "expired",
+          "owner": "064ea040-a5c2-4b92-afbd-015c6a23091e",
+          "booking": "91b93733-df4d-447d-ad4b-da7b0da6bb27",
+          "payment": "8cc290d4-f8e2-4215-81ee-617d024faa1f",
+          "ref": "HJZ-B7C6C3F14EE6",
+          "intent": "hbi_v1_25061f29effb49729444c3212cfab70a",
+          "method": "card",
+          "b13": "hsb_req_S1B_20260904T195834511Z_ecc45498_expired",
+          "b14": "hst_req_S1B_20260904T195834511Z_ecc45498_expired",
+          "digest": "3267f26b5ff239f0e702cff287372765302090363e5c0ede7dabbacac7948549"
+        }
+      ],
+      "usedFixtures": [
+        {
+          "label": "crash13",
+          "booking": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+          "payment": "ceac02a7-a150-4eff-82a8-435ac3bf8a26"
+        },
+        {
+          "label": "issued",
+          "booking": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+          "payment": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4"
+        },
+        {
+          "label": "none",
+          "booking": "92862f50-c590-4da0-abd8-52775c5de45b",
+          "payment": "6c41e1d5-cae5-4508-81f4-0d543b936abf"
+        },
+        {
+          "label": "metadata",
+          "booking": "f44480b7-dc2b-4e27-bc6b-f80c8a1678eb",
+          "payment": "6e6f2029-1296-4851-a4e0-55953b06a456"
+        },
+        {
+          "label": "bankak",
+          "booking": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+          "payment": "b321e0aa-1cd9-4c66-8f92-ae32373aada7"
+        },
+        {
+          "label": "ownerb",
+          "booking": "0d285ff1-55c2-4ed4-b6a0-613f67b5a59e",
+          "payment": "85ca8c6f-cba8-472c-8f5f-64db452f11b8"
+        },
+        {
+          "label": "rejected",
+          "booking": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+          "payment": "42b3a55f-4e3f-4138-b38d-e8fd2a1efac4"
+        }
+      ],
+      "identities": [
+        "064ea040-a5c2-4b92-afbd-015c6a23091e",
+        "c73f6b30-a5fe-4e63-bb2d-99586d7ed355"
+      ],
+      "cleanup": "PENDING",
+      "invariant": "Server-time expiry cannot be bypassed by caller-supplied event time"
+    }
+  },
+  "cleanup": "PASS",
+  "error": null
+}

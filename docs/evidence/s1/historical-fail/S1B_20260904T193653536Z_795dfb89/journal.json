@@ -1,0 +1,1796 @@
+{
+  "run": "S1B_20260904T193653536Z_795dfb89",
+  "project": "pdnuswmljownjzjzpoop",
+  "offer": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+  "emails": [
+    "s1b_20260904t193653536z_795dfb89-a@example.invalid",
+    "s1b_20260904t193653536z_795dfb89-b@example.invalid",
+    "s1b_20260904t193653536z_795dfb89-finance@example.invalid"
+  ],
+  "actors": [
+    {
+      "id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "label": "A",
+      "email": "s1b_20260904t193653536z_795dfb89-a@example.invalid"
+    },
+    {
+      "id": "1f86d35c-1aa6-4759-b689-20b14196529a",
+      "label": "B",
+      "email": "s1b_20260904t193653536z_795dfb89-b@example.invalid"
+    },
+    {
+      "id": "104512d8-0ded-4d23-a01d-cb96a13148e2",
+      "label": "FINANCE",
+      "email": "s1b_20260904t193653536z_795dfb89-finance@example.invalid"
+    }
+  ],
+  "fixtures": [
+    {
+      "label": "crash13",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "booking": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+      "payment": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+      "ref": "HJZ-AD3E9694A4E9",
+      "intent": "hbi_v1_935eac56c3e34db1ae44c936db6c4737",
+      "method": "card",
+      "b13": "hsb_req_S1B_20260904T193653536Z_795dfb89_crash13",
+      "b14": "hst_req_S1B_20260904T193653536Z_795dfb89_crash13",
+      "digest": "1310bb4adb569bb2b9d7d3910eccc0dbad9c94f3fc6668d521b9968a5e102bcf",
+      "committed": true
+    },
+    {
+      "label": "issued",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "booking": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+      "payment": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+      "ref": "HJZ-8ABDA287E5B9",
+      "intent": "hbi_v1_933ab8784624456dbbd50978333f0099",
+      "method": "card",
+      "b13": "hsb_req_S1B_20260904T193653536Z_795dfb89_issued",
+      "b14": "hst_req_S1B_20260904T193653536Z_795dfb89_issued",
+      "digest": "141e5a781a53174b472905abefe4fe6af19770924334de528c2b070f975f0ee3",
+      "committed": true
+    },
+    {
+      "label": "none",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "booking": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+      "payment": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+      "ref": "HJZ-7830317EC448",
+      "intent": "hbi_v1_b5616e28ee8145358055bdb710f443e2",
+      "method": "card",
+      "b13": "hsb_req_S1B_20260904T193653536Z_795dfb89_none",
+      "b14": "hst_req_S1B_20260904T193653536Z_795dfb89_none",
+      "digest": "40c99801dd4ffc9e4848b551dede89ff47bfd5b4a9464ad24666f2940ae8588f",
+      "committed": true
+    },
+    {
+      "label": "metadata",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "booking": "86640509-54a4-41de-8714-7ea3afdc94b7",
+      "payment": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+      "ref": "HJZ-C72FCD5A1F35",
+      "intent": "hbi_v1_69edd88fb0a14fccb6e90257754756f6",
+      "method": "card",
+      "b13": "hsb_req_S1B_20260904T193653536Z_795dfb89_metadata",
+      "b14": "hst_req_S1B_20260904T193653536Z_795dfb89_metadata",
+      "digest": "9fdf9a2bea71ecd1e5b778a083eee8ae5113f7c00b96eab53a9ac4066dcbe325",
+      "committed": true
+    },
+    {
+      "label": "bankak",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "booking": "68bdfa49-cccd-488a-85b5-4801d8ad5a18",
+      "payment": "50c182d1-b854-402a-8280-93605bf9ed23",
+      "ref": "HJZ-376559B20772",
+      "intent": "hbi_v1_8897b0bf46334970b5f0975a6dc46e88",
+      "method": "bankak",
+      "b13": "hsb_req_S1B_20260904T193653536Z_795dfb89_bankak",
+      "b14": "hst_req_S1B_20260904T193653536Z_795dfb89_bankak",
+      "digest": "eb1e8467166b2ab860ac907e0f776f321f1dc1baa706b91a72b5103bdb3b1650",
+      "committed": true
+    },
+    {
+      "label": "ownerb",
+      "owner": "1f86d35c-1aa6-4759-b689-20b14196529a",
+      "booking": "77dcd5c8-f3f7-4354-8454-3454850b5e5f",
+      "payment": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+      "ref": "HJZ-7A39FBA5D5C5",
+      "intent": "hbi_v1_ec00451f242641d6ae03b907323d347e",
+      "method": "card",
+      "b13": "hsb_req_S1B_20260904T193653536Z_795dfb89_ownerb",
+      "b14": "hst_req_S1B_20260904T193653536Z_795dfb89_ownerb",
+      "digest": "ed818f796303205455acf6f99864c61af1cf6eff134ee29b392feb5e8f31133b",
+      "committed": true
+    },
+    {
+      "label": "rejected",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "booking": "d32eb456-b05f-4963-8af1-d82e10570afb",
+      "payment": "22de15dd-0c1f-4d68-bfc9-02f68bd8e3c3",
+      "ref": "HJZ-E03620AAC75A",
+      "intent": "hbi_v1_4766fc64d5044792b2a9796cbadf10bd",
+      "method": "card",
+      "b13": "hsb_req_S1B_20260904T193653536Z_795dfb89_rejected",
+      "b14": "hst_req_S1B_20260904T193653536Z_795dfb89_rejected",
+      "digest": "5bd42a21356fb6c4f56e4ab46fbc7dc21d9b184306f68b90469e4e09af359349"
+    },
+    {
+      "label": "expired",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "booking": "6ccf9234-5d87-4492-a449-611dc111271b",
+      "payment": "1b672a3b-6c71-4a52-a8fe-bf9ad3a294e7",
+      "ref": "HJZ-12683898C2C7",
+      "intent": "hbi_v1_d9f9838453e54e3cba5b562a79789e9d",
+      "method": "card",
+      "b13": "hsb_req_S1B_20260904T193653536Z_795dfb89_expired",
+      "b14": "hst_req_S1B_20260904T193653536Z_795dfb89_expired",
+      "digest": "24a19d2fa69acdfc57cafaf45e68864edccecb5f56cf3b689b23e63a4ba6843c"
+    }
+  ],
+  "storage": [
+    "d72ac157-1960-41d8-8b51-36bc9181f416/50c182d1-b854-402a-8280-93605bf9ed23/S1B_20260904T193653536Z_795dfb89.png",
+    "d72ac157-1960-41d8-8b51-36bc9181f416/50c182d1-b854-402a-8280-93605bf9ed23/S1B_20260904T193653536Z_795dfb89-wrongowner.png",
+    "d72ac157-1960-41d8-8b51-36bc9181f416/dcdd0a01-6449-4786-9117-b7abd14267a2/S1B_20260904T193653536Z_795dfb89-wrongmethod.png",
+    "d72ac157-1960-41d8-8b51-36bc9181f416/50c182d1-b854-402a-8280-93605bf9ed23/S1B_20260904T193653536Z_795dfb89-expired.png"
+  ],
+  "cleanup": "PASS",
+  "beforeCleanup": {
+    "auth.users": [
+      {
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "email": "s1b_20260904t193653536z_795dfb89-a@example.invalid"
+      },
+      {
+        "id": "104512d8-0ded-4d23-a01d-cb96a13148e2",
+        "email": "s1b_20260904t193653536z_795dfb89-finance@example.invalid"
+      },
+      {
+        "id": "1f86d35c-1aa6-4759-b689-20b14196529a",
+        "email": "s1b_20260904t193653536z_795dfb89-b@example.invalid"
+      }
+    ],
+    "public.profiles": [
+      {
+        "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "id": "1f86d35c-1aa6-4759-b689-20b14196529a"
+      },
+      {
+        "id": "104512d8-0ded-4d23-a01d-cb96a13148e2"
+      }
+    ],
+    "public.offers": [
+      {
+        "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "supplier_provider": "mock",
+        "enabled": true
+      }
+    ],
+    "public.bookings": [
+      {
+        "id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "status": "ticketed",
+        "supplier_provider": "mock"
+      },
+      {
+        "id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "status": "payment_confirmed",
+        "supplier_provider": "mock"
+      },
+      {
+        "id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f",
+        "user_id": "1f86d35c-1aa6-4759-b689-20b14196529a",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "status": "payment_confirmed",
+        "supplier_provider": "mock"
+      },
+      {
+        "id": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "status": "processing",
+        "supplier_provider": "mock"
+      },
+      {
+        "id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "status": "ticketed",
+        "supplier_provider": "mock"
+      },
+      {
+        "id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "status": "ticketed",
+        "supplier_provider": "mock"
+      }
+    ],
+    "public.payments": [
+      {
+        "id": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+        "reviewer_id": null,
+        "status": "confirmed"
+      },
+      {
+        "id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "reviewer_id": null,
+        "status": "confirmed"
+      },
+      {
+        "id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "reviewer_id": null,
+        "status": "confirmed"
+      },
+      {
+        "id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "reviewer_id": null,
+        "status": "confirmed"
+      },
+      {
+        "id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+        "user_id": "1f86d35c-1aa6-4759-b689-20b14196529a",
+        "booking_id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f",
+        "reviewer_id": null,
+        "status": "confirmed"
+      },
+      {
+        "id": "50c182d1-b854-402a-8280-93605bf9ed23",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18",
+        "reviewer_id": "104512d8-0ded-4d23-a01d-cb96a13148e2",
+        "status": "confirmed"
+      }
+    ],
+    "public.payment_provider_events": [
+      {
+        "id": "55",
+        "payment_id": "dcdd0a01-6449-4786-9117-b7abd14267a2"
+      },
+      {
+        "id": "56",
+        "payment_id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5"
+      },
+      {
+        "id": "57",
+        "payment_id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458"
+      },
+      {
+        "id": "58",
+        "payment_id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d"
+      },
+      {
+        "id": "59",
+        "payment_id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb"
+      }
+    ],
+    "public.payment_receipts": [
+      {
+        "id": "eaf6fa2f-0037-4582-b620-d2b7dd4c7aa9",
+        "payment_id": "50c182d1-b854-402a-8280-93605bf9ed23",
+        "user_id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      }
+    ],
+    "public.payment_audit": [
+      {
+        "id": "242",
+        "aggregate_id": "50c182d1-b854-402a-8280-93605bf9ed23",
+        "actor_id": null,
+        "event_type": "receipt_inspected"
+      },
+      {
+        "id": "212",
+        "aggregate_id": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "flight_payment_initiated"
+      },
+      {
+        "id": "213",
+        "aggregate_id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "flight_payment_initiated"
+      },
+      {
+        "id": "214",
+        "aggregate_id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "flight_payment_initiated"
+      },
+      {
+        "id": "215",
+        "aggregate_id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "flight_payment_initiated"
+      },
+      {
+        "id": "216",
+        "aggregate_id": "50c182d1-b854-402a-8280-93605bf9ed23",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "flight_payment_initiated"
+      },
+      {
+        "id": "217",
+        "aggregate_id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+        "actor_id": "1f86d35c-1aa6-4759-b689-20b14196529a",
+        "event_type": "flight_payment_initiated"
+      },
+      {
+        "id": "218",
+        "aggregate_id": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+        "actor_id": null,
+        "event_type": "provider_event"
+      },
+      {
+        "id": "219",
+        "aggregate_id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+        "actor_id": null,
+        "event_type": "provider_event"
+      },
+      {
+        "id": "220",
+        "aggregate_id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+        "actor_id": null,
+        "event_type": "provider_event"
+      },
+      {
+        "id": "221",
+        "aggregate_id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+        "actor_id": null,
+        "event_type": "provider_event"
+      },
+      {
+        "id": "222",
+        "aggregate_id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+        "actor_id": null,
+        "event_type": "provider_event"
+      },
+      {
+        "id": "226",
+        "aggregate_id": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "supplier_booking_request_sent"
+      },
+      {
+        "id": "227",
+        "aggregate_id": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "supplier_booking_exception"
+      },
+      {
+        "id": "228",
+        "aggregate_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "supplier_booking_request_sent"
+      },
+      {
+        "id": "229",
+        "aggregate_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "actor_id": null,
+        "event_type": "supplier_booking_accepted"
+      },
+      {
+        "id": "231",
+        "aggregate_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "supplier_ticketing_request_sent"
+      },
+      {
+        "id": "232",
+        "aggregate_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "supplier_ticketing_exception"
+      },
+      {
+        "id": "233",
+        "aggregate_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "actor_id": null,
+        "event_type": "supplier_tickets_issued"
+      },
+      {
+        "id": "234",
+        "aggregate_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "supplier_booking_request_sent"
+      },
+      {
+        "id": "235",
+        "aggregate_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "actor_id": null,
+        "event_type": "supplier_booking_accepted"
+      },
+      {
+        "id": "236",
+        "aggregate_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "supplier_ticketing_request_sent"
+      },
+      {
+        "id": "237",
+        "aggregate_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "actor_id": null,
+        "event_type": "supplier_tickets_issued"
+      },
+      {
+        "id": "238",
+        "aggregate_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "supplier_booking_request_sent"
+      },
+      {
+        "id": "239",
+        "aggregate_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "actor_id": null,
+        "event_type": "supplier_booking_accepted"
+      },
+      {
+        "id": "240",
+        "aggregate_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "actor_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "event_type": "supplier_ticketing_request_sent"
+      },
+      {
+        "id": "241",
+        "aggregate_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "actor_id": null,
+        "event_type": "supplier_tickets_issued"
+      },
+      {
+        "id": "243",
+        "aggregate_id": "50c182d1-b854-402a-8280-93605bf9ed23",
+        "actor_id": "104512d8-0ded-4d23-a01d-cb96a13148e2",
+        "event_type": "bankak_review"
+      }
+    ],
+    "app_private.flight_booking_intents": [
+      {
+        "id": "c3d53c28-45ff-420b-aa18-ff6fb62101f3",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "id": "fc591e40-b23b-4037-9801-3c95cee4f242",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "id": "ff372dd3-4e97-4aa2-b57b-a6bbf732a138",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "id": "5dc2bb79-cb99-4671-9d36-3845e5e1db6f",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "id": "7dd0fb54-5180-428e-bce9-1cc347c657ed",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+      },
+      {
+        "id": "3f1a6314-4fc2-4e93-bd29-f3d9174b2311",
+        "owner_id": "1f86d35c-1aa6-4759-b689-20b14196529a"
+      }
+    ],
+    "app_private.flight_payment_initiations": [
+      {
+        "id": "c2779391-b649-4f39-92b3-b77c7983ea78",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+        "payment_id": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+        "booking_intent_id": "c3d53c28-45ff-420b-aa18-ff6fb62101f3"
+      },
+      {
+        "id": "af0ae170-bed4-4cb2-9cfa-1000708f2fb8",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "payment_id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+        "booking_intent_id": "fc591e40-b23b-4037-9801-3c95cee4f242"
+      },
+      {
+        "id": "b49d959a-f35a-4c5a-be66-9f85c2eb5005",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "payment_id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+        "booking_intent_id": "ff372dd3-4e97-4aa2-b57b-a6bbf732a138"
+      },
+      {
+        "id": "f36ef239-93d2-4932-9bcc-b4ae9fa0534b",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "payment_id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+        "booking_intent_id": "5dc2bb79-cb99-4671-9d36-3845e5e1db6f"
+      },
+      {
+        "id": "61eb2840-7606-4ecd-b3ed-d113b7851318",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18",
+        "payment_id": "50c182d1-b854-402a-8280-93605bf9ed23",
+        "booking_intent_id": "7dd0fb54-5180-428e-bce9-1cc347c657ed"
+      },
+      {
+        "id": "a208cc0f-06ee-42eb-b32d-3ac6452e63c0",
+        "owner_id": "1f86d35c-1aa6-4759-b689-20b14196529a",
+        "booking_id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f",
+        "payment_id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+        "booking_intent_id": "3f1a6314-4fc2-4e93-bd29-f3d9174b2311"
+      }
+    ],
+    "app_private.flight_supplier_booking_executions": [
+      {
+        "id": "da77024f-7da7-4d8b-9440-3d3e1ce1e388",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "payment_id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+        "booking_intent_id": "ff372dd3-4e97-4aa2-b57b-a6bbf732a138",
+        "operation_id": "7d485e69-5dbb-4268-a1ed-4011b101ba1f",
+        "provider": "mock",
+        "execution_state": "ACCEPTED"
+      },
+      {
+        "id": "c1ccd12e-d7de-423e-b97b-58fc4d58253c",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "payment_id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+        "booking_intent_id": "5dc2bb79-cb99-4671-9d36-3845e5e1db6f",
+        "operation_id": "37e54eb9-a576-4edd-a653-d538b950dd6a",
+        "provider": "mock",
+        "execution_state": "ACCEPTED"
+      },
+      {
+        "id": "6f542086-f81b-4eb6-bdcd-c3fc6b15ac94",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+        "payment_id": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+        "booking_intent_id": "c3d53c28-45ff-420b-aa18-ff6fb62101f3",
+        "operation_id": "969290bf-9c66-4a69-bfe4-06a433953660",
+        "provider": "mock",
+        "execution_state": "UNKNOWN"
+      },
+      {
+        "id": "8b795607-d982-4cce-80ed-cf54b263bcc1",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "payment_id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+        "booking_intent_id": "fc591e40-b23b-4037-9801-3c95cee4f242",
+        "operation_id": "64dbeca2-5935-40cb-bcbc-ed768f9562d4",
+        "provider": "mock",
+        "execution_state": "ACCEPTED"
+      }
+    ],
+    "app_private.flight_supplier_ticketing_executions": [
+      {
+        "id": "0672477b-3cc4-49ae-ac92-532ef257d709",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "supplier_execution_id": "8b795607-d982-4cce-80ed-cf54b263bcc1",
+        "operation_id": "81455c12-f6aa-49bd-ba9b-299a73112fbf",
+        "provider": "mock",
+        "execution_state": "ISSUED"
+      },
+      {
+        "id": "10fc6c10-31c5-4106-90ff-d90bc125c605",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "supplier_execution_id": "da77024f-7da7-4d8b-9440-3d3e1ce1e388",
+        "operation_id": "a92fc20a-4f92-4ecc-be86-17a06b3ae079",
+        "provider": "mock",
+        "execution_state": "ISSUED"
+      },
+      {
+        "id": "ce6cfc3a-26a0-420c-a3c0-bd82891f4d7f",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "supplier_execution_id": "c1ccd12e-d7de-423e-b97b-58fc4d58253c",
+        "operation_id": "f5010c87-8935-4a1f-acab-34b816f72b3c",
+        "provider": "mock",
+        "execution_state": "ISSUED"
+      }
+    ],
+    "app_private.flight_ticket_records": [
+      {
+        "id": "dd41e1b3-73c2-4a57-9cdd-38a105860b34",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "ticketing_execution_id": "0672477b-3cc4-49ae-ac92-532ef257d709",
+        "provider": "mock"
+      },
+      {
+        "id": "a672e626-2e70-4c77-875a-851fbdedb212",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "ticketing_execution_id": "0672477b-3cc4-49ae-ac92-532ef257d709",
+        "provider": "mock"
+      },
+      {
+        "id": "5dc62e77-c042-4a79-aedb-cf176db8d9a7",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "ticketing_execution_id": "10fc6c10-31c5-4106-90ff-d90bc125c605",
+        "provider": "mock"
+      },
+      {
+        "id": "eef97f9a-93d1-4a3a-adb5-858608f62a41",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "ticketing_execution_id": "10fc6c10-31c5-4106-90ff-d90bc125c605",
+        "provider": "mock"
+      },
+      {
+        "id": "33a4de10-9f1b-4366-a0bc-6672c3d52b64",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "ticketing_execution_id": "ce6cfc3a-26a0-420c-a3c0-bd82891f4d7f",
+        "provider": "mock"
+      },
+      {
+        "id": "3e81a6de-5333-4c94-b2ef-cdc472e3b61d",
+        "owner_id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+        "booking_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "ticketing_execution_id": "ce6cfc3a-26a0-420c-a3c0-bd82891f4d7f",
+        "provider": "mock"
+      }
+    ],
+    "app_private.supplier_operations": [
+      {
+        "id": "969290bf-9c66-4a69-bfe4-06a433953660",
+        "booking_id": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "provider": "mock",
+        "status": "unknown"
+      },
+      {
+        "id": "64dbeca2-5935-40cb-bcbc-ed768f9562d4",
+        "booking_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "provider": "mock",
+        "status": "succeeded"
+      },
+      {
+        "id": "81455c12-f6aa-49bd-ba9b-299a73112fbf",
+        "booking_id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "provider": "mock",
+        "status": "succeeded"
+      },
+      {
+        "id": "7d485e69-5dbb-4268-a1ed-4011b101ba1f",
+        "booking_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "provider": "mock",
+        "status": "succeeded"
+      },
+      {
+        "id": "a92fc20a-4f92-4ecc-be86-17a06b3ae079",
+        "booking_id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "provider": "mock",
+        "status": "succeeded"
+      },
+      {
+        "id": "37e54eb9-a576-4edd-a653-d538b950dd6a",
+        "booking_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "provider": "mock",
+        "status": "succeeded"
+      },
+      {
+        "id": "f5010c87-8935-4a1f-acab-34b816f72b3c",
+        "booking_id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+        "offer_id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+        "provider": "mock",
+        "status": "succeeded"
+      }
+    ]
+  },
+  "ledger": [
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "auth.users",
+      "id": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "owner": null,
+      "aggregateId": null,
+      "parents": [],
+      "children": [
+        {
+          "table": "public.bookings",
+          "id": "86640509-54a4-41de-8714-7ea3afdc94b7"
+        },
+        {
+          "table": "public.bookings",
+          "id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18"
+        },
+        {
+          "table": "public.bookings",
+          "id": "249e7bc8-2e9a-4e65-81f8-57054af4999e"
+        },
+        {
+          "table": "public.bookings",
+          "id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289"
+        },
+        {
+          "table": "public.bookings",
+          "id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618"
+        },
+        {
+          "table": "public.payments",
+          "id": "dcdd0a01-6449-4786-9117-b7abd14267a2"
+        },
+        {
+          "table": "public.payments",
+          "id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5"
+        },
+        {
+          "table": "public.payments",
+          "id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458"
+        },
+        {
+          "table": "public.payments",
+          "id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d"
+        },
+        {
+          "table": "public.payments",
+          "id": "50c182d1-b854-402a-8280-93605bf9ed23"
+        },
+        {
+          "table": "public.payment_receipts",
+          "id": "eaf6fa2f-0037-4582-b620-d2b7dd4c7aa9"
+        }
+      ],
+      "reason": "required FK parent in immutable-row dependency closure",
+      "tests": [
+        "metadata",
+        "bankak",
+        "crash13",
+        "issued",
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "auth.users",
+      "id": "104512d8-0ded-4d23-a01d-cb96a13148e2",
+      "owner": null,
+      "aggregateId": null,
+      "parents": [],
+      "children": [
+        {
+          "table": "public.payments",
+          "id": "50c182d1-b854-402a-8280-93605bf9ed23"
+        }
+      ],
+      "reason": "required FK parent in immutable-row dependency closure",
+      "tests": [
+        "bankak"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "auth.users",
+      "id": "1f86d35c-1aa6-4759-b689-20b14196529a",
+      "owner": null,
+      "aggregateId": null,
+      "parents": [],
+      "children": [
+        {
+          "table": "public.bookings",
+          "id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f"
+        },
+        {
+          "table": "public.payments",
+          "id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb"
+        }
+      ],
+      "reason": "required FK parent in immutable-row dependency closure",
+      "tests": [
+        "ownerb"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.offers",
+      "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada",
+      "owner": null,
+      "aggregateId": null,
+      "parents": [],
+      "children": [
+        {
+          "table": "public.bookings",
+          "id": "86640509-54a4-41de-8714-7ea3afdc94b7"
+        },
+        {
+          "table": "public.bookings",
+          "id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18"
+        },
+        {
+          "table": "public.bookings",
+          "id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f"
+        },
+        {
+          "table": "public.bookings",
+          "id": "249e7bc8-2e9a-4e65-81f8-57054af4999e"
+        },
+        {
+          "table": "public.bookings",
+          "id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289"
+        },
+        {
+          "table": "public.bookings",
+          "id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618"
+        }
+      ],
+      "reason": "required FK parent in immutable-row dependency closure",
+      "tests": [
+        "metadata",
+        "bankak",
+        "ownerb",
+        "crash13",
+        "issued",
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.bookings",
+      "id": "86640509-54a4-41de-8714-7ea3afdc94b7",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        },
+        {
+          "table": "public.offers",
+          "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payments",
+          "id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d"
+        }
+      ],
+      "reason": "required FK parent of retained payment",
+      "tests": [
+        "metadata"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.bookings",
+      "id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        },
+        {
+          "table": "public.offers",
+          "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payments",
+          "id": "50c182d1-b854-402a-8280-93605bf9ed23"
+        }
+      ],
+      "reason": "required FK parent of retained payment",
+      "tests": [
+        "bankak"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.bookings",
+      "id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f",
+      "owner": "1f86d35c-1aa6-4759-b689-20b14196529a",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "auth.users",
+          "id": "1f86d35c-1aa6-4759-b689-20b14196529a"
+        },
+        {
+          "table": "public.offers",
+          "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payments",
+          "id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb"
+        }
+      ],
+      "reason": "required FK parent of retained payment",
+      "tests": [
+        "ownerb"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.bookings",
+      "id": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        },
+        {
+          "table": "public.offers",
+          "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payments",
+          "id": "dcdd0a01-6449-4786-9117-b7abd14267a2"
+        }
+      ],
+      "reason": "required FK parent of retained payment",
+      "tests": [
+        "crash13"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.bookings",
+      "id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        },
+        {
+          "table": "public.offers",
+          "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payments",
+          "id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5"
+        }
+      ],
+      "reason": "required FK parent of retained payment",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.bookings",
+      "id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        },
+        {
+          "table": "public.offers",
+          "id": "ae1f5311-3af1-4e26-9877-03fd7ff0bada"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payments",
+          "id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458"
+        }
+      ],
+      "reason": "required FK parent of retained payment",
+      "tests": [
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payments",
+      "id": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.bookings",
+          "id": "249e7bc8-2e9a-4e65-81f8-57054af4999e"
+        },
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payment_provider_events",
+          "id": "55"
+        }
+      ],
+      "reason": "required FK parent of immutable event/receipt",
+      "tests": [
+        "crash13"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payments",
+      "id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.bookings",
+          "id": "3153630e-aaaa-4ed9-8f4c-c9555d45a289"
+        },
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payment_provider_events",
+          "id": "56"
+        }
+      ],
+      "reason": "required FK parent of immutable event/receipt",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payments",
+      "id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.bookings",
+          "id": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618"
+        },
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payment_provider_events",
+          "id": "57"
+        }
+      ],
+      "reason": "required FK parent of immutable event/receipt",
+      "tests": [
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payments",
+      "id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.bookings",
+          "id": "86640509-54a4-41de-8714-7ea3afdc94b7"
+        },
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payment_provider_events",
+          "id": "58"
+        }
+      ],
+      "reason": "required FK parent of immutable event/receipt",
+      "tests": [
+        "metadata"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payments",
+      "id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+      "owner": "1f86d35c-1aa6-4759-b689-20b14196529a",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.bookings",
+          "id": "77dcd5c8-f3f7-4354-8454-3454850b5e5f"
+        },
+        {
+          "table": "auth.users",
+          "id": "1f86d35c-1aa6-4759-b689-20b14196529a"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payment_provider_events",
+          "id": "59"
+        }
+      ],
+      "reason": "required FK parent of immutable event/receipt",
+      "tests": [
+        "ownerb"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payments",
+      "id": "50c182d1-b854-402a-8280-93605bf9ed23",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.bookings",
+          "id": "68bdfa49-cccd-488a-85b5-4801d8ad5a18"
+        },
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        },
+        {
+          "table": "auth.users",
+          "id": "104512d8-0ded-4d23-a01d-cb96a13148e2"
+        }
+      ],
+      "children": [
+        {
+          "table": "public.payment_receipts",
+          "id": "eaf6fa2f-0037-4582-b620-d2b7dd4c7aa9"
+        }
+      ],
+      "reason": "required FK parent of immutable event/receipt",
+      "tests": [
+        "bankak"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_provider_events",
+      "id": "55",
+      "owner": null,
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.payments",
+          "id": "dcdd0a01-6449-4786-9117-b7abd14267a2"
+        }
+      ],
+      "children": [],
+      "reason": "provider_events_immutable",
+      "tests": [
+        "crash13"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_provider_events",
+      "id": "56",
+      "owner": null,
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.payments",
+          "id": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5"
+        }
+      ],
+      "children": [],
+      "reason": "provider_events_immutable",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_provider_events",
+      "id": "57",
+      "owner": null,
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.payments",
+          "id": "c4c8888d-0199-4b6f-8dd7-acfd46e12458"
+        }
+      ],
+      "children": [],
+      "reason": "provider_events_immutable",
+      "tests": [
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_provider_events",
+      "id": "58",
+      "owner": null,
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.payments",
+          "id": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d"
+        }
+      ],
+      "children": [],
+      "reason": "provider_events_immutable",
+      "tests": [
+        "metadata"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_provider_events",
+      "id": "59",
+      "owner": null,
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.payments",
+          "id": "19e11a02-8714-46c9-bf4c-607e3ebe50fb"
+        }
+      ],
+      "children": [],
+      "reason": "provider_events_immutable",
+      "tests": [
+        "ownerb"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_receipts",
+      "id": "eaf6fa2f-0037-4582-b620-d2b7dd4c7aa9",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": null,
+      "parents": [
+        {
+          "table": "public.payments",
+          "id": "50c182d1-b854-402a-8280-93605bf9ed23"
+        },
+        {
+          "table": "auth.users",
+          "id": "d72ac157-1960-41d8-8b51-36bc9181f416"
+        }
+      ],
+      "children": [],
+      "reason": "receipts_immutable",
+      "tests": [
+        "bankak"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "242",
+      "owner": null,
+      "aggregateId": "50c182d1-b854-402a-8280-93605bf9ed23",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "bankak"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "212",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "crash13"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "213",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "214",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "215",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "metadata"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "216",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "50c182d1-b854-402a-8280-93605bf9ed23",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "bankak"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "217",
+      "owner": "1f86d35c-1aa6-4759-b689-20b14196529a",
+      "aggregateId": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "ownerb"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "218",
+      "owner": null,
+      "aggregateId": "dcdd0a01-6449-4786-9117-b7abd14267a2",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "crash13"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "219",
+      "owner": null,
+      "aggregateId": "ec348d99-2e98-414d-8cf5-a813c9f3d2d5",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "220",
+      "owner": null,
+      "aggregateId": "c4c8888d-0199-4b6f-8dd7-acfd46e12458",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "221",
+      "owner": null,
+      "aggregateId": "aa77c2fb-1458-42fb-bfc8-a7b651ced37d",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "metadata"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "222",
+      "owner": null,
+      "aggregateId": "19e11a02-8714-46c9-bf4c-607e3ebe50fb",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "ownerb"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "226",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "crash13"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "227",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "249e7bc8-2e9a-4e65-81f8-57054af4999e",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "crash13"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "228",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "229",
+      "owner": null,
+      "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "231",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "232",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "233",
+      "owner": null,
+      "aggregateId": "3153630e-aaaa-4ed9-8f4c-c9555d45a289",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "issued"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "234",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "235",
+      "owner": null,
+      "aggregateId": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "236",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "237",
+      "owner": null,
+      "aggregateId": "c69bbe94-6ad1-48a4-aec0-9da23ab1f618",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "none"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "238",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "86640509-54a4-41de-8714-7ea3afdc94b7",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "metadata"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "239",
+      "owner": null,
+      "aggregateId": "86640509-54a4-41de-8714-7ea3afdc94b7",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "metadata"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "240",
+      "owner": "d72ac157-1960-41d8-8b51-36bc9181f416",
+      "aggregateId": "86640509-54a4-41de-8714-7ea3afdc94b7",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "metadata"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "241",
+      "owner": null,
+      "aggregateId": "86640509-54a4-41de-8714-7ea3afdc94b7",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "metadata"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    },
+    {
+      "runId": "S1B_20260904T193653536Z_795dfb89",
+      "table": "public.payment_audit",
+      "id": "243",
+      "owner": "104512d8-0ded-4d23-a01d-cb96a13148e2",
+      "aggregateId": "50c182d1-b854-402a-8280-93605bf9ed23",
+      "parents": [],
+      "children": [],
+      "reason": "payment_audit_immutable; aggregate/actor identifiers are logical references, not retention FKs",
+      "tests": [
+        "bankak"
+      ],
+      "supplierExecutionEligibility": "NO",
+      "productionRelevance": "NONE",
+      "containsRealPII": "NO"
+    }
+  ]
+}

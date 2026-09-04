@@ -1,0 +1,838 @@
+[
+  {
+    "stage": "REST_PUBLIC_PROBE",
+    "status": "NOT_APPLICABLE_BY_SCHEMA",
+    "target": "NONE",
+    "basis": "C1_REVOKES_ANON_TABLE_ACCESS_AND_GRANTS_NO_ANON_RPC"
+  },
+  {
+    "test": "payment_separation",
+    "actual": {
+      "id": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+      "booking_status": "payment_confirmed",
+      "payment_status": "confirmed",
+      "net_cost": "2300.00",
+      "sold_price": "2600.00",
+      "commission": "0.00",
+      "agent_profit": "300.00",
+      "currency": "SDG",
+      "supplier_provider": "mock",
+      "amount": "2600.00",
+      "expires_at": "2026-09-04T20:28:48.301Z",
+      "supplier_reference": null,
+      "b13": null,
+      "b14": null,
+      "tickets": 0
+    }
+  },
+  {
+    "test": "psp",
+    "actual": {
+      "id": "6dcc42d8-8116-4076-b46c-fd2f4e8c89b4",
+      "booking_status": "pending_payment",
+      "payment_status": "rejected",
+      "net_cost": "2300.00",
+      "sold_price": "2600.00",
+      "commission": "0.00",
+      "agent_profit": "300.00",
+      "currency": "SDG",
+      "supplier_provider": "mock",
+      "amount": "2600.00",
+      "expires_at": "2026-09-04T20:29:33.072Z",
+      "supplier_reference": null,
+      "b13": null,
+      "b14": null,
+      "tickets": 0
+    },
+    "eventCount": 1,
+    "cleanup": "ROLLBACK; no committed residue"
+  },
+  {
+    "test": "B13 competing prepare",
+    "pidA": 1049874,
+    "pidB": 1049875,
+    "begin": "2026-09-04 19:59:42.779969+00",
+    "lock": {
+      "pid": 1049875,
+      "state": "active",
+      "wait_event_type": "Lock",
+      "wait_event": "transactionid",
+      "query_start": "2026-09-04 19:59:43.107759+00",
+      "xact_start": "2026-09-04 19:59:42.627533+00",
+      "observed": "2026-09-04 19:59:43.363496+00",
+      "blockers": [
+        1049874
+      ]
+    },
+    "end": "2026-09-04 19:59:48.601873+00",
+    "transactionA": "BEGIN/RPC/COMMIT",
+    "transactionB": "BEGIN/RPC/COMMIT",
+    "A": [
+      {
+        "execution_id": "cc859cb8-f1c8-481f-9093-d22b496c8942",
+        "operation_id": "497fd218-8408-4f41-9126-c1e3491751cd",
+        "execution_state": "PREPARED",
+        "should_send": false,
+        "replayed": false,
+        "booking_status": "payment_confirmed",
+        "payment_status": "confirmed"
+      }
+    ],
+    "B": [
+      {
+        "execution_id": "cc859cb8-f1c8-481f-9093-d22b496c8942",
+        "operation_id": "497fd218-8408-4f41-9126-c1e3491751cd",
+        "execution_state": "PREPARED",
+        "should_send": false,
+        "replayed": true,
+        "booking_status": "payment_confirmed",
+        "payment_status": "confirmed"
+      }
+    ]
+  },
+  {
+    "test": "B13 competing mark",
+    "pidA": 1049874,
+    "pidB": 1049875,
+    "begin": "2026-09-04 19:59:51.787158+00",
+    "lock": {
+      "pid": 1049875,
+      "state": "active",
+      "wait_event_type": "Lock",
+      "wait_event": "transactionid",
+      "query_start": "2026-09-04 19:59:52.112295+00",
+      "xact_start": "2026-09-04 19:59:51.634132+00",
+      "observed": "2026-09-04 19:59:52.361946+00",
+      "blockers": [
+        1049874
+      ]
+    },
+    "end": "2026-09-04 19:59:57.660202+00",
+    "transactionA": "BEGIN/RPC/COMMIT",
+    "transactionB": "BEGIN/RPC/COMMIT",
+    "A": [
+      {
+        "execution_id": "cc859cb8-f1c8-481f-9093-d22b496c8942",
+        "operation_id": "497fd218-8408-4f41-9126-c1e3491751cd",
+        "execution_state": "REQUEST_SENT",
+        "should_send": true,
+        "replayed": false,
+        "booking_status": "processing",
+        "payment_status": "confirmed"
+      }
+    ],
+    "B": [
+      {
+        "execution_id": "cc859cb8-f1c8-481f-9093-d22b496c8942",
+        "operation_id": "497fd218-8408-4f41-9126-c1e3491751cd",
+        "execution_state": "REQUEST_SENT",
+        "should_send": false,
+        "replayed": true,
+        "booking_status": "processing",
+        "payment_status": "confirmed"
+      }
+    ]
+  },
+  {
+    "test": "B13_counts",
+    "actual": {
+      "b13": 1,
+      "b14": 0,
+      "operations": 1,
+      "tickets": 0,
+      "audit": 1
+    }
+  },
+  {
+    "test": "B13 competing failure recovery",
+    "pidA": 1049874,
+    "pidB": 1049888,
+    "begin": "2026-09-04 20:00:02.368415+00",
+    "lock": {
+      "pid": 1049888,
+      "state": "active",
+      "wait_event_type": "Lock",
+      "wait_event": "transactionid",
+      "query_start": "2026-09-04 20:00:02.679292+00",
+      "xact_start": "2026-09-04 20:00:02.21609+00",
+      "observed": "2026-09-04 20:00:02.935663+00",
+      "blockers": [
+        1049874
+      ]
+    },
+    "end": "2026-09-04 20:00:08.14985+00",
+    "transactionA": "BEGIN/RPC/COMMIT",
+    "transactionB": "BEGIN/RPC/COMMIT",
+    "A": [
+      {
+        "execution_id": "cc859cb8-f1c8-481f-9093-d22b496c8942",
+        "operation_id": "497fd218-8408-4f41-9126-c1e3491751cd",
+        "execution_state": "UNKNOWN",
+        "should_send": false,
+        "replayed": false,
+        "booking_status": "processing",
+        "payment_status": "confirmed"
+      }
+    ],
+    "B": [
+      {
+        "execution_id": "cc859cb8-f1c8-481f-9093-d22b496c8942",
+        "operation_id": "497fd218-8408-4f41-9126-c1e3491751cd",
+        "execution_state": "UNKNOWN",
+        "should_send": false,
+        "replayed": true,
+        "booking_status": "processing",
+        "payment_status": "confirmed"
+      }
+    ]
+  },
+  {
+    "test": "B13_crash",
+    "beforeRecovery": {
+      "id": "c9122d4c-6a92-4191-9813-bdb55eaa6e92",
+      "booking_status": "processing",
+      "payment_status": "confirmed",
+      "net_cost": "2300.00",
+      "sold_price": "2600.00",
+      "commission": "0.00",
+      "agent_profit": "300.00",
+      "currency": "SDG",
+      "supplier_provider": "mock",
+      "amount": "2600.00",
+      "expires_at": "2026-09-04T20:28:48.301Z",
+      "supplier_reference": null,
+      "b13": "REQUEST_SENT",
+      "b14": null,
+      "tickets": 0
+    },
+    "afterRecovery": {
+      "execution_state": "UNKNOWN",
+      "reconciliation_required": true,
+      "attempt_count": 1,
+      "request_sent_at": "2026-09-04T19:59:51.634Z"
+    },
+    "externalCalls": 0
+  },
+  {
+    "test": "B13 competing complete",
+    "pidA": 1049875,
+    "pidB": 1049874,
+    "begin": "2026-09-04 20:00:15.771778+00",
+    "lock": {
+      "pid": 1049874,
+      "state": "active",
+      "wait_event_type": "Lock",
+      "wait_event": "transactionid",
+      "query_start": "2026-09-04 20:00:16.088984+00",
+      "xact_start": "2026-09-04 20:00:15.614483+00",
+      "observed": "2026-09-04 20:00:16.343784+00",
+      "blockers": [
+        1049875
+      ]
+    },
+    "end": "2026-09-04 20:00:21.546089+00",
+    "transactionA": "BEGIN/RPC/COMMIT",
+    "transactionB": "BEGIN/RPC/COMMIT",
+    "A": [
+      {
+        "execution_id": "735098a5-7fe4-4e40-ba40-f49f48072030",
+        "operation_id": "70c5210a-a8dc-4b43-8818-55c30eef6607",
+        "execution_state": "ACCEPTED",
+        "should_send": false,
+        "replayed": false,
+        "booking_status": "confirmed",
+        "payment_status": "confirmed"
+      }
+    ],
+    "B": [
+      {
+        "execution_id": "735098a5-7fe4-4e40-ba40-f49f48072030",
+        "operation_id": "70c5210a-a8dc-4b43-8818-55c30eef6607",
+        "execution_state": "ACCEPTED",
+        "should_send": false,
+        "replayed": true,
+        "booking_status": "confirmed",
+        "payment_status": "confirmed"
+      }
+    ]
+  },
+  {
+    "test": "B14 competing prepare",
+    "pidA": 1049875,
+    "pidB": 1049874,
+    "begin": "2026-09-04 20:00:25.008575+00",
+    "lock": {
+      "pid": 1049874,
+      "state": "active",
+      "wait_event_type": "Lock",
+      "wait_event": "transactionid",
+      "query_start": "2026-09-04 20:00:25.324012+00",
+      "xact_start": "2026-09-04 20:00:24.849165+00",
+      "observed": "2026-09-04 20:00:25.581922+00",
+      "blockers": [
+        1049875
+      ]
+    },
+    "end": "2026-09-04 20:00:30.72414+00",
+    "transactionA": "BEGIN/RPC/COMMIT",
+    "transactionB": "BEGIN/RPC/COMMIT",
+    "A": [
+      {
+        "execution_id": "cc93b98b-06eb-42c8-aab7-741b6582ae19",
+        "operation_id": null,
+        "execution_state": "PREPARED",
+        "should_send": false,
+        "replayed": false,
+        "booking_status": "confirmed",
+        "ticket_count": "0",
+        "can_download_ticket": false
+      }
+    ],
+    "B": [
+      {
+        "execution_id": "cc93b98b-06eb-42c8-aab7-741b6582ae19",
+        "operation_id": null,
+        "execution_state": "PREPARED",
+        "should_send": false,
+        "replayed": true,
+        "booking_status": "confirmed",
+        "ticket_count": "0",
+        "can_download_ticket": false
+      }
+    ]
+  },
+  {
+    "test": "B14 competing mark",
+    "pidA": 1049875,
+    "pidB": 1049874,
+    "begin": "2026-09-04 20:00:35.067059+00",
+    "lock": {
+      "pid": 1049874,
+      "state": "active",
+      "wait_event_type": "Lock",
+      "wait_event": "transactionid",
+      "query_start": "2026-09-04 20:00:35.391423+00",
+      "xact_start": "2026-09-04 20:00:34.90131+00",
+      "observed": "2026-09-04 20:00:35.395878+00",
+      "blockers": [
+        1049875
+      ]
+    },
+    "end": "2026-09-04 20:00:41.09816+00",
+    "transactionA": "BEGIN/RPC/COMMIT",
+    "transactionB": "BEGIN/RPC/COMMIT",
+    "A": [
+      {
+        "execution_id": "cc93b98b-06eb-42c8-aab7-741b6582ae19",
+        "operation_id": "39a1bf4c-6a4a-4517-a8df-c88522969bc8",
+        "execution_state": "REQUEST_SENT",
+        "should_send": true,
+        "replayed": false,
+        "booking_status": "confirmed",
+        "ticket_count": "0",
+        "can_download_ticket": false
+      }
+    ],
+    "B": [
+      {
+        "execution_id": "cc93b98b-06eb-42c8-aab7-741b6582ae19",
+        "operation_id": "39a1bf4c-6a4a-4517-a8df-c88522969bc8",
+        "execution_state": "REQUEST_SENT",
+        "should_send": false,
+        "replayed": true,
+        "booking_status": "confirmed",
+        "ticket_count": "0",
+        "can_download_ticket": false
+      }
+    ]
+  },
+  {
+    "test": "B14_counts",
+    "actual": {
+      "b13": 1,
+      "b14": 1,
+      "operations": 2,
+      "tickets": 0,
+      "audit": 3
+    }
+  },
+  {
+    "test": "B14 competing failure recovery",
+    "pidA": 1049874,
+    "pidB": 1049888,
+    "begin": "2026-09-04 20:00:46.110699+00",
+    "lock": {
+      "pid": 1049888,
+      "state": "active",
+      "wait_event_type": "Lock",
+      "wait_event": "transactionid",
+      "query_start": "2026-09-04 20:00:46.441556+00",
+      "xact_start": "2026-09-04 20:00:45.954579+00",
+      "observed": "2026-09-04 20:00:46.70558+00",
+      "blockers": [
+        1049874
+      ]
+    },
+    "end": "2026-09-04 20:00:52.030183+00",
+    "transactionA": "BEGIN/RPC/COMMIT",
+    "transactionB": "BEGIN/RPC/COMMIT",
+    "A": [
+      {
+        "execution_id": "cc93b98b-06eb-42c8-aab7-741b6582ae19",
+        "operation_id": "39a1bf4c-6a4a-4517-a8df-c88522969bc8",
+        "execution_state": "UNKNOWN",
+        "should_send": false,
+        "replayed": false,
+        "booking_status": "confirmed",
+        "ticket_count": "0",
+        "can_download_ticket": false
+      }
+    ],
+    "B": [
+      {
+        "execution_id": "cc93b98b-06eb-42c8-aab7-741b6582ae19",
+        "operation_id": "39a1bf4c-6a4a-4517-a8df-c88522969bc8",
+        "execution_state": "UNKNOWN",
+        "should_send": false,
+        "replayed": true,
+        "booking_status": "confirmed",
+        "ticket_count": "0",
+        "can_download_ticket": false
+      }
+    ]
+  },
+  {
+    "test": "B14 competing trusted completion",
+    "pidA": 1049874,
+    "pidB": 1049888,
+    "begin": "2026-09-04 20:00:59.237844+00",
+    "lock": {
+      "pid": 1049888,
+      "state": "active",
+      "wait_event_type": "Lock",
+      "wait_event": "transactionid",
+      "query_start": "2026-09-04 20:00:59.562149+00",
+      "xact_start": "2026-09-04 20:00:59.085375+00",
+      "observed": "2026-09-04 20:00:59.809848+00",
+      "blockers": [
+        1049874
+      ]
+    },
+    "end": "2026-09-04 20:01:05.167349+00",
+    "transactionA": "BEGIN/RPC/COMMIT",
+    "transactionB": "BEGIN/RPC/COMMIT",
+    "A": [
+      {
+        "execution_id": "cc93b98b-06eb-42c8-aab7-741b6582ae19",
+        "operation_id": "39a1bf4c-6a4a-4517-a8df-c88522969bc8",
+        "execution_state": "ISSUED",
+        "should_send": false,
+        "replayed": false,
+        "booking_status": "ticketed",
+        "ticket_count": "2",
+        "can_download_ticket": true
+      }
+    ],
+    "B": [
+      {
+        "execution_id": "cc93b98b-06eb-42c8-aab7-741b6582ae19",
+        "operation_id": "39a1bf4c-6a4a-4517-a8df-c88522969bc8",
+        "execution_state": "ISSUED",
+        "should_send": false,
+        "replayed": true,
+        "booking_status": "ticketed",
+        "ticket_count": "2",
+        "can_download_ticket": true
+      }
+    ]
+  },
+  {
+    "test": "B14_crash",
+    "beforeRecovery": {
+      "id": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+      "booking_status": "confirmed",
+      "payment_status": "confirmed",
+      "net_cost": "2300.00",
+      "sold_price": "2600.00",
+      "commission": "0.00",
+      "agent_profit": "300.00",
+      "currency": "SDG",
+      "supplier_provider": "mock",
+      "amount": "2600.00",
+      "expires_at": "2026-09-04T20:28:52.239Z",
+      "supplier_reference": "SYNTHETIC-S1B_20260904T195834511Z_ecc45498",
+      "b13": "ACCEPTED",
+      "b14": "REQUEST_SENT",
+      "tickets": 0
+    },
+    "afterUnknown": {
+      "execution_state": "UNKNOWN",
+      "reconciliation_required": true,
+      "attempt_count": 1
+    },
+    "afterIssued": {
+      "id": "818bdb30-6bf5-41e5-b5cb-4015c0572ca0",
+      "booking_status": "ticketed",
+      "payment_status": "confirmed",
+      "net_cost": "2300.00",
+      "sold_price": "2600.00",
+      "commission": "0.00",
+      "agent_profit": "300.00",
+      "currency": "SDG",
+      "supplier_provider": "mock",
+      "amount": "2600.00",
+      "expires_at": "2026-09-04T20:28:52.239Z",
+      "supplier_reference": "SYNTHETIC-S1B_20260904T195834511Z_ecc45498",
+      "b13": "ACCEPTED",
+      "b14": "ISSUED",
+      "tickets": 2
+    },
+    "counts": {
+      "b13": 1,
+      "b14": 1,
+      "operations": 2,
+      "tickets": 2,
+      "audit": 5
+    },
+    "externalCalls": 0
+  },
+  {
+    "test": "artifact_projection",
+    "rows": [
+      {
+        "booking_ref": "HJZ-9B55D4D2806A",
+        "ticketing_state": "ISSUED",
+        "ticket_count": 2,
+        "artifact_available": false,
+        "issued_at": "2026-09-04T20:01:18.544+00:00",
+        "reconciliation_required": false
+      },
+      {
+        "booking_ref": "HJZ-CB28EB2379DE",
+        "ticketing_state": "ISSUED",
+        "ticket_count": 2,
+        "artifact_available": false,
+        "issued_at": "2026-09-04T20:01:11.433+00:00",
+        "reconciliation_required": false
+      },
+      {
+        "booking_ref": "HJZ-B8F9DD856806",
+        "ticketing_state": "ISSUED",
+        "ticket_count": 2,
+        "artifact_available": true,
+        "issued_at": "2026-09-04T20:00:53.365+00:00",
+        "reconciliation_required": false
+      }
+    ]
+  },
+  {
+    "test": "Bankak",
+    "underReview": {
+      "id": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+      "booking_status": "pending_payment",
+      "payment_status": "under_review",
+      "net_cost": "2300.00",
+      "sold_price": "2600.00",
+      "commission": "0.00",
+      "agent_profit": "300.00",
+      "currency": "SDG",
+      "supplier_provider": "mock",
+      "amount": "2600.00",
+      "expires_at": "2026-09-05T19:59:03.088Z",
+      "supplier_reference": null,
+      "b13": null,
+      "b14": null,
+      "tickets": 0
+    },
+    "reviewed": {
+      "id": "4c9ef707-00f8-4743-bd5b-7a4dbfe21ee4",
+      "booking_status": "payment_confirmed",
+      "payment_status": "confirmed",
+      "net_cost": "2300.00",
+      "sold_price": "2600.00",
+      "commission": "0.00",
+      "agent_profit": "300.00",
+      "currency": "SDG",
+      "supplier_provider": "mock",
+      "amount": "2600.00",
+      "expires_at": "2026-09-05T19:59:03.088Z",
+      "supplier_reference": null,
+      "b13": null,
+      "b14": null,
+      "tickets": 0
+    },
+    "storageUploadStatus": {
+      "status": 200,
+      "denied": false
+    }
+  },
+  {
+    "test": "RLS",
+    "identityA": "064ea040-a5c2-4b92-afbd-015c6a23091e",
+    "identityB": "c73f6b30-a5fe-4e63-bb2d-99586d7ed355",
+    "normalPasswordSignIn": true,
+    "ownerAndCrossOwnerAssertions": true
+  },
+  {
+    "test": "MyTrips",
+    "bookings": [
+      {
+        "booking_ref": "HJZ-DBE0742F6245",
+        "status": "payment_confirmed",
+        "sold_price": 2600,
+        "currency": "SDG",
+        "pay_method": "bankak",
+        "created_at": "2026-09-04T19:59:03.088999+00:00"
+      },
+      {
+        "booking_ref": "HJZ-9B55D4D2806A",
+        "status": "ticketed",
+        "sold_price": 2600,
+        "currency": "SDG",
+        "pay_method": "card",
+        "created_at": "2026-09-04T19:58:59.206169+00:00"
+      },
+      {
+        "booking_ref": "HJZ-CB28EB2379DE",
+        "status": "ticketed",
+        "sold_price": 2600,
+        "currency": "SDG",
+        "pay_method": "card",
+        "created_at": "2026-09-04T19:58:55.324408+00:00"
+      },
+      {
+        "booking_ref": "HJZ-B8F9DD856806",
+        "status": "ticketed",
+        "sold_price": 2600,
+        "currency": "SDG",
+        "pay_method": "card",
+        "created_at": "2026-09-04T19:58:51.459487+00:00"
+      },
+      {
+        "booking_ref": "HJZ-8653BE769617",
+        "status": "processing",
+        "sold_price": 2600,
+        "currency": "SDG",
+        "pay_method": "card",
+        "created_at": "2026-09-04T19:58:47.465488+00:00"
+      }
+    ],
+    "payments": [
+      {
+        "payment_id": "b321e0aa-1cd9-4c66-8f92-ae32373aada7",
+        "booking_ref": "HJZ-DBE0742F6245",
+        "method": "bankak",
+        "status": "confirmed",
+        "amount": 2600,
+        "currency": "SDG",
+        "amount_sdg": 2600,
+        "payment_reference": "PAY-580C6FF38143",
+        "expires_at": "2026-09-05T19:59:03.088+00:00",
+        "created_at": "2026-09-04T19:59:03.088999+00:00"
+      },
+      {
+        "payment_id": "6e6f2029-1296-4851-a4e0-55953b06a456",
+        "booking_ref": "HJZ-9B55D4D2806A",
+        "method": "card",
+        "status": "confirmed",
+        "amount": 2600,
+        "currency": "SDG",
+        "amount_sdg": null,
+        "payment_reference": "PAY-6341FA584529",
+        "expires_at": "2026-09-04T20:29:00.002391+00:00",
+        "created_at": "2026-09-04T19:58:59.206169+00:00"
+      },
+      {
+        "payment_id": "6c41e1d5-cae5-4508-81f4-0d543b936abf",
+        "booking_ref": "HJZ-CB28EB2379DE",
+        "method": "card",
+        "status": "confirmed",
+        "amount": 2600,
+        "currency": "SDG",
+        "amount_sdg": null,
+        "payment_reference": "PAY-973F031C5C2A",
+        "expires_at": "2026-09-04T20:28:56.091101+00:00",
+        "created_at": "2026-09-04T19:58:55.324408+00:00"
+      },
+      {
+        "payment_id": "2d0b0141-7ed5-48b6-a08f-1fd9c4f835b4",
+        "booking_ref": "HJZ-B8F9DD856806",
+        "method": "card",
+        "status": "confirmed",
+        "amount": 2600,
+        "currency": "SDG",
+        "amount_sdg": null,
+        "payment_reference": "PAY-2D3E23EEC3F3",
+        "expires_at": "2026-09-04T20:28:52.239338+00:00",
+        "created_at": "2026-09-04T19:58:51.459487+00:00"
+      },
+      {
+        "payment_id": "ceac02a7-a150-4eff-82a8-435ac3bf8a26",
+        "booking_ref": "HJZ-8653BE769617",
+        "method": "card",
+        "status": "confirmed",
+        "amount": 2600,
+        "currency": "SDG",
+        "amount_sdg": null,
+        "payment_reference": "PAY-1FCD7E5373DA",
+        "expires_at": "2026-09-04T20:28:48.30126+00:00",
+        "created_at": "2026-09-04T19:58:47.465488+00:00"
+      }
+    ],
+    "ticketing": [
+      {
+        "booking_ref": "HJZ-9B55D4D2806A",
+        "ticketing_state": "ISSUED",
+        "ticket_count": 2,
+        "artifact_available": false,
+        "issued_at": "2026-09-04T20:01:18.544+00:00",
+        "reconciliation_required": false
+      },
+      {
+        "booking_ref": "HJZ-CB28EB2379DE",
+        "ticketing_state": "ISSUED",
+        "ticket_count": 2,
+        "artifact_available": false,
+        "issued_at": "2026-09-04T20:01:11.433+00:00",
+        "reconciliation_required": false
+      },
+      {
+        "booking_ref": "HJZ-B8F9DD856806",
+        "ticketing_state": "ISSUED",
+        "ticket_count": 2,
+        "artifact_available": true,
+        "issued_at": "2026-09-04T20:00:53.365+00:00",
+        "reconciliation_required": false
+      }
+    ],
+    "presentation": [
+      {
+        "key": "account-booking-0",
+        "bookingState": "payment_confirmed",
+        "paymentState": "confirmed",
+        "reference": "HJZ-DBE0742F6245",
+        "createdAt": "2026-09-04T19:59:03.088Z",
+        "amount": 2600,
+        "currency": "SDG",
+        "paymentMethod": "bankak",
+        "ticketingState": "NOT_STARTED",
+        "ticketingLabel": "لم تصدر التذكرة بعد",
+        "ticketCount": 0,
+        "canViewTicketDetails": false,
+        "canDownloadTicket": false,
+        "reconciliationRequired": false
+      },
+      {
+        "key": "account-booking-1",
+        "bookingState": "ticketed",
+        "paymentState": "confirmed",
+        "reference": "HJZ-9B55D4D2806A",
+        "createdAt": "2026-09-04T19:58:59.206Z",
+        "amount": 2600,
+        "currency": "SDG",
+        "paymentMethod": "card",
+        "ticketingState": "ISSUED",
+        "ticketingLabel": "تم إصدار التذكرة",
+        "ticketCount": 2,
+        "canViewTicketDetails": true,
+        "canDownloadTicket": false,
+        "reconciliationRequired": false
+      },
+      {
+        "key": "account-booking-2",
+        "bookingState": "ticketed",
+        "paymentState": "confirmed",
+        "reference": "HJZ-CB28EB2379DE",
+        "createdAt": "2026-09-04T19:58:55.324Z",
+        "amount": 2600,
+        "currency": "SDG",
+        "paymentMethod": "card",
+        "ticketingState": "ISSUED",
+        "ticketingLabel": "تم إصدار التذكرة",
+        "ticketCount": 2,
+        "canViewTicketDetails": true,
+        "canDownloadTicket": false,
+        "reconciliationRequired": false
+      },
+      {
+        "key": "account-booking-3",
+        "bookingState": "ticketed",
+        "paymentState": "confirmed",
+        "reference": "HJZ-B8F9DD856806",
+        "createdAt": "2026-09-04T19:58:51.459Z",
+        "amount": 2600,
+        "currency": "SDG",
+        "paymentMethod": "card",
+        "ticketingState": "ISSUED",
+        "ticketingLabel": "تم إصدار التذكرة",
+        "ticketCount": 2,
+        "canViewTicketDetails": true,
+        "canDownloadTicket": true,
+        "reconciliationRequired": false
+      },
+      {
+        "key": "account-booking-4",
+        "bookingState": "processing",
+        "paymentState": "confirmed",
+        "reference": "HJZ-8653BE769617",
+        "createdAt": "2026-09-04T19:58:47.465Z",
+        "amount": 2600,
+        "currency": "SDG",
+        "paymentMethod": "card",
+        "ticketingState": "NOT_STARTED",
+        "ticketingLabel": "لم تصدر التذكرة بعد",
+        "ticketCount": 0,
+        "canViewTicketDetails": false,
+        "canDownloadTicket": false,
+        "reconciliationRequired": false
+      }
+    ]
+  },
+  {
+    "test": "Expiry setup",
+    "payment": "8cc290d4-f8e2-4215-81ee-617d024faa1f",
+    "timing": {
+      "expires_at": "2026-09-04 20:01:51.41094+00",
+      "authoritative_time": "2026-09-04 20:01:52.41094+00",
+      "observed_wall_time": "2026-09-04 20:01:53.958513+00",
+      "expired_by_function_clock": true
+    },
+    "callerOccurredAt": "2099-01-01T00:00:00Z",
+    "cleanup": "ROLLBACK; no committed residue"
+  },
+  {
+    "test": "Expiry future caller time",
+    "payment": "8cc290d4-f8e2-4215-81ee-617d024faa1f",
+    "confirmationAccepted": false,
+    "expected": false,
+    "cleanup": "ROLLBACK; no committed residue"
+  },
+  {
+    "test": "Expiry",
+    "actual": {
+      "id": "91b93733-df4d-447d-ad4b-da7b0da6bb27",
+      "booking_status": "pending_payment",
+      "payment_status": "expired",
+      "net_cost": "2300.00",
+      "sold_price": "2600.00",
+      "commission": "0.00",
+      "agent_profit": "300.00",
+      "currency": "SDG",
+      "supplier_provider": "mock",
+      "amount": "2600.00",
+      "expires_at": "2026-09-04T20:01:51.410Z",
+      "supplier_reference": null,
+      "b13": null,
+      "b14": null,
+      "tickets": 0
+    },
+    "cleanup": "ROLLBACK; no committed residue"
+  },
+  {
+    "test": "Exact committed footprint",
+    "paymentAudit": 28,
+    "providerEvents": 5,
+    "receipts": 1,
+    "bookings": 6
+  }
+]
