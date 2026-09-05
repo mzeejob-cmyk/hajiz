@@ -117,3 +117,55 @@ Only the following work remains:
 6. Wire the Admin, Partner, CMS, travelers, and favorites screens only after their deployed authorities exist.
 
 Hotels H2 remains PARTIAL and was not modified. No Production, Legacy, live supplier, Travelport capability, hotel supplier, hold, hotel booking/payment, voucher, or cancellation/refund path was touched.
+
+## P2 STORAGE MIGRATION REMEDIATION
+
+This remediation remains a review-only design. The SQL stays at `docs/proposals/P2_STORAGE_PROPOSAL.sql`, ends in `ROLLBACK`, and has not been converted into `supabase/migrations` or applied to any database. P2 overall remains **PARTIAL**.
+
+### M-01 — migration guards: remediated for review
+
+Every proposed relation has a precondition based on `to_regclass`, relation kind, migration owner, and a canonical object signature. The proposal creates an object only when absent. It then validates an exact ordered column fingerprint and guarded named constraints. Indexes validate their target relation, validity, uniqueness, key definition, and canonical signature. Policies validate command, roles, predicates, and signature. All proposed RPCs have a `to_regprocedure` owner/signature precondition before `CREATE OR REPLACE`. A final owner-consistency guard requires all private tables and definer functions to share the migration owner. Unknown or drifted objects fail closed; there is no drop, destructive repair, blind replay, or history rewrite.
+
+### M-02 — database trust model: remediated for review
+
+The chosen model is the established B11–B14 HAJIZ model:
+
+- The runtime database identity is the backend Supabase `service_role`, used only through named RPC calls.
+- `service_role`, `authenticated`, `anon`, and `public` receive no direct table privileges on the P2 private tables.
+- The backend receives `EXECUTE` only on reviewed `SECURITY DEFINER` RPCs with `search_path=''`.
+- The P2 JavaScript service now accepts an RPC adapter rather than a raw SQL executor; owner IDs are still derived from verified user authentication before an RPC call.
+- RLS is defense in depth through explicit deny policies. It is not the primary owner authorization boundary.
+- `NO FORCE ROW LEVEL SECURITY` is deliberate because the definer functions and tables share a guarded owner, matching canonical B11–B14 behavior. The design does not depend on an undocumented `BYPASSRLS` grant.
+- Owner predicates and stored Admin role checks are enforced inside the RPC layer. The browser cannot submit an authoritative owner or role.
+
+No direct financial, commission, payout, notification-delivery, or external KYC-provider writer authority is granted.
+
+### M-03 — notification domain idempotency: remediated for review
+
+`payment_pending`, `payment_confirmed`, `supplier_confirmed`, and `ticket_issued` are one logical transition each per booking. Their server-computed domain key is the event type, so a regenerated `event_id` cannot duplicate the same notification. `failed_reconciliation` can legitimately recur for distinct authoritative failure sources; its domain key is `failed_reconciliation:<source_event_id>`, where the stable source event is required by the internal backend contract. A unique constraint on `(booking_id, event_type, domain_key)` is the concurrency boundary. Recipient identity is derived from `public.bookings.user_id`; it is never accepted from the browser. Delivery attempts remain separate mutable worker state and no worker/provider is configured by this proposal.
+
+### M-04 — KYC authority and audit: remediated for review
+
+Partners now have `created_at` and `updated_at`. An append-only `p2_kyc_transition_audit` records owner, prior state, new state, actor, actor source, stable source event, and server timestamp. The fail-closed transition matrix is:
+
+- `NOT_SUBMITTED → PENDING`: owner submission only.
+- `REJECTED → PENDING`: owner resubmission only.
+- `PENDING → VERIFIED`: stored Admin review only.
+- `PENDING → REJECTED`: stored Admin review only.
+- `VERIFIED`: terminal in this proposal.
+
+The transition RPC is callable only by the backend role. Owner-submission transitions require actor and owner identity to match; verification/rejection requires a stored Admin role. Stable source-event replay is idempotent and conflicting replay fails. No external KYC provider or customer self-verification authority is introduced.
+
+### M-05 — CMS audit and concurrency: remediated for review
+
+Catalog records now contain `created_at`, `created_by`, `updated_at`, `updated_by`, `published_at`, `published_by`, and a positive `version`. Draft creation starts at version 1. Draft edits and publication require a caller-supplied expected version that is compared inside the Admin-authorized RPC; each accepted change increments the version. Missing/stale versions fail closed with a serialization-style conflict instead of overwriting newer work. Publication records its actor and server timestamp. Published output omits internal actor identifiers. The schema contains no supplier availability, inventory, pricing, booking, or orchestration authority.
+
+### Re-review and validation status
+
+Saved-traveler names remain bounded, Unicode-capable, control-character-free, and cascade only with their owner. Favorites preserve owner/type/canonical-ID uniqueness without supplier identifiers. Preferences use `owner_id` as the primary key because exactly one row exists per owner. Commission entries retain booking/source-event lineage and explicit reversal linkage, but no producer. Payout storage keeps `UNKNOWN` available without pretending that provider reconciliation exists. Outbox indexes prepare a future worker claim query but no worker EXECUTE authority exists.
+
+Static/offline remediation tests cover guards, drift failure, privileges, RPC-only service alignment, outbox domain identity, KYC transitions/audit, CMS versioning/audit, and prohibited producer/provider boundaries.
+
+Local database validation: **NOT AVAILABLE**. This machine has no approved local disposable PostgreSQL/Supabase runtime (`docker`, Supabase CLI, and `psql` are unavailable), so no database was contacted and Staging was not substituted.
+
+Remaining blockers before conversion are independent SQL/security review and real execution against an approved disposable local Supabase/PostgreSQL environment, including fresh apply, exact replay, deliberate drift, privileges/RLS, KYC concurrency/idempotency, outbox contention, CMS stale-version contention, and rollback. Conversion and Staging application remain explicitly unauthorized.

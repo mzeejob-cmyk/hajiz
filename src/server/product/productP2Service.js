@@ -1,4 +1,4 @@
-// Server composition only. query is a trusted parameterized database executor;
+// Server composition only. rpc is a service-role Supabase RPC adapter;
 // authenticate must verify the current Supabase user, not decode unverified claims.
 const uuid = value => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
 function gate(ok, code) { if (!ok) throw new Error(code) }
@@ -22,13 +22,17 @@ export function createP2SupabaseAuthenticator(client) {
     return { userId: result.data.user.id }
   }
 }
-export function createProductP2Service({ authenticate, query, schemaReady = false, artifactReader = null }) {
+export function createP2RpcAdapter(client) {
+  return async (name, parameters) => {
+    const result = await client.rpc(name, parameters)
+    if (result.error) throw new Error("P2_PERSISTENCE_UNAVAILABLE")
+    return result.data
+  }
+}
+export function createProductP2Service({ authenticate, rpc, schemaReady = false, artifactReader = null }) {
   async function user(request) { const identity = await authenticate(request); gate(uuid(identity?.userId), "AUTH_REQUIRED"); return identity.userId }
   function prepared() { gate(schemaReady === true, "P2_SCHEMA_NOT_APPLIED") }
-  async function admin(id) {
-    const result = await query("select role from public.profiles where id=$1 and role='admin'", [id])
-    gate(result.rows.length === 1, "ADMIN_REQUIRED")
-  }
+  async function call(name, parameters) { gate(typeof rpc === "function", "P2_RPC_ADAPTER_REQUIRED"); return rpc(name, parameters) }
   return Object.freeze({
     async collection(request, input) {
       const id = await user(request)
@@ -39,61 +43,48 @@ export function createProductP2Service({ authenticate, query, schemaReady = fals
       const data = input.operation === "save" ? config.validate(input.data) : null
       if (input.operation !== "list") gate(uuid(input.id), "RECORD_ID_REQUIRED")
       prepared()
-      // Table interpolation comes only from the closed, server-defined registry.
-      if (input.operation === "list") {
-        const result = await query(`select id,data from app_private.${config.table} where owner_id=$1 order by id limit 100`, [id])
-        return result.rows.map(row => own({ id: row.id, data: config.validate(row.data) }))
-      }
-      if (input.operation === "delete") {
-        const result = await query(`delete from app_private.${config.table} where id=$1 and owner_id=$2 returning id`, [input.id, id])
-        gate(result.rows.length === 1, "RECORD_NOT_FOUND"); return { deleted: true }
-      }
-      const result = await query(`insert into app_private.${config.table}(id,owner_id,data) values($1,$2,$3::jsonb) on conflict(id) do update set data=excluded.data,updated_at=now() where ${config.table}.owner_id=$2 returning id,data`, [input.id, id, JSON.stringify(data)])
-      gate(result.rows.length === 1, "RECORD_NOT_FOUND")
-      return own({ id: result.rows[0].id, data: config.validate(result.rows[0].data) })
+      const value = await call("p2_collection_v1", { p_owner_id: id, p_collection: input.collection, p_operation: input.operation, p_record_id: input.id ?? null, p_data: data })
+      if (input.operation === "delete") return { deleted: value?.deleted === true }
+      const rows = Array.isArray(value) ? value : [value]
+      const projected = rows.filter(Boolean).map(row => own({ id: row.id, data: config.validate(row.data) }))
+      return input.operation === "list" ? projected : projected[0]
     },
     async adminReads(request, input) {
-      const id = await user(request); fields(input, []); await admin(id)
-      const result = await query("select b.booking_ref,b.status as booking_status,p.status as payment_status,p.method,p.amount,p.currency from public.payments p join public.bookings b on b.id=p.booking_id where exists(select 1 from public.profiles a where a.id=$1 and a.role='admin') order by p.created_at desc limit 100", [id])
-      return result.rows.map(r => ({ bookingReference: r.booking_ref, bookingState: r.booking_status, paymentState: r.payment_status, method: r.method, amount: r.amount, currency: r.currency }))
+      const id = await user(request); fields(input, []); prepared()
+      const result = await call("get_p2_admin_payments_v1", { p_actor_id: id })
+      return result.map(r => ({ bookingReference: r.booking_ref, bookingState: r.booking_status, paymentState: r.payment_status, method: r.method, amount: r.amount, currency: r.currency }))
     },
     async partner(request, input) {
       const id = await user(request); fields(input, []); prepared()
-      const identity = await query("select owner_id,kyc_state from app_private.p2_partners where owner_id=$1", [id])
-      gate(identity.rows.length === 1 && identity.rows[0].owner_id === id, "PARTNER_NOT_FOUND")
-      const commissions = await query("select id,currency,amount,state from app_private.p2_commission_entries where owner_id=$1 order by created_at desc limit 100", [id])
-      const payouts = await query("select id,currency,amount,state from app_private.p2_payouts where owner_id=$1 order by created_at desc limit 100", [id])
+      const value = await call("get_p2_partner_v1", { p_owner_id: id })
+      gate(value?.owner_id === id, "PARTNER_NOT_FOUND")
       const project = r => ({ id: r.id, currency: r.currency, amount: r.amount, state: r.state })
-      return { kycState: identity.rows[0].kyc_state, commissions: commissions.rows.map(project), payouts: payouts.rows.map(project), payoutExecutionAllowed: false, availableCommission: null, walletBalance: null }
+      return { kycState: value.kyc_state, commissions: value.commissions.map(project), payouts: value.payouts.map(project), payoutExecutionAllowed: false, availableCommission: null, walletBalance: null }
     },
     async catalog(request, input) {
       const id = await user(request)
-      fields(input, ["operation", "id", "type", "title", "summary"])
+      fields(input, ["operation", "id", "type", "title", "summary", "expectedVersion"])
       gate(["published", "drafts", "save", "publish"].includes(input.operation), "OPERATION_INVALID")
-      if (input.operation !== "published") await admin(id)
       prepared()
       if (["published", "drafts"].includes(input.operation)) {
-        const state = input.operation === "published" ? "published" : "draft"
-        const result = await query("select id,type,title,summary,state from app_private.p2_catalog where state=$1 and ($1='published' or exists(select 1 from public.profiles where id=$2 and role='admin')) order by updated_at desc limit 100", [state, id])
-        return result.rows.map(r => ({ id: r.id, type: r.type, title: r.title, summary: r.summary, state: r.state, dynamicBuilder: false, supplierAvailability: null }))
+        const result = await call("p2_catalog_v1", { p_actor_id: id, p_operation: input.operation, p_record_id: null, p_type: null, p_title: null, p_summary: null, p_expected_version: null })
+        return result.map(r => ({ id: r.id, type: r.type, title: r.title, summary: r.summary, state: r.state, version: r.version, dynamicBuilder: false, supplierAvailability: null }))
       }
       gate(uuid(input.id), "RECORD_ID_REQUIRED")
+      gate(Number.isSafeInteger(input.expectedVersion) && input.expectedVersion >= 0, "EXPECTED_VERSION_REQUIRED")
       if (input.operation === "save") {
         gate(["package", "offer"].includes(input.type), "CATALOG_TYPE_INVALID")
         const title = text(input.title, 120), summary = text(input.summary, 1000)
-        const result = await query("insert into app_private.p2_catalog(id,type,title,summary,state) select $1,$2,$3,$4,'draft' where exists(select 1 from public.profiles where id=$5 and role='admin') on conflict(id) do update set title=excluded.title,summary=excluded.summary,state='draft',updated_at=now() returning id", [input.id, input.type, title, summary, id])
-        gate(result.rows.length === 1, "CATALOG_WRITE_DENIED"); return { state: "draft" }
+        return call("p2_catalog_v1", { p_actor_id: id, p_operation: "save", p_record_id: input.id, p_type: input.type, p_title: title, p_summary: summary, p_expected_version: input.expectedVersion })
       }
-      const result = await query("update app_private.p2_catalog set state='published',updated_at=now() where id=$1 and state='draft' and exists(select 1 from public.profiles where id=$2 and role='admin') returning id", [input.id, id])
-      gate(result.rows.length === 1, "CATALOG_PUBLISH_DENIED"); return { state: "published" }
+      return call("p2_catalog_v1", { p_actor_id: id, p_operation: "publish", p_record_id: input.id, p_type: null, p_title: null, p_summary: null, p_expected_version: input.expectedVersion })
     },
     async artifact(request, input) {
       const id = await user(request); fields(input, ["ticketId"]); gate(uuid(input.ticketId), "TICKET_ID_INVALID")
-      const result = await query("select t.id,t.owner_id,t.artifact_ref,t.artifact_digest,t.artifact_media_type from app_private.flight_ticket_records t join app_private.flight_supplier_ticketing_executions e on e.id=t.ticketing_execution_id and e.booking_id=t.booking_id and e.owner_id=t.owner_id join public.bookings b on b.id=t.booking_id and b.user_id=t.owner_id where t.id=$1 and t.owner_id=$2 and b.status='ticketed' and e.execution_state='ISSUED' and not e.reconciliation_required and t.artifact_availability='AVAILABLE'", [input.ticketId, id])
-      gate(result.rows.length === 1 && result.rows[0].owner_id === id, "ARTIFACT_UNAVAILABLE")
+      const row = await call("get_p2_ticket_artifact_authority_v1", { p_owner_id: id, p_ticket_id: input.ticketId })
+      gate(row?.owner_id === id, "ARTIFACT_UNAVAILABLE")
       // Registry resolves a trusted reference to private bytes; no URL or key from client.
       gate(artifactReader, "ARTIFACT_PROVIDER_NOT_CONFIGURED")
-      const row = result.rows[0]
       gate(/^[a-f0-9]{64}$/.test(row.artifact_digest) && row.artifact_media_type === "application/pdf", "ARTIFACT_INVALID")
       const bytes = await artifactReader.readTrustedPrivateArtifact(row.artifact_ref)
       const { createHash } = await import("node:crypto")
@@ -106,19 +97,18 @@ export function createProductP2Service({ authenticate, query, schemaReady = fals
 }
 
 // Internal event producer only; deliberately absent from the browser dispatcher.
-export function createNotificationOutbox({ query, schemaReady = false }) {
+export function createNotificationOutbox({ rpc, schemaReady = false }) {
   return Object.freeze({
     async enqueue(event) {
-      fields(event, ["eventId", "bookingId", "type"])
+      fields(event, ["eventId", "bookingId", "type", "sourceEventId"])
       gate(uuid(event.eventId) && uuid(event.bookingId), "EVENT_ID_INVALID")
       gate(["payment_pending", "payment_confirmed", "supplier_confirmed", "ticket_issued", "failed_reconciliation"].includes(event.type), "EVENT_TYPE_INVALID")
+      if (event.type === "failed_reconciliation") gate(uuid(event.sourceEventId), "SOURCE_EVENT_REQUIRED")
+      else gate(event.sourceEventId === undefined, "SOURCE_EVENT_FORBIDDEN")
       gate(schemaReady, "P2_SCHEMA_NOT_APPLIED")
-      const result = await query("insert into app_private.p2_notification_outbox(event_id,booking_id,recipient_id,event_type,state) select $1,b.id,b.user_id,$3,'NOT_CONFIGURED' from public.bookings b where b.id=$2 on conflict(event_id) do nothing returning event_id", [event.eventId, event.bookingId, event.type])
-      if (!result.rows.length) {
-        const prior = await query("select event_id from app_private.p2_notification_outbox where event_id=$1 and booking_id=$2 and event_type=$3", [event.eventId, event.bookingId, event.type])
-        gate(prior.rows.length === 1, "EVENT_CONFLICT")
-      }
-      return { state: "NOT_CONFIGURED", delivered: false }
+      gate(typeof rpc === "function", "P2_RPC_ADAPTER_REQUIRED")
+      const value = await rpc("enqueue_p2_notification_v1", { p_event_id: event.eventId, p_booking_id: event.bookingId, p_event_type: event.type, p_source_event_id: event.sourceEventId ?? null })
+      return { state: value.state, delivered: false, replayed: value.replayed === true }
     },
     async deliver() { throw new Error("NOTIFICATION_PROVIDER_NOT_CONFIGURED") },
   })
