@@ -12,10 +12,19 @@ function stagingConfig(env = import.meta.env) {
   return { url: parsed.origin, anonKey }
 }
 
+let accountSessionClient
+export function getAccountSessionClient() {
+  if (!accountSessionClient) {
+    const { url, anonKey } = stagingConfig()
+    accountSessionClient = createClient(url, anonKey, { auth: { persistSession: false, detectSessionInUrl: false, autoRefreshToken: true } })
+  }
+  return accountSessionClient
+}
+
 export function createMyTripsDataSource({ client } = {}) {
   let authenticatedClient = client
   const requireClient = async () => {
-    if (!authenticatedClient) { const { url, anonKey } = stagingConfig(); authenticatedClient = createClient(url, anonKey) }
+    if (!authenticatedClient) authenticatedClient = getAccountSessionClient()
     const { data: authData, error: authError } = await authenticatedClient.auth.getUser()
     if (authError || !authData?.user) throw new Error("MY_TRIPS_AUTH_REQUIRED")
     return authenticatedClient
