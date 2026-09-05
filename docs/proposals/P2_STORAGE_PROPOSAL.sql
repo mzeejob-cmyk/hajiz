@@ -58,8 +58,7 @@ do $migration$ begin
       constraint p2_favorites_data_check check(
         pg_catalog.jsonb_typeof(data)='object' and pg_catalog.pg_column_size(data)<=512
         and data ?& array['kind','canonicalId'] and data-array['kind','canonicalId']='{}'::jsonb
-        and data->>'kind' in ('hotel','package','offer') and data->>'canonicalId' ~ '^[A-Za-z0-9_-]{1,128}$'),
-      constraint p2_favorites_owner_identity_unique unique(owner_id,(data->>'kind'),(data->>'canonicalId'))
+        and data->>'kind' in ('hotel','package','offer') and data->>'canonicalId' ~ '^[A-Za-z0-9_-]{1,128}$')
     );
     comment on table app_private.p2_favorites is 'hajiz:p2:favorites:v2';
   end if;
@@ -195,7 +194,7 @@ declare item record; target regclass; constraint_oid oid; actual_kind "char"; si
 begin
   for item in select * from (values
     ('app_private.p2_saved_travelers','p2_saved_travelers_pkey','p'),('app_private.p2_saved_travelers','p2_saved_travelers_owner_id_fkey','f'),('app_private.p2_saved_travelers','p2_saved_travelers_data_check','c'),
-    ('app_private.p2_favorites','p2_favorites_pkey','p'),('app_private.p2_favorites','p2_favorites_owner_id_fkey','f'),('app_private.p2_favorites','p2_favorites_data_check','c'),('app_private.p2_favorites','p2_favorites_owner_identity_unique','u'),
+    ('app_private.p2_favorites','p2_favorites_pkey','p'),('app_private.p2_favorites','p2_favorites_owner_id_fkey','f'),('app_private.p2_favorites','p2_favorites_data_check','c'),
     ('app_private.p2_preferences','p2_preferences_pkey','p'),('app_private.p2_preferences','p2_preferences_owner_id_fkey','f'),('app_private.p2_preferences','p2_preferences_data_check','c'),
     ('app_private.p2_partners','p2_partners_pkey','p'),('app_private.p2_partners','p2_partners_owner_id_fkey','f'),('app_private.p2_partners','p2_partners_kyc_state_check','c'),
     ('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_pkey','p'),('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_owner_id_fkey','f'),('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_actor_id_fkey','f'),('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_source_event_id_key','u'),('app_private.p2_kyc_transition_audit','p2_kyc_audit_previous_check','c'),('app_private.p2_kyc_transition_audit','p2_kyc_audit_new_check','c'),('app_private.p2_kyc_transition_audit','p2_kyc_audit_source_check','c'),('app_private.p2_kyc_transition_audit','p2_kyc_audit_transition_check','c'),
@@ -213,26 +212,40 @@ begin
 end $guard$;
 
 -- Guarded indexes validate signature, target, validity, uniqueness, and keys.
+-- Expression indexes additionally compare every ordered key expression exactly.
 do $guard$
-declare item record; idx regclass; signature text; definition text; target oid; valid boolean; unique_index boolean;
+declare item record; idx regclass; signature text; definition text; target oid; valid boolean; unique_index boolean; actual_key_parts text[];
 begin
   for item in select * from (values
-    ('app_private.p2_travelers_owner_idx','create index p2_travelers_owner_idx on app_private.p2_saved_travelers(owner_id,created_at desc)','app_private.p2_saved_travelers',false,'owner_id, created_at DESC'),
-    ('app_private.p2_favorites_owner_idx','create index p2_favorites_owner_idx on app_private.p2_favorites(owner_id,created_at desc)','app_private.p2_favorites',false,'owner_id, created_at DESC'),
-    ('app_private.p2_kyc_owner_time_idx','create index p2_kyc_owner_time_idx on app_private.p2_kyc_transition_audit(owner_id,occurred_at desc)','app_private.p2_kyc_transition_audit',false,'owner_id, occurred_at DESC'),
-    ('app_private.p2_commission_owner_idx','create index p2_commission_owner_idx on app_private.p2_commission_entries(owner_id,created_at desc)','app_private.p2_commission_entries',false,'owner_id, created_at DESC'),
-    ('app_private.p2_commission_booking_idx','create index p2_commission_booking_idx on app_private.p2_commission_entries(booking_id)','app_private.p2_commission_entries',false,'booking_id'),
-    ('app_private.p2_payout_owner_idx','create index p2_payout_owner_idx on app_private.p2_payouts(owner_id,created_at desc)','app_private.p2_payouts',false,'owner_id, created_at DESC'),
-    ('app_private.p2_catalog_state_idx','create index p2_catalog_state_idx on app_private.p2_catalog(state,updated_at desc)','app_private.p2_catalog',false,'state, updated_at DESC'),
-    ('app_private.p2_outbox_recipient_idx','create index p2_outbox_recipient_idx on app_private.p2_notification_outbox(recipient_id,created_at desc)','app_private.p2_notification_outbox',false,'recipient_id, created_at DESC'),
-    ('app_private.p2_outbox_pending_idx','create index p2_outbox_pending_idx on app_private.p2_notification_outbox(next_attempt_at,event_id) where state=''PENDING''','app_private.p2_notification_outbox',false,'next_attempt_at, event_id')
-  ) as expected(name,ddl,table_name,is_unique,key_text) loop
+    ('app_private.p2_travelers_owner_idx','create index p2_travelers_owner_idx on app_private.p2_saved_travelers(owner_id,created_at desc)','app_private.p2_saved_travelers',false,'owner_id, created_at DESC',null::text[]),
+    ('app_private.p2_favorites_owner_idx','create index p2_favorites_owner_idx on app_private.p2_favorites(owner_id,created_at desc)','app_private.p2_favorites',false,'owner_id, created_at DESC',null::text[]),
+    ('app_private.p2_favorites_owner_identity_unique','create unique index p2_favorites_owner_identity_unique on app_private.p2_favorites(owner_id,(data->>''kind''),(data->>''canonicalId''))','app_private.p2_favorites',true,null,array['owner_id','data->>''kind''::text','data->>''canonicalId''::text']::text[]),
+    ('app_private.p2_kyc_owner_time_idx','create index p2_kyc_owner_time_idx on app_private.p2_kyc_transition_audit(owner_id,occurred_at desc)','app_private.p2_kyc_transition_audit',false,'owner_id, occurred_at DESC',null::text[]),
+    ('app_private.p2_commission_owner_idx','create index p2_commission_owner_idx on app_private.p2_commission_entries(owner_id,created_at desc)','app_private.p2_commission_entries',false,'owner_id, created_at DESC',null::text[]),
+    ('app_private.p2_commission_booking_idx','create index p2_commission_booking_idx on app_private.p2_commission_entries(booking_id)','app_private.p2_commission_entries',false,'booking_id',null::text[]),
+    ('app_private.p2_payout_owner_idx','create index p2_payout_owner_idx on app_private.p2_payouts(owner_id,created_at desc)','app_private.p2_payouts',false,'owner_id, created_at DESC',null::text[]),
+    ('app_private.p2_catalog_state_idx','create index p2_catalog_state_idx on app_private.p2_catalog(state,updated_at desc)','app_private.p2_catalog',false,'state, updated_at DESC',null::text[]),
+    ('app_private.p2_outbox_recipient_idx','create index p2_outbox_recipient_idx on app_private.p2_notification_outbox(recipient_id,created_at desc)','app_private.p2_notification_outbox',false,'recipient_id, created_at DESC',null::text[]),
+    ('app_private.p2_outbox_pending_idx','create index p2_outbox_pending_idx on app_private.p2_notification_outbox(next_attempt_at,event_id) where state=''PENDING''','app_private.p2_notification_outbox',false,'next_attempt_at, event_id',null::text[])
+  ) as expected(name,ddl,table_name,is_unique,key_text,canonical_keys) loop
     idx:=pg_catalog.to_regclass(item.name);
-    if idx is null then execute item.ddl; idx:=pg_catalog.to_regclass(item.name); execute pg_catalog.format('comment on index %s is %L',idx,'hajiz:p2:'||split_part(item.name,'.',2)||':v2');
-    else
-      select i.indrelid,i.indisvalid,i.indisunique,pg_catalog.pg_get_indexdef(i.indexrelid),pg_catalog.obj_description(i.indexrelid,'pg_class') into target,valid,unique_index,definition,signature from pg_catalog.pg_index i where i.indexrelid=idx;
-      if target is distinct from item.table_name::regclass::oid or not valid or unique_index is distinct from item.is_unique or position(item.key_text in definition)=0 or signature is distinct from 'hajiz:p2:'||split_part(item.name,'.',2)||':v2' then raise exception 'P2 index % is non-canonical',item.name; end if;
+    if idx is null then
+      execute item.ddl;
+      idx:=pg_catalog.to_regclass(item.name);
+      execute pg_catalog.format('comment on index %s is %L',idx,'hajiz:p2:'||split_part(item.name,'.',2)||':v2');
     end if;
+    select i.indrelid,i.indisvalid,i.indisunique,pg_catalog.pg_get_indexdef(i.indexrelid),pg_catalog.obj_description(i.indexrelid,'pg_class') into target,valid,unique_index,definition,signature from pg_catalog.pg_index i where i.indexrelid=idx;
+    if item.canonical_keys is not null then
+      select pg_catalog.array_agg(pg_catalog.regexp_replace(pg_catalog.pg_get_indexdef(idx::oid,key_position,true),'[()[:space:]]','','g') order by key_position)
+        into actual_key_parts
+        from pg_catalog.generate_series(1,(select indnkeyatts from pg_catalog.pg_index where indexrelid=idx)) as keys(key_position);
+    else
+      actual_key_parts:=null;
+    end if;
+    if target is distinct from item.table_name::regclass::oid or not valid or unique_index is distinct from item.is_unique
+      or (item.key_text is not null and position(item.key_text in definition)=0)
+      or (item.canonical_keys is not null and actual_key_parts is distinct from item.canonical_keys)
+      or signature is distinct from 'hajiz:p2:'||split_part(item.name,'.',2)||':v2' then raise exception 'P2 index % is non-canonical',item.name; end if;
   end loop;
 end $guard$;
 
