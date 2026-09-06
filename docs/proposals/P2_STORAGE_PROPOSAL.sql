@@ -167,74 +167,124 @@ do $migration$ begin
   end if;
 end $migration$;
 
+-- Exact column/default matrices were captured from PostgreSQL 17.6 canonical deparse output.
 -- Exact column fingerprint detects same-version drift before privileges exist.
 do $guard$
 declare item record; actual text[];
 begin
   for item in select * from (values
-    ('app_private.p2_saved_travelers',array['id:uuid:true','owner_id:uuid:true','data:jsonb:true','created_at:timestamp with time zone:true','updated_at:timestamp with time zone:true']),
-    ('app_private.p2_favorites',array['id:uuid:true','owner_id:uuid:true','data:jsonb:true','created_at:timestamp with time zone:true','updated_at:timestamp with time zone:true']),
-    ('app_private.p2_preferences',array['owner_id:uuid:true','data:jsonb:true','created_at:timestamp with time zone:true','updated_at:timestamp with time zone:true']),
-    ('app_private.p2_partners',array['owner_id:uuid:true','kyc_state:text:true','created_at:timestamp with time zone:true','updated_at:timestamp with time zone:true']),
-    ('app_private.p2_kyc_transition_audit',array['id:uuid:true','owner_id:uuid:true','previous_state:text:true','new_state:text:true','actor_id:uuid:true','actor_source:text:true','source_event_id:uuid:true','occurred_at:timestamp with time zone:true']),
-    ('app_private.p2_commission_entries',array['id:uuid:true','owner_id:uuid:true','booking_id:uuid:true','currency:text:true','amount:numeric(20,2):true','state:text:true','source_event_id:uuid:true','reversal_of_id:uuid:false','created_at:timestamp with time zone:true']),
-    ('app_private.p2_payouts',array['id:uuid:true','owner_id:uuid:true','currency:text:true','amount:numeric(20,2):true','state:text:true','source_event_id:uuid:true','created_at:timestamp with time zone:true','updated_at:timestamp with time zone:true']),
-    ('app_private.p2_catalog',array['id:uuid:true','type:text:true','title:text:true','summary:text:true','state:text:true','version:bigint:true','created_at:timestamp with time zone:true','created_by:uuid:true','updated_at:timestamp with time zone:true','updated_by:uuid:true','published_at:timestamp with time zone:false','published_by:uuid:false']),
-    ('app_private.p2_notification_outbox',array['event_id:uuid:true','booking_id:uuid:true','recipient_id:uuid:true','event_type:text:true','source_event_id:uuid:false','domain_key:text:true','state:text:true','attempts:integer:true','next_attempt_at:timestamp with time zone:false','created_at:timestamp with time zone:true','updated_at:timestamp with time zone:true'])
+    ('app_private.p2_saved_travelers',array['id:uuid:true:gen_random_uuid()','owner_id:uuid:true:<NO_DEFAULT>','data:jsonb:true:<NO_DEFAULT>','created_at:timestamp with time zone:true:now()','updated_at:timestamp with time zone:true:now()']),
+    ('app_private.p2_favorites',array['id:uuid:true:gen_random_uuid()','owner_id:uuid:true:<NO_DEFAULT>','data:jsonb:true:<NO_DEFAULT>','created_at:timestamp with time zone:true:now()','updated_at:timestamp with time zone:true:now()']),
+    ('app_private.p2_preferences',array['owner_id:uuid:true:<NO_DEFAULT>','data:jsonb:true:<NO_DEFAULT>','created_at:timestamp with time zone:true:now()','updated_at:timestamp with time zone:true:now()']),
+    ('app_private.p2_partners',array['owner_id:uuid:true:<NO_DEFAULT>','kyc_state:text:true:''NOT_SUBMITTED''::text','created_at:timestamp with time zone:true:now()','updated_at:timestamp with time zone:true:now()']),
+    ('app_private.p2_kyc_transition_audit',array['id:uuid:true:gen_random_uuid()','owner_id:uuid:true:<NO_DEFAULT>','previous_state:text:true:<NO_DEFAULT>','new_state:text:true:<NO_DEFAULT>','actor_id:uuid:true:<NO_DEFAULT>','actor_source:text:true:<NO_DEFAULT>','source_event_id:uuid:true:<NO_DEFAULT>','occurred_at:timestamp with time zone:true:clock_timestamp()']),
+    ('app_private.p2_commission_entries',array['id:uuid:true:gen_random_uuid()','owner_id:uuid:true:<NO_DEFAULT>','booking_id:uuid:true:<NO_DEFAULT>','currency:text:true:<NO_DEFAULT>','amount:numeric(20,2):true:<NO_DEFAULT>','state:text:true:<NO_DEFAULT>','source_event_id:uuid:true:<NO_DEFAULT>','reversal_of_id:uuid:false:<NO_DEFAULT>','created_at:timestamp with time zone:true:now()']),
+    ('app_private.p2_payouts',array['id:uuid:true:gen_random_uuid()','owner_id:uuid:true:<NO_DEFAULT>','currency:text:true:<NO_DEFAULT>','amount:numeric(20,2):true:<NO_DEFAULT>','state:text:true:<NO_DEFAULT>','source_event_id:uuid:true:<NO_DEFAULT>','created_at:timestamp with time zone:true:now()','updated_at:timestamp with time zone:true:now()']),
+    ('app_private.p2_catalog',array['id:uuid:true:gen_random_uuid()','type:text:true:<NO_DEFAULT>','title:text:true:<NO_DEFAULT>','summary:text:true:<NO_DEFAULT>','state:text:true:''draft''::text','version:bigint:true:1','created_at:timestamp with time zone:true:now()','created_by:uuid:true:<NO_DEFAULT>','updated_at:timestamp with time zone:true:now()','updated_by:uuid:true:<NO_DEFAULT>','published_at:timestamp with time zone:false:<NO_DEFAULT>','published_by:uuid:false:<NO_DEFAULT>']),
+    ('app_private.p2_notification_outbox',array['event_id:uuid:true:<NO_DEFAULT>','booking_id:uuid:true:<NO_DEFAULT>','recipient_id:uuid:true:<NO_DEFAULT>','event_type:text:true:<NO_DEFAULT>','source_event_id:uuid:false:<NO_DEFAULT>','domain_key:text:true:<NO_DEFAULT>','state:text:true:''NOT_CONFIGURED''::text','attempts:integer:true:0','next_attempt_at:timestamp with time zone:false:<NO_DEFAULT>','created_at:timestamp with time zone:true:now()','updated_at:timestamp with time zone:true:now()'])
   ) as expected(table_name,columns) loop
-    select pg_catalog.array_agg(pg_catalog.format('%s:%s:%s',a.attname,pg_catalog.format_type(a.atttypid,a.atttypmod),case when a.attnotnull then 'true' else 'false' end) order by a.attnum)
-      into actual from pg_catalog.pg_attribute a where a.attrelid=item.table_name::regclass and a.attnum>0 and not a.attisdropped;
+    select pg_catalog.array_agg(pg_catalog.format('%s:%s:%s:%s',a.attname,pg_catalog.format_type(a.atttypid,a.atttypmod),case when a.attnotnull then 'true' else 'false' end,coalesce(pg_catalog.pg_get_expr(ad.adbin,ad.adrelid,false),'<NO_DEFAULT>')) order by a.attnum)
+      into actual
+      from pg_catalog.pg_attribute a
+      left join pg_catalog.pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+      where a.attrelid=item.table_name::regclass and a.attnum>0 and not a.attisdropped;
     if actual is distinct from item.columns then raise exception 'P2 table % has non-canonical columns',item.table_name; end if;
   end loop;
 end $guard$;
 
--- Every named constraint has a catalog kind and canonical signature guard.
+-- Every named constraint has an exact PostgreSQL 17.6 definition and signature guard.
 do $guard$
-declare item record; target regclass; constraint_oid oid; actual_kind "char"; signature text;
+declare item record; target regclass; constraint_oid oid; actual_kind "char"; actual_definition text; signature text;
 begin
   for item in select * from (values
-    ('app_private.p2_saved_travelers','p2_saved_travelers_pkey','p'),('app_private.p2_saved_travelers','p2_saved_travelers_owner_id_fkey','f'),('app_private.p2_saved_travelers','p2_saved_travelers_data_check','c'),
-    ('app_private.p2_favorites','p2_favorites_pkey','p'),('app_private.p2_favorites','p2_favorites_owner_id_fkey','f'),('app_private.p2_favorites','p2_favorites_data_check','c'),
-    ('app_private.p2_preferences','p2_preferences_pkey','p'),('app_private.p2_preferences','p2_preferences_owner_id_fkey','f'),('app_private.p2_preferences','p2_preferences_data_check','c'),
-    ('app_private.p2_partners','p2_partners_pkey','p'),('app_private.p2_partners','p2_partners_owner_id_fkey','f'),('app_private.p2_partners','p2_partners_kyc_state_check','c'),
-    ('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_pkey','p'),('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_owner_id_fkey','f'),('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_actor_id_fkey','f'),('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_source_event_id_key','u'),('app_private.p2_kyc_transition_audit','p2_kyc_audit_previous_check','c'),('app_private.p2_kyc_transition_audit','p2_kyc_audit_new_check','c'),('app_private.p2_kyc_transition_audit','p2_kyc_audit_source_check','c'),('app_private.p2_kyc_transition_audit','p2_kyc_audit_transition_check','c'),
-    ('app_private.p2_commission_entries','p2_commission_entries_pkey','p'),('app_private.p2_commission_entries','p2_commission_entries_owner_id_fkey','f'),('app_private.p2_commission_entries','p2_commission_entries_booking_id_fkey','f'),('app_private.p2_commission_entries','p2_commission_entries_source_event_id_key','u'),('app_private.p2_commission_entries','p2_commission_entries_reversal_of_id_fkey','f'),('app_private.p2_commission_entries','p2_commission_currency_check','c'),('app_private.p2_commission_entries','p2_commission_amount_check','c'),('app_private.p2_commission_entries','p2_commission_state_check','c'),('app_private.p2_commission_entries','p2_commission_reversal_check','c'),
-    ('app_private.p2_payouts','p2_payouts_pkey','p'),('app_private.p2_payouts','p2_payouts_owner_id_fkey','f'),('app_private.p2_payouts','p2_payouts_source_event_id_key','u'),('app_private.p2_payouts','p2_payout_currency_check','c'),('app_private.p2_payouts','p2_payout_amount_check','c'),('app_private.p2_payouts','p2_payout_state_check','c'),
-    ('app_private.p2_catalog','p2_catalog_pkey','p'),('app_private.p2_catalog','p2_catalog_created_by_fkey','f'),('app_private.p2_catalog','p2_catalog_updated_by_fkey','f'),('app_private.p2_catalog','p2_catalog_published_by_fkey','f'),('app_private.p2_catalog','p2_catalog_type_check','c'),('app_private.p2_catalog','p2_catalog_title_check','c'),('app_private.p2_catalog','p2_catalog_summary_check','c'),('app_private.p2_catalog','p2_catalog_state_check','c'),('app_private.p2_catalog','p2_catalog_version_check','c'),('app_private.p2_catalog','p2_catalog_publish_shape_check','c'),
-    ('app_private.p2_notification_outbox','p2_notification_outbox_pkey','p'),('app_private.p2_notification_outbox','p2_notification_outbox_booking_id_fkey','f'),('app_private.p2_notification_outbox','p2_notification_outbox_recipient_id_fkey','f'),('app_private.p2_notification_outbox','p2_outbox_event_type_check','c'),('app_private.p2_notification_outbox','p2_outbox_source_shape_check','c'),('app_private.p2_notification_outbox','p2_outbox_domain_key_check','c'),('app_private.p2_notification_outbox','p2_outbox_state_check','c'),('app_private.p2_notification_outbox','p2_outbox_attempts_check','c'),('app_private.p2_notification_outbox','p2_outbox_domain_unique','u')
-  ) as expected(table_name,name,kind) loop
+    ('app_private.p2_saved_travelers','p2_saved_travelers_data_check','c','CHECK (((jsonb_typeof(data) = ''object''::text) AND (pg_column_size(data) <= 1024) AND (data ?& ARRAY[''firstName''::text, ''lastName''::text]) AND ((data - ARRAY[''firstName''::text, ''lastName''::text]) = ''{}''::jsonb) AND (jsonb_typeof((data -> ''firstName''::text)) = ''string''::text) AND (jsonb_typeof((data -> ''lastName''::text)) = ''string''::text) AND ((char_length((data ->> ''firstName''::text)) >= 1) AND (char_length((data ->> ''firstName''::text)) <= 80)) AND ((char_length((data ->> ''lastName''::text)) >= 1) AND (char_length((data ->> ''lastName''::text)) <= 80)) AND ((data ->> ''firstName''::text) !~ ''[[:cntrl:]]''::text) AND ((data ->> ''lastName''::text) !~ ''[[:cntrl:]]''::text)))'),
+    ('app_private.p2_saved_travelers','p2_saved_travelers_owner_id_fkey','f','FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE'),
+    ('app_private.p2_saved_travelers','p2_saved_travelers_pkey','p','PRIMARY KEY (id)'),
+    ('app_private.p2_favorites','p2_favorites_data_check','c','CHECK (((jsonb_typeof(data) = ''object''::text) AND (pg_column_size(data) <= 512) AND (data ?& ARRAY[''kind''::text, ''canonicalId''::text]) AND ((data - ARRAY[''kind''::text, ''canonicalId''::text]) = ''{}''::jsonb) AND ((data ->> ''kind''::text) = ANY (ARRAY[''hotel''::text, ''package''::text, ''offer''::text])) AND ((data ->> ''canonicalId''::text) ~ ''^[A-Za-z0-9_-]{1,128}$''::text)))'),
+    ('app_private.p2_favorites','p2_favorites_owner_id_fkey','f','FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE'),
+    ('app_private.p2_favorites','p2_favorites_pkey','p','PRIMARY KEY (id)'),
+    ('app_private.p2_preferences','p2_preferences_data_check','c','CHECK (((jsonb_typeof(data) = ''object''::text) AND (data ? ''locale''::text) AND ((data - ''locale''::text) = ''{}''::jsonb) AND ((data ->> ''locale''::text) = ANY (ARRAY[''ar''::text, ''en''::text]))))'),
+    ('app_private.p2_preferences','p2_preferences_owner_id_fkey','f','FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE'),
+    ('app_private.p2_preferences','p2_preferences_pkey','p','PRIMARY KEY (owner_id)'),
+    ('app_private.p2_partners','p2_partners_kyc_state_check','c','CHECK ((kyc_state = ANY (ARRAY[''NOT_SUBMITTED''::text, ''PENDING''::text, ''VERIFIED''::text, ''REJECTED''::text])))'),
+    ('app_private.p2_partners','p2_partners_owner_id_fkey','f','FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE RESTRICT'),
+    ('app_private.p2_partners','p2_partners_pkey','p','PRIMARY KEY (owner_id)'),
+    ('app_private.p2_kyc_transition_audit','p2_kyc_audit_new_check','c','CHECK ((new_state = ANY (ARRAY[''NOT_SUBMITTED''::text, ''PENDING''::text, ''VERIFIED''::text, ''REJECTED''::text])))'),
+    ('app_private.p2_kyc_transition_audit','p2_kyc_audit_previous_check','c','CHECK ((previous_state = ANY (ARRAY[''NOT_SUBMITTED''::text, ''PENDING''::text, ''VERIFIED''::text, ''REJECTED''::text])))'),
+    ('app_private.p2_kyc_transition_audit','p2_kyc_audit_source_check','c','CHECK ((actor_source = ANY (ARRAY[''OWNER_SUBMISSION''::text, ''ADMIN_REVIEW''::text])))'),
+    ('app_private.p2_kyc_transition_audit','p2_kyc_audit_transition_check','c','CHECK ((((previous_state = ''NOT_SUBMITTED''::text) AND (new_state = ''PENDING''::text) AND (actor_source = ''OWNER_SUBMISSION''::text)) OR ((previous_state = ''REJECTED''::text) AND (new_state = ''PENDING''::text) AND (actor_source = ''OWNER_SUBMISSION''::text)) OR ((previous_state = ''PENDING''::text) AND (new_state = ANY (ARRAY[''VERIFIED''::text, ''REJECTED''::text])) AND (actor_source = ''ADMIN_REVIEW''::text))))'),
+    ('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_actor_id_fkey','f','FOREIGN KEY (actor_id) REFERENCES auth.users(id) ON DELETE RESTRICT'),
+    ('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_owner_id_fkey','f','FOREIGN KEY (owner_id) REFERENCES app_private.p2_partners(owner_id) ON DELETE RESTRICT'),
+    ('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_pkey','p','PRIMARY KEY (id)'),
+    ('app_private.p2_kyc_transition_audit','p2_kyc_transition_audit_source_event_id_key','u','UNIQUE (source_event_id)'),
+    ('app_private.p2_commission_entries','p2_commission_amount_check','c','CHECK ((amount > (0)::numeric))'),
+    ('app_private.p2_commission_entries','p2_commission_currency_check','c','CHECK ((currency ~ ''^[A-Z]{3}$''::text))'),
+    ('app_private.p2_commission_entries','p2_commission_entries_booking_id_fkey','f','FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE RESTRICT'),
+    ('app_private.p2_commission_entries','p2_commission_entries_owner_id_fkey','f','FOREIGN KEY (owner_id) REFERENCES app_private.p2_partners(owner_id) ON DELETE RESTRICT'),
+    ('app_private.p2_commission_entries','p2_commission_entries_pkey','p','PRIMARY KEY (id)'),
+    ('app_private.p2_commission_entries','p2_commission_entries_reversal_of_id_fkey','f','FOREIGN KEY (reversal_of_id) REFERENCES app_private.p2_commission_entries(id) ON DELETE RESTRICT'),
+    ('app_private.p2_commission_entries','p2_commission_entries_source_event_id_key','u','UNIQUE (source_event_id)'),
+    ('app_private.p2_commission_entries','p2_commission_reversal_check','c','CHECK (((state = ''REVERSED''::text) = (reversal_of_id IS NOT NULL)))'),
+    ('app_private.p2_commission_entries','p2_commission_state_check','c','CHECK ((state = ANY (ARRAY[''PENDING''::text, ''EARNED''::text, ''REVERSED''::text])))'),
+    ('app_private.p2_payouts','p2_payout_amount_check','c','CHECK ((amount > (0)::numeric))'),
+    ('app_private.p2_payouts','p2_payout_currency_check','c','CHECK ((currency ~ ''^[A-Z]{3}$''::text))'),
+    ('app_private.p2_payouts','p2_payout_state_check','c','CHECK ((state = ANY (ARRAY[''PENDING''::text, ''PROCESSING''::text, ''PAID''::text, ''FAILED''::text, ''UNKNOWN''::text])))'),
+    ('app_private.p2_payouts','p2_payouts_owner_id_fkey','f','FOREIGN KEY (owner_id) REFERENCES app_private.p2_partners(owner_id) ON DELETE RESTRICT'),
+    ('app_private.p2_payouts','p2_payouts_pkey','p','PRIMARY KEY (id)'),
+    ('app_private.p2_payouts','p2_payouts_source_event_id_key','u','UNIQUE (source_event_id)'),
+    ('app_private.p2_catalog','p2_catalog_created_by_fkey','f','FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE RESTRICT'),
+    ('app_private.p2_catalog','p2_catalog_pkey','p','PRIMARY KEY (id)'),
+    ('app_private.p2_catalog','p2_catalog_publish_shape_check','c','CHECK ((((state = ''draft''::text) AND (published_at IS NULL) AND (published_by IS NULL)) OR ((state = ''published''::text) AND (published_at IS NOT NULL) AND (published_by IS NOT NULL))))'),
+    ('app_private.p2_catalog','p2_catalog_published_by_fkey','f','FOREIGN KEY (published_by) REFERENCES auth.users(id) ON DELETE RESTRICT'),
+    ('app_private.p2_catalog','p2_catalog_state_check','c','CHECK ((state = ANY (ARRAY[''draft''::text, ''published''::text])))'),
+    ('app_private.p2_catalog','p2_catalog_summary_check','c','CHECK ((((char_length(summary) >= 1) AND (char_length(summary) <= 1000)) AND (summary !~ ''[[:cntrl:]]''::text)))'),
+    ('app_private.p2_catalog','p2_catalog_title_check','c','CHECK ((((char_length(title) >= 1) AND (char_length(title) <= 120)) AND (title !~ ''[[:cntrl:]]''::text)))'),
+    ('app_private.p2_catalog','p2_catalog_type_check','c','CHECK ((type = ANY (ARRAY[''package''::text, ''offer''::text])))'),
+    ('app_private.p2_catalog','p2_catalog_updated_by_fkey','f','FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE RESTRICT'),
+    ('app_private.p2_catalog','p2_catalog_version_check','c','CHECK ((version > 0))'),
+    ('app_private.p2_notification_outbox','p2_notification_outbox_booking_id_fkey','f','FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE RESTRICT'),
+    ('app_private.p2_notification_outbox','p2_notification_outbox_pkey','p','PRIMARY KEY (event_id)'),
+    ('app_private.p2_notification_outbox','p2_notification_outbox_recipient_id_fkey','f','FOREIGN KEY (recipient_id) REFERENCES auth.users(id) ON DELETE RESTRICT'),
+    ('app_private.p2_notification_outbox','p2_outbox_attempts_check','c','CHECK ((attempts >= 0))'),
+    ('app_private.p2_notification_outbox','p2_outbox_domain_key_check','c','CHECK ((((char_length(domain_key) >= 1) AND (char_length(domain_key) <= 100)) AND (domain_key !~ ''[[:cntrl:]]''::text)))'),
+    ('app_private.p2_notification_outbox','p2_outbox_domain_unique','u','UNIQUE (booking_id, event_type, domain_key)'),
+    ('app_private.p2_notification_outbox','p2_outbox_event_type_check','c','CHECK ((event_type = ANY (ARRAY[''payment_pending''::text, ''payment_confirmed''::text, ''supplier_confirmed''::text, ''ticket_issued''::text, ''failed_reconciliation''::text])))'),
+    ('app_private.p2_notification_outbox','p2_outbox_source_shape_check','c','CHECK (((event_type = ''failed_reconciliation''::text) = (source_event_id IS NOT NULL)))'),
+    ('app_private.p2_notification_outbox','p2_outbox_state_check','c','CHECK ((state = ANY (ARRAY[''NOT_CONFIGURED''::text, ''PENDING''::text, ''SENDING''::text, ''DELIVERED''::text, ''FAILED''::text, ''UNKNOWN''::text])))')
+  ) as expected(table_name,name,kind,canonical_definition) loop
     target:=item.table_name::regclass;
-    select oid,contype,pg_catalog.obj_description(oid,'pg_constraint') into constraint_oid,actual_kind,signature from pg_catalog.pg_constraint where conrelid=target and conname=item.name;
+    select oid,contype,pg_catalog.pg_get_constraintdef(oid,false),pg_catalog.obj_description(oid,'pg_constraint') into constraint_oid,actual_kind,actual_definition,signature from pg_catalog.pg_constraint where conrelid=target and conname=item.name;
     if constraint_oid is null or actual_kind::text is distinct from item.kind then raise exception 'P2 constraint % on % is missing or drifted',item.name,item.table_name; end if;
+    if actual_definition is distinct from item.canonical_definition then raise exception 'P2 constraint % on % has non-canonical definition',item.name,item.table_name; end if;
     if signature is null then execute pg_catalog.format('comment on constraint %I on %s is %L',item.name,item.table_name,'hajiz:p2:'||item.name||':v2');
     elsif signature is distinct from 'hajiz:p2:'||item.name||':v2' then raise exception 'P2 constraint % has non-canonical signature',item.name; end if;
   end loop;
 end $guard$;
 
--- Guarded indexes validate signature, target, validity, uniqueness, and keys.
+-- Guarded indexes validate signature, target, validity, uniqueness, keys, and predicate.
 -- Expression indexes additionally compare every ordered key expression exactly.
 do $guard$
-declare item record; idx regclass; signature text; definition text; target oid; valid boolean; unique_index boolean; actual_key_parts text[];
+declare item record; idx regclass; signature text; definition text; target oid; valid boolean; unique_index boolean; actual_key_parts text[]; actual_predicate text;
 begin
   for item in select * from (values
-    ('app_private.p2_travelers_owner_idx','create index p2_travelers_owner_idx on app_private.p2_saved_travelers(owner_id,created_at desc)','app_private.p2_saved_travelers',false,'owner_id, created_at DESC',null::text[]),
-    ('app_private.p2_favorites_owner_idx','create index p2_favorites_owner_idx on app_private.p2_favorites(owner_id,created_at desc)','app_private.p2_favorites',false,'owner_id, created_at DESC',null::text[]),
-    ('app_private.p2_favorites_owner_identity_unique','create unique index p2_favorites_owner_identity_unique on app_private.p2_favorites(owner_id,(data->>''kind''),(data->>''canonicalId''))','app_private.p2_favorites',true,null,array['owner_id','data->>''kind''::text','data->>''canonicalId''::text']::text[]),
-    ('app_private.p2_kyc_owner_time_idx','create index p2_kyc_owner_time_idx on app_private.p2_kyc_transition_audit(owner_id,occurred_at desc)','app_private.p2_kyc_transition_audit',false,'owner_id, occurred_at DESC',null::text[]),
-    ('app_private.p2_commission_owner_idx','create index p2_commission_owner_idx on app_private.p2_commission_entries(owner_id,created_at desc)','app_private.p2_commission_entries',false,'owner_id, created_at DESC',null::text[]),
-    ('app_private.p2_commission_booking_idx','create index p2_commission_booking_idx on app_private.p2_commission_entries(booking_id)','app_private.p2_commission_entries',false,'booking_id',null::text[]),
-    ('app_private.p2_payout_owner_idx','create index p2_payout_owner_idx on app_private.p2_payouts(owner_id,created_at desc)','app_private.p2_payouts',false,'owner_id, created_at DESC',null::text[]),
-    ('app_private.p2_catalog_state_idx','create index p2_catalog_state_idx on app_private.p2_catalog(state,updated_at desc)','app_private.p2_catalog',false,'state, updated_at DESC',null::text[]),
-    ('app_private.p2_outbox_recipient_idx','create index p2_outbox_recipient_idx on app_private.p2_notification_outbox(recipient_id,created_at desc)','app_private.p2_notification_outbox',false,'recipient_id, created_at DESC',null::text[]),
-    ('app_private.p2_outbox_pending_idx','create index p2_outbox_pending_idx on app_private.p2_notification_outbox(next_attempt_at,event_id) where state=''PENDING''','app_private.p2_notification_outbox',false,'next_attempt_at, event_id',null::text[])
-  ) as expected(name,ddl,table_name,is_unique,key_text,canonical_keys) loop
+    ('app_private.p2_travelers_owner_idx','create index p2_travelers_owner_idx on app_private.p2_saved_travelers(owner_id,created_at desc)','app_private.p2_saved_travelers',false,'owner_id, created_at DESC',null::text[],null::text),
+    ('app_private.p2_favorites_owner_idx','create index p2_favorites_owner_idx on app_private.p2_favorites(owner_id,created_at desc)','app_private.p2_favorites',false,'owner_id, created_at DESC',null::text[],null::text),
+    ('app_private.p2_favorites_owner_identity_unique','create unique index p2_favorites_owner_identity_unique on app_private.p2_favorites(owner_id,(data->>''kind''),(data->>''canonicalId''))','app_private.p2_favorites',true,null,array['owner_id','data->>''kind''::text','data->>''canonicalId''::text']::text[],null::text),
+    ('app_private.p2_kyc_owner_time_idx','create index p2_kyc_owner_time_idx on app_private.p2_kyc_transition_audit(owner_id,occurred_at desc)','app_private.p2_kyc_transition_audit',false,'owner_id, occurred_at DESC',null::text[],null::text),
+    ('app_private.p2_commission_owner_idx','create index p2_commission_owner_idx on app_private.p2_commission_entries(owner_id,created_at desc)','app_private.p2_commission_entries',false,'owner_id, created_at DESC',null::text[],null::text),
+    ('app_private.p2_commission_booking_idx','create index p2_commission_booking_idx on app_private.p2_commission_entries(booking_id)','app_private.p2_commission_entries',false,'booking_id',null::text[],null::text),
+    ('app_private.p2_payout_owner_idx','create index p2_payout_owner_idx on app_private.p2_payouts(owner_id,created_at desc)','app_private.p2_payouts',false,'owner_id, created_at DESC',null::text[],null::text),
+    ('app_private.p2_catalog_state_idx','create index p2_catalog_state_idx on app_private.p2_catalog(state,updated_at desc)','app_private.p2_catalog',false,'state, updated_at DESC',null::text[],null::text),
+    ('app_private.p2_outbox_recipient_idx','create index p2_outbox_recipient_idx on app_private.p2_notification_outbox(recipient_id,created_at desc)','app_private.p2_notification_outbox',false,'recipient_id, created_at DESC',null::text[],null::text),
+    ('app_private.p2_outbox_pending_idx','create index p2_outbox_pending_idx on app_private.p2_notification_outbox(next_attempt_at,event_id) where state=''PENDING''','app_private.p2_notification_outbox',false,'next_attempt_at, event_id',null::text[],'(state = ''PENDING''::text)')
+  ) as expected(name,ddl,table_name,is_unique,key_text,canonical_keys,canonical_predicate) loop
     idx:=pg_catalog.to_regclass(item.name);
     if idx is null then
       execute item.ddl;
       idx:=pg_catalog.to_regclass(item.name);
       execute pg_catalog.format('comment on index %s is %L',idx,'hajiz:p2:'||split_part(item.name,'.',2)||':v2');
     end if;
-    select i.indrelid,i.indisvalid,i.indisunique,pg_catalog.pg_get_indexdef(i.indexrelid),pg_catalog.obj_description(i.indexrelid,'pg_class') into target,valid,unique_index,definition,signature from pg_catalog.pg_index i where i.indexrelid=idx;
+    select i.indrelid,i.indisvalid,i.indisunique,pg_catalog.pg_get_indexdef(i.indexrelid),pg_catalog.pg_get_expr(i.indpred,i.indrelid,false),pg_catalog.obj_description(i.indexrelid,'pg_class') into target,valid,unique_index,definition,actual_predicate,signature from pg_catalog.pg_index i where i.indexrelid=idx;
     if item.canonical_keys is not null then
       select pg_catalog.array_agg(pg_catalog.regexp_replace(pg_catalog.pg_get_indexdef(idx::oid,key_position,true),'[()[:space:]]','','g') order by key_position)
         into actual_key_parts
@@ -245,6 +295,7 @@ begin
     if target is distinct from item.table_name::regclass::oid or not valid or unique_index is distinct from item.is_unique
       or (item.key_text is not null and position(item.key_text in definition)=0)
       or (item.canonical_keys is not null and actual_key_parts is distinct from item.canonical_keys)
+      or actual_predicate is distinct from item.canonical_predicate
       or signature is distinct from 'hajiz:p2:'||split_part(item.name,'.',2)||':v2' then raise exception 'P2 index % is non-canonical',item.name; end if;
   end loop;
 end $guard$;

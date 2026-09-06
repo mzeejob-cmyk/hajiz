@@ -7,6 +7,8 @@ const sql = await fs.readFile(proposalUrl, "utf8")
 const service = await fs.readFile(serviceUrl, "utf8")
 let passed = 0
 const test = async (name, fn) => { await fn(); passed += 1; console.log(`PASS ${name}`) }
+const sqlStringLiterals = text => [...text.matchAll(/'((?:''|[^'])*)'/g)].map(match => match[1].replaceAll("''", "'"))
+const guardSection = (start, end) => sql.match(new RegExp(`${start}[\\s\\S]*?${end}`, "i"))?.[0] ?? ""
 const objects = ["p2_saved_travelers", "p2_favorites", "p2_preferences", "p2_partners", "p2_kyc_transition_audit", "p2_commission_entries", "p2_payouts", "p2_catalog", "p2_notification_outbox"]
 const functions = ["p2_collection_v1", "get_p2_admin_payments_v1", "get_p2_partner_v1", "p2_catalog_v1", "enqueue_p2_notification_v1", "transition_p2_partner_kyc_v1", "get_p2_ticket_artifact_authority_v1"]
 
@@ -15,24 +17,60 @@ await test("proposal remains rollback-only", () => { assert.match(sql, /begin;/i
 await test("relation precondition guards exist", () => { assert.match(sql, /M-01 PRECONDITION/); assert.match(sql, /to_regclass/); assert.match(sql, /non-canonical ownership or signature/) })
 await test("all proposed storage objects have signatures and guards", () => { for (const name of objects) { assert.match(sql, new RegExp(`to_regclass\\('app_private\\.${name}'\\)|\\('app_private\\.${name}'`), name); assert.match(sql, new RegExp(`comment on table app_private\\.${name}`), name) } })
 await test("column fingerprint rejects incompatible drift", () => { assert.match(sql, /Exact column fingerprint/); assert.match(sql, /pg_catalog\.format_type/); assert.match(sql, /has non-canonical columns/) })
-await test("column fingerprint normalizes nullability to canonical boolean text", () => {
-  const fingerprint = sql.match(/select pg_catalog\.array_agg\(pg_catalog\.format\('%s:%s:%s',[\s\S]*?order by a\.attnum\)[\s\S]*?into actual[^;]*;/i)?.[0] ?? ""
-  assert.match(fingerprint, /pg_catalog\.format\('%s:%s:%s',\s*a\.attname,\s*pg_catalog\.format_type\(a\.atttypid,a\.atttypmod\),\s*case\s+when a\.attnotnull then 'true'\s+else 'false'\s+end\)/i)
-  assert.doesNotMatch(fingerprint, /pg_catalog\.format\('%s:%s:%s',\s*a\.attname,\s*pg_catalog\.format_type\(a\.atttypid,a\.atttypmod\),\s*a\.attnotnull\s*\)/i)
+await test("column fingerprint includes exact PostgreSQL default deparse", () => {
+  const fingerprint = guardSection("-- Exact column/default matrices", "-- Every named constraint")
+  assert.match(fingerprint, /left join pg_catalog\.pg_attrdef ad on ad\.adrelid=a\.attrelid and ad\.adnum=a\.attnum/i)
+  assert.match(fingerprint, /pg_catalog\.pg_get_expr\(ad\.adbin,ad\.adrelid,false\)/i)
+  assert.match(fingerprint, /coalesce\(pg_catalog\.pg_get_expr\(ad\.adbin,ad\.adrelid,false\),'<NO_DEFAULT>'\)/i)
+  assert.doesNotMatch(fingerprint, /'<NO_DEFAULT>'::text/i)
 })
-await test("column fingerprint preserves ordered types and true false expectations", () => {
-  const guard = sql.match(/-- Exact column fingerprint[\s\S]*?-- Every named constraint/)?.[0] ?? ""
-  assert.match(guard, /array\['id:uuid:true','owner_id:uuid:true','data:jsonb:true','created_at:timestamp with time zone:true','updated_at:timestamp with time zone:true'\]/)
-  assert.match(guard, /'reversal_of_id:uuid:false'/)
-  assert.match(guard, /'published_at:timestamp with time zone:false'/)
+await test("column fingerprint preserves ordered types nullability and defaults", () => {
+  const guard = guardSection("-- Exact column/default matrices", "-- Every named constraint")
+  assert.match(guard, /array\['id:uuid:true:gen_random_uuid\(\)','owner_id:uuid:true:<NO_DEFAULT>','data:jsonb:true:<NO_DEFAULT>','created_at:timestamp with time zone:true:now\(\)','updated_at:timestamp with time zone:true:now\(\)'\]/)
+  assert.match(guard, /'reversal_of_id:uuid:false:<NO_DEFAULT>'/)
+  assert.match(guard, /'published_at:timestamp with time zone:false:<NO_DEFAULT>'/)
   assert.doesNotMatch(guard, /:[tf]'/)
   assert.match(guard, /order by a\.attnum/)
   assert.match(guard, /pg_catalog\.format_type\(a\.atttypid,a\.atttypmod\)/)
   assert.match(guard, /has non-canonical columns/)
 })
+await test("column default matrix covers exactly 66 columns with canonical table counts", () => {
+  const guard = guardSection("-- Exact column/default matrices", "-- Every named constraint")
+  const expected = new Map([["p2_saved_travelers",5],["p2_favorites",5],["p2_preferences",4],["p2_partners",4],["p2_kyc_transition_audit",8],["p2_commission_entries",9],["p2_payouts",8],["p2_catalog",12],["p2_notification_outbox",11]])
+  let total = 0
+  for (const [table, count] of expected) {
+    const body = guard.match(new RegExp(`\\('app_private\\.${table}',array\\[([\\s\\S]*?)\\]\\)`))?.[1] ?? ""
+    const actual = sqlStringLiterals(body).length
+    assert.equal(actual, count, table)
+    total += actual
+  }
+  assert.equal(total, 66)
+})
 await test("constraint catalog guards reject missing kind or signature", () => { assert.match(sql, /pg_catalog\.pg_constraint/); assert.match(sql, /missing or drifted/); assert.match(sql, /non-canonical signature/) })
+await test("constraint guard compares all 54 exact PostgreSQL definitions", () => {
+  const guard = guardSection("-- Every named constraint", "-- Guarded indexes")
+  assert.match(guard, /pg_catalog\.pg_get_constraintdef\(oid,false\)/)
+  assert.match(guard, /actual_definition is distinct from item\.canonical_definition/)
+  const rows = [...guard.matchAll(/\('app_private\.[a-z0-9_]+','[a-z0-9_]+','[pcfu]','(?:''|[^'])*'\)/g)]
+  assert.equal(rows.length, 54)
+  assert.match(guard, /'CHECK \(\(amount > \(0\)::numeric\)\)'/)
+  assert.match(guard, /'FOREIGN KEY \(owner_id\) REFERENCES auth\.users\(id\) ON DELETE CASCADE'/)
+  assert.match(guard, /'FOREIGN KEY \(owner_id\) REFERENCES auth\.users\(id\) ON DELETE RESTRICT'/)
+  assert.match(guard, /'UNIQUE \(booking_id, event_type, domain_key\)'/)
+})
+await test("constraint definition validation precedes comment stamping", () => {
+  const guard = guardSection("-- Every named constraint", "-- Guarded indexes")
+  assert.ok(guard.indexOf("actual_definition is distinct") < guard.indexOf("if signature is null"))
+})
 await test("every declared named constraint participates in a guard", () => { const declared = [...sql.matchAll(/constraint\s+([a-z0-9_]+)/gi)].map(match => match[1]); for (const name of new Set(declared)) assert.ok(sql.split(name).length >= 3, name) })
 await test("index guards reject target definition and signature drift", () => { assert.match(sql, /pg_catalog\.pg_get_indexdef/); assert.match(sql, /indisvalid/); assert.match(sql, /P2 index % is non-canonical/) })
+await test("all guarded indexes compare exact PostgreSQL predicates", () => {
+  const guard = guardSection("-- Guarded indexes", "-- Function precondition")
+  assert.match(guard, /pg_catalog\.pg_get_expr\(i\.indpred,i\.indrelid,false\)/)
+  assert.match(guard, /actual_predicate is distinct from item\.canonical_predicate/)
+  assert.equal((guard.match(/,null::text\)/g) ?? []).length, 9)
+  assert.equal((guard.match(/,'\(state = ''PENDING''::text\)'\)/g) ?? []).length, 1)
+})
 await test("favorites table has no expression UNIQUE constraint", () => { const table = sql.match(/create table app_private\.p2_favorites\([\s\S]*?\n\s*\);/)?.[0] ?? ""; assert.doesNotMatch(table, /unique\s*\([^\n]*\([^\n]*data\s*->>/i); assert.doesNotMatch(table, /constraint\s+p2_favorites_owner_identity_unique/i) })
 await test("favorites identity is a standalone unique expression index", () => { assert.match(sql, /create unique index p2_favorites_owner_identity_unique on app_private\.p2_favorites\s*\(owner_id,\s*\(data->>''kind''\),\s*\(data->>''canonicalId''\)\)/i) })
 await test("favorites expression index has exact ordered key guard", () => { assert.match(sql, /p2_favorites_owner_identity_unique[^\n]*true,null,array\['owner_id','data->>''kind''::text','data->>''canonicalId''::text'\]/); assert.match(sql, /actual_key_parts is distinct from item\.canonical_keys/) })
