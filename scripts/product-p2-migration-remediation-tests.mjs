@@ -15,6 +15,21 @@ await test("proposal remains rollback-only", () => { assert.match(sql, /begin;/i
 await test("relation precondition guards exist", () => { assert.match(sql, /M-01 PRECONDITION/); assert.match(sql, /to_regclass/); assert.match(sql, /non-canonical ownership or signature/) })
 await test("all proposed storage objects have signatures and guards", () => { for (const name of objects) { assert.match(sql, new RegExp(`to_regclass\\('app_private\\.${name}'\\)|\\('app_private\\.${name}'`), name); assert.match(sql, new RegExp(`comment on table app_private\\.${name}`), name) } })
 await test("column fingerprint rejects incompatible drift", () => { assert.match(sql, /Exact column fingerprint/); assert.match(sql, /pg_catalog\.format_type/); assert.match(sql, /has non-canonical columns/) })
+await test("column fingerprint normalizes nullability to canonical boolean text", () => {
+  const fingerprint = sql.match(/select pg_catalog\.array_agg\(pg_catalog\.format\('%s:%s:%s',[\s\S]*?order by a\.attnum\)[\s\S]*?into actual[^;]*;/i)?.[0] ?? ""
+  assert.match(fingerprint, /pg_catalog\.format\('%s:%s:%s',\s*a\.attname,\s*pg_catalog\.format_type\(a\.atttypid,a\.atttypmod\),\s*case\s+when a\.attnotnull then 'true'\s+else 'false'\s+end\)/i)
+  assert.doesNotMatch(fingerprint, /pg_catalog\.format\('%s:%s:%s',\s*a\.attname,\s*pg_catalog\.format_type\(a\.atttypid,a\.atttypmod\),\s*a\.attnotnull\s*\)/i)
+})
+await test("column fingerprint preserves ordered types and true false expectations", () => {
+  const guard = sql.match(/-- Exact column fingerprint[\s\S]*?-- Every named constraint/)?.[0] ?? ""
+  assert.match(guard, /array\['id:uuid:true','owner_id:uuid:true','data:jsonb:true','created_at:timestamp with time zone:true','updated_at:timestamp with time zone:true'\]/)
+  assert.match(guard, /'reversal_of_id:uuid:false'/)
+  assert.match(guard, /'published_at:timestamp with time zone:false'/)
+  assert.doesNotMatch(guard, /:[tf]'/)
+  assert.match(guard, /order by a\.attnum/)
+  assert.match(guard, /pg_catalog\.format_type\(a\.atttypid,a\.atttypmod\)/)
+  assert.match(guard, /has non-canonical columns/)
+})
 await test("constraint catalog guards reject missing kind or signature", () => { assert.match(sql, /pg_catalog\.pg_constraint/); assert.match(sql, /missing or drifted/); assert.match(sql, /non-canonical signature/) })
 await test("every declared named constraint participates in a guard", () => { const declared = [...sql.matchAll(/constraint\s+([a-z0-9_]+)/gi)].map(match => match[1]); for (const name of new Set(declared)) assert.ok(sql.split(name).length >= 3, name) })
 await test("index guards reject target definition and signature drift", () => { assert.match(sql, /pg_catalog\.pg_get_indexdef/); assert.match(sql, /indisvalid/); assert.match(sql, /P2 index % is non-canonical/) })

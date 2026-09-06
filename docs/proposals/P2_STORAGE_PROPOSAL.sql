@@ -182,7 +182,7 @@ begin
     ('app_private.p2_catalog',array['id:uuid:true','type:text:true','title:text:true','summary:text:true','state:text:true','version:bigint:true','created_at:timestamp with time zone:true','created_by:uuid:true','updated_at:timestamp with time zone:true','updated_by:uuid:true','published_at:timestamp with time zone:false','published_by:uuid:false']),
     ('app_private.p2_notification_outbox',array['event_id:uuid:true','booking_id:uuid:true','recipient_id:uuid:true','event_type:text:true','source_event_id:uuid:false','domain_key:text:true','state:text:true','attempts:integer:true','next_attempt_at:timestamp with time zone:false','created_at:timestamp with time zone:true','updated_at:timestamp with time zone:true'])
   ) as expected(table_name,columns) loop
-    select pg_catalog.array_agg(pg_catalog.format('%s:%s:%s',a.attname,pg_catalog.format_type(a.atttypid,a.atttypmod),a.attnotnull) order by a.attnum)
+    select pg_catalog.array_agg(pg_catalog.format('%s:%s:%s',a.attname,pg_catalog.format_type(a.atttypid,a.atttypmod),case when a.attnotnull then 'true' else 'false' end) order by a.attnum)
       into actual from pg_catalog.pg_attribute a where a.attrelid=item.table_name::regclass and a.attnum>0 and not a.attisdropped;
     if actual is distinct from item.columns then raise exception 'P2 table % has non-canonical columns',item.table_name; end if;
   end loop;
