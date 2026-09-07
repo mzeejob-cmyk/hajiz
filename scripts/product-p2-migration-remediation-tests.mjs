@@ -99,6 +99,19 @@ await test("CMS stale update and publish fail closed", () => { assert.match(sql,
 await test("CMS remains content-only without supplier availability", () => { const catalog = sql.match(/create table app_private\.p2_catalog[\s\S]*?comment on table app_private\.p2_catalog/)?.[0] ?? ""; assert.doesNotMatch(catalog, /supplier|availability|inventory|booking/i) })
 await test("commission and payout producer authority remains absent", () => { assert.doesNotMatch(sql, /function public\.(credit|create|execute|pay)_p2_(commission|payout)/i); assert.match(sql, /No commission, payout, notification-delivery/) })
 await test("notification delivery and external providers remain absent", () => { assert.doesNotMatch(sql, /https?:\/\/|net\.http|http_post|pg_net/i); assert.doesNotMatch(sql, /deliver_p2_notification/) })
-await test("migration is neither created nor applied", async () => { const migrations = await fs.readdir(new URL("../supabase/migrations/", import.meta.url)); assert.equal(migrations.some(name => /p2.*storage|product.*p2/i.test(name)), false); assert.match(sql, /NOT applied/); assert.doesNotMatch(sql, /apply_migration|supabase db push/i) })
+await test("exactly one approved P2 migration exists and remains unapplied", async () => {
+  const expected = "20260907073346_product_p2_storage_v1.sql"
+  const migrations = await fs.readdir(new URL("../supabase/migrations/", import.meta.url))
+  const p2Migrations = migrations.filter(name => /p2.*storage|product.*p2/i.test(name)).sort()
+  const assertApprovedMigrationSet = actual => assert.deepEqual(actual, [expected])
+  assertApprovedMigrationSet(p2Migrations)
+  assert.throws(() => assertApprovedMigrationSet([...p2Migrations, "20260907073347_product_p2_storage_v1.sql"]))
+  assert.throws(() => assertApprovedMigrationSet(["20260907073347_product_p2_storage_v1.sql"]))
+  const migration = await fs.readFile(new URL(`../supabase/migrations/${expected}`, import.meta.url), "utf8")
+  assert.match(sql, /NOT applied/)
+  assert.match(sql, /rollback;\s*$/i)
+  assert.match(migration, /not yet applied to local\/Staging\/Production at conversion time/i)
+  assert.doesNotMatch(`${sql}\n${migration}`, /apply_migration|supabase db push/i)
+})
 
 console.log(`\n${passed}/${passed} Product P2 migration remediation tests passed`)
