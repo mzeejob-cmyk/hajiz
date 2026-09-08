@@ -3,8 +3,8 @@ const freeze = (items) => Object.freeze(items.map((item) => Object.freeze(item))
 export const ACCOUNT_SECTIONS = freeze([
   { id: "trips", label: "حجوزاتي", path: "/account/trips", state: "authenticated-rpc" },
   { id: "profile", label: "الملف الشخصي", path: "/account/profile", state: "profile-rpc-boundary" },
-  { id: "travelers", label: "المسافرون المحفوظون", path: "/account/travelers", state: "contract-pending" },
-  { id: "favorites", label: "المفضلة والتفضيلات", path: "/account/favorites", state: "contract-pending" },
+  { id: "travelers", label: "المسافرون المحفوظون", path: "/account/travelers", state: "authenticated-p2-edge" },
+  { id: "favorites", label: "المفضلة والتفضيلات", path: "/account/favorites", state: "authenticated-p2-edge" },
 ])
 
 export const PROFILE_FIELDS = freeze([

@@ -1,0 +1,34 @@
+import assert from "node:assert/strict"
+import { readFile } from "node:fs/promises"
+import { createAccountP2DataSource } from "../src/services/accountP2DataSource.js"
+import { ACCOUNT_SECTIONS } from "../src/features/account/data/accountPresentation.js"
+
+let passed = 0
+const test = async (name, fn) => { await fn(); passed++; console.log(`PASS ${name}`) }
+const USER = "11111111-1111-4111-8111-111111111111", RECORD = "22222222-2222-4222-8222-222222222222"
+function client({ data = [], error = null, user = { id: USER } } = {}) {
+  const calls = []
+  return { calls, auth: { async getUser() { calls.push(["getUser"]); return { data: { user }, error: user ? null : {} } } }, functions: { async invoke(name, options) { calls.push(["invoke", name, options]); return { data: structuredClone(data), error } } } }
+}
+const source = (mock, createId = () => RECORD) => createAccountP2DataSource({ getClient: () => mock, createId })
+const invoked = mock => mock.calls.find(call => call[0] === "invoke")
+
+await test("Account P2 requires verified authentication", async () => { const mock = client({ user: null }); await assert.rejects(source(mock).listTravelers(), /AUTH_REQUIRED/); assert.equal(invoked(mock), undefined) })
+await test("Account P2 uses exact Edge collection envelope", async () => { const mock = client(); await source(mock).listTravelers(); assert.deepEqual(invoked(mock), ["invoke", "product-p2", { body: { operation: "collection", body: { collection: "travelers", operation: "list" } } }]) })
+await test("Account P2 travelers list validates public rows", async () => { const mock = client({ data: [{ id: RECORD, firstName: "A", lastName: "B" }] }); assert.deepEqual(await source(mock).listTravelers(), [{ id: RECORD, firstName: "A", lastName: "B" }]) })
+await test("Account P2 travelers save sends names only", async () => { const mock = client({ data: { id: RECORD, firstName: "A", lastName: "B" } }); await source(mock).saveTraveler({ firstName: " A ", lastName: " B " }); assert.deepEqual(invoked(mock)[2].body.body, { collection: "travelers", operation: "save", id: RECORD, data: { firstName: "A", lastName: "B" } }) })
+await test("Account P2 travelers delete uses record id only", async () => { const mock = client({ data: { deleted: true } }); assert.deepEqual(await source(mock).deleteTraveler(RECORD), { deleted: true }); assert.deepEqual(invoked(mock)[2].body.body, { collection: "travelers", operation: "delete", id: RECORD }) })
+await test("Account P2 favorites list supports canonical kinds only", async () => { const mock = client({ data: [{ id: RECORD, kind: "hotel", canonicalId: "hotel_one" }] }); assert.equal((await source(mock).listFavorites())[0].kind, "hotel"); const malformed = client({ data: [{ id: RECORD, kind: "flight", canonicalId: "x" }] }); await assert.rejects(source(malformed).listFavorites(), /RESPONSE_INVALID/) })
+await test("Account P2 favorites save contains no supplier identity", async () => { const mock = client({ data: { id: RECORD, kind: "offer", canonicalId: "offer_one" } }); await source(mock).saveFavorite({ kind: "offer", canonicalId: "offer_one" }); assert.deepEqual(invoked(mock)[2].body.body.data, { kind: "offer", canonicalId: "offer_one" }) })
+await test("Account P2 favorites delete uses record id only", async () => { const mock = client({ data: { deleted: true } }); await source(mock).deleteFavorite(RECORD); assert.equal(invoked(mock)[2].body.body.id, RECORD) })
+await test("Account P2 preferences consume flat id locale rows", async () => { const mock = client({ data: [{ id: USER, locale: "ar" }] }); assert.deepEqual(await source(mock).loadPreference(), { id: USER, locale: "ar" }); const nested = client({ data: [{ id: USER, data: { locale: "ar" } }] }); await assert.rejects(source(nested).loadPreference(), /INPUT_INVALID/) })
+for (const locale of ["ar", "en"]) await test(`Account P2 preference saves ${locale}`, async () => { const mock = client({ data: { id: USER, locale } }); assert.equal((await source(mock).savePreference(locale)).locale, locale); assert.deepEqual(invoked(mock)[2].body.body.data, { locale }) })
+await test("Account P2 malformed server results fail safely", async () => { for (const data of [null, {}, [{ id: "bad", firstName: "A", lastName: "B" }]]) await assert.rejects(source(client({ data })).listTravelers(), /RESPONSE_INVALID|INPUT_INVALID/) })
+await test("Account P2 server errors fail without raw leakage", async () => { const mock = client({ error: new Error("private SQL and token") }); await assert.rejects(source(mock).listFavorites(), error => error.message === "ACCOUNT_P2_REQUEST_FAILED") })
+await test("Account P2 rejects owner role and extra PII injection", async () => { const mock = client({ data: {} }); for (const extra of [{ ownerId: USER }, { userId: USER }, { role: "admin" }, { passportNumber: "P1" }, { email: "x@example.invalid" }, { phone: "+1" }]) await assert.rejects(source(mock).saveTraveler({ firstName: "A", lastName: "B", ...extra }), /INPUT_INVALID/); assert.equal(invoked(mock), undefined) })
+await test("Account sections no longer claim contract pending", () => { for (const id of ["travelers", "favorites"]) assert.equal(ACCOUNT_SECTIONS.find(item => item.id === id).state, "authenticated-p2-edge") })
+await test("Traveler UI exposes only first and last name inputs", async () => { const ui = await readFile(new URL("../src/features/account/components/AccountOverview.jsx", import.meta.url), "utf8"); const traveler = ui.match(/export function TravelersFoundation[\s\S]*?\n}\n\nconst favoriteKinds/)?.[0] ?? ""; assert.match(traveler, /name="firstName"/); assert.match(traveler, /name="lastName"/); assert.equal(/name="(?:passport|document|nationality|birth|email|phone)/i.test(traveler), false) })
+await test("Favorites UI has list deletion and no unsupported save form", async () => { const ui = await readFile(new URL("../src/features/account/components/AccountOverview.jsx", import.meta.url), "utf8"); const favorites = ui.slice(ui.indexOf("export function FavoritesFoundation")); assert.equal(/flight|supplier|name="canonicalId"/i.test(favorites), false); assert.match(favorites, /تفضيل اللغة/); assert.match(favorites, /deleteFavorite/) })
+await test("Account P2 source has no direct table RPC storage or authority fields", async () => { const files = ["../src/services/accountP2DataSource.js", "../src/features/account/components/AccountOverview.jsx"]; const restricted = /localStorage|sessionStorage|indexedDB|document\.cookie|\.from\s*\(|\.rpc\s*\(|service_role|ownerId|userId|supplier_net|walletBalance|availableCommission|payoutExecutionAllowed/; for (const file of files) assert.equal(restricted.test(await readFile(new URL(file, import.meta.url), "utf8")), false, file) })
+
+console.log(`\n${passed}/${passed} Account P2 frontend tests passed`)
