@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react"
 import { adminP2DataSource } from "../../services/adminP2DataSource.js"
 import { ADMIN_OPS_PRESENTATION } from "./data/adminOpsPresentation.js"
+import { AdminCatalogPanel } from "./components/AdminCatalogPanel.jsx"
 
 function counts(rows, field) { return Object.entries(rows.reduce((all, row) => ({ ...all, [row[field]]: (all[row[field]] ?? 0) + 1 }), {})) }
 function Metrics({ rows }) { const groups = [["سجلات موثّقة", [["الإجمالي", rows.length]]], ["حالات الدفع", counts(rows, "paymentState")], ["حالات الحجز", counts(rows, "bookingState")], ["طرق الدفع", counts(rows, "method")]]; return <section className="admin-ops-metrics" aria-label="مؤشرات السجلات الموثّقة">{groups.map(([label, values]) => <article key={label}><span>{label}</span><strong>{values.reduce((sum, [, value]) => sum + value, 0)}</strong><small>{values.map(([key, value]) => `${key}: ${value}`).join(" · ")}</small></article>)}</section> }
 function DomainState({ domain, status }) { return <span className={`admin-state admin-state--${status}`} data-domain={domain} data-status={status}>{status}</span> }
 function Deferred() { return <section className="admin-ops-card admin-ops-placeholder"><p className="admin-ops-kicker">pending-read-only</p><h2>مجالات إدارية مؤجلة</h2><ul>{ADMIN_OPS_PRESENTATION.deferred.map(item => <li key={item} data-contract-state="pending-read-only">{item}</li>)}</ul><p>لا توجد بيانات تجريبية أو إجراءات تنفيذ لهذه المجالات.</p></section> }
 
-export default function AdminPage({ dataSource = adminP2DataSource }) {
+export default function AdminPage({ dataSource = adminP2DataSource, catalogDataSource }) {
   const [state, setState] = useState("loading"), [rows, setRows] = useState([]), [revision, setRevision] = useState(0)
   useEffect(() => { let active = true; setState("loading"); setRows([]); dataSource.load().then(value => { if (active) { setRows(value); setState("ready") } }).catch(() => { if (active) setState("error") }); return () => { active = false } }, [dataSource, revision])
   return <div className="admin-ops-page" dir="rtl" data-boundary="authenticated-p2-read" data-source="authenticated-p2-edge" data-state={state}><aside className="admin-ops-nav" aria-label="تنقل مساحة العمليات"><bdi dir="ltr">HAJIZ Admin</bdi><small>Operations Console</small>{ADMIN_OPS_PRESENTATION.navigation.map((item, index) => <span className={index === 0 ? "is-active" : ""} key={item}>{item}</span>)}</aside><main className="admin-ops-main"><header><p className="admin-ops-kicker">Authenticated · Read only</p><h1>نظرة عامة تشغيلية</h1><p>سجلات دفع وحجز موثّقة للقراءة فقط، دون أي صلاحية تعديل من المتصفح.</p></header>
     {state === "loading" && <section className="admin-ops-card" aria-live="polite">جارٍ تحميل السجلات الإدارية</section>}
     {state === "error" && <section className="admin-ops-card" aria-live="polite"><p>تعذر تحميل بيانات الإدارة. تحقق من الصلاحية وحاول مجددًا.</p><button type="button" onClick={() => setRevision(value => value + 1)}>إعادة المحاولة</button></section>}
     {state === "ready" && <><Metrics rows={rows} /><div className="admin-ops-grid"><section className="admin-ops-card" aria-labelledby="admin-queue-title"><div className="admin-ops-card__heading"><div><p className="admin-ops-kicker">authoritative-payment-booking-rows</p><h2 id="admin-queue-title">سجل الدفع والحجز</h2></div><span className="admin-ops-count">{rows.length}</span></div>{rows.length === 0 ? <p>لا توجد سجلات متاحة.</p> : <ul className="admin-ops-list">{rows.map(row => <li key={`${row.bookingReference}-${row.method}`}><div><bdi dir="ltr" className="admin-ops-reference">{row.bookingReference}</bdi><p><bdi dir="ltr">{row.amount} {row.currency}</bdi> · {row.method}</p></div><div className="admin-ops-domains"><DomainState domain="payment" status={row.paymentState} /><DomainState domain="booking" status={row.bookingState} /></div></li>)}</ul>}</section><Deferred /></div></>}
-    <aside className="admin-ops-warning" role="note"><strong>بوابة إدارية للقراءة فقط</strong><span>HAJIZ ليس جاهزًا للإنتاج حتى اكتمال تمكين الموردين وبوابات تقوية Production المتبقية.</span></aside>
+    <AdminCatalogPanel {...(catalogDataSource ? { dataSource: catalogDataSource } : {})} />
+    <aside className="admin-ops-warning" role="note"><strong>السجلات التشغيلية للقراءة فقط؛ صلاحية الكتابة محصورة في Catalog CMS</strong><span>HAJIZ ليس جاهزًا للإنتاج حتى اكتمال تمكين الموردين وبوابات تقوية Production المتبقية.</span></aside>
   </main></div>
 }

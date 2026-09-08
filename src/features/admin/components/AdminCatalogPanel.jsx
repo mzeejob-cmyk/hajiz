@@ -1,0 +1,19 @@
+import { useEffect, useState } from "react"
+import { adminCatalogP2DataSource } from "../../../services/adminCatalogP2DataSource.js"
+
+const empty = Object.freeze({ type: "package", title: "", summary: "" })
+export function AdminCatalogPanel({ dataSource = adminCatalogP2DataSource }) {
+  const [state, setState] = useState("loading"), [drafts, setDrafts] = useState([]), [published, setPublished] = useState([]), [form, setForm] = useState(empty), [editing, setEditing] = useState(null), [revision, setRevision] = useState(0)
+  useEffect(() => { let active = true; setState("loading"); Promise.all([dataSource.listDrafts(), dataSource.listPublished()]).then(([nextDrafts, nextPublished]) => { if (active) { setDrafts(nextDrafts); setPublished(nextPublished); setState("ready") } }).catch(() => { if (active) setState("error") }); return () => { active = false } }, [dataSource, revision])
+  const reload = () => setRevision(value => value + 1)
+  async function save(event) { event.preventDefault(); setState("saving"); try { if (editing) await dataSource.updateDraft({ id: editing.id, version: editing.version, ...form }); else await dataSource.createDraft(form); setEditing(null); setForm(empty); reload() } catch { setState("conflict") } }
+  async function publish(row) { setState("publishing"); try { await dataSource.publishDraft({ id: row.id, version: row.version }); reload() } catch { setState("conflict") } }
+  function edit(row) { setEditing(row); setForm({ type: row.type, title: row.title, summary: row.summary }); setState("ready") }
+  const busy = ["loading", "saving", "publishing"].includes(state)
+  return <section className="admin-catalog" data-boundary="admin-authorized-catalog-writes" data-state={state}><header><p className="admin-ops-kicker">Admin-authorized Catalog CMS</p><h2>إدارة الباقات والعروض</h2><p>هذا النطاق وحده يسمح بالحفظ والنشر؛ سجلات الدفع والحجز أعلاه تبقى للقراءة فقط.</p></header>
+    <p aria-live="polite">{{ loading: "جارٍ تحميل المسودات والمنشور", saving: "جارٍ حفظ المسودة", publishing: "جارٍ نشر السجل", error: "تعذر تحميل الكتالوج. حاول مجددًا.", conflict: "تعذر الحفظ؛ ربما تغيرت النسخة. أعد التحميل ثم حاول مجددًا.", ready: "الكتالوج جاهز" }[state]}</p>
+    {(state === "error" || state === "conflict") && <button type="button" onClick={reload}>إعادة التحميل</button>}
+    {!busy && <div className="admin-ops-grid"><section className="admin-ops-card"><h3>المسودات</h3>{drafts.length === 0 ? <p>لا توجد مسودات.</p> : <ul className="admin-ops-list">{drafts.map(row => <li key={row.id}><div><strong>{row.title}</strong><p>{row.type} · v{row.version} · {row.summary}</p></div><div><button type="button" onClick={() => edit(row)}>تعديل</button><button type="button" onClick={() => publish(row)}>نشر</button></div></li>)}</ul>}</section><section className="admin-ops-card"><h3>المنشور داخل Admin</h3>{published.length === 0 ? <p>لا توجد سجلات منشورة.</p> : <ul className="admin-ops-list">{published.map(row => <li key={row.id}><div><strong>{row.title}</strong><p>{row.type} · v{row.version} · {row.summary}</p></div></li>)}</ul>}</section></div>}
+    <form className="admin-ops-card admin-catalog-form" onSubmit={save}><h3>{editing ? "تعديل المسودة" : "إنشاء مسودة"}</h3><label>النوع<select value={form.type} disabled={busy} onChange={event => setForm(value => ({ ...value, type: event.target.value }))}><option value="package">باقة</option><option value="offer">عرض</option></select></label><label>العنوان<input required maxLength="120" value={form.title} disabled={busy} onChange={event => setForm(value => ({ ...value, title: event.target.value }))} /></label><label>الملخص<textarea required maxLength="1000" value={form.summary} disabled={busy} onChange={event => setForm(value => ({ ...value, summary: event.target.value }))} /></label><button disabled={busy}>حفظ المسودة</button>{editing && <button type="button" onClick={() => { setEditing(null); setForm(empty) }}>إلغاء</button>}</form>
+  </section>
+}
