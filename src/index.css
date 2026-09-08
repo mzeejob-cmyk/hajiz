@@ -581,5 +581,7 @@ button { border: 0; cursor: pointer; }
 .account-p2-list li { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #eef0f4; }
 .account-p2-list li div { display:flex; gap:6px; }
 .account-p2-empty { padding:12px; border-radius:8px; background:#f7f8fa; }
+.partner-p2-list { display:grid; gap:8px; padding:0; list-style:none; }
+.partner-p2-list li { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #eef0f4; }
 .portal-foundation>main>header { margin-bottom:20px; } .portal-foundation>main>header h1 { margin:.25rem 0; }
 @media (max-width:900px) { .account-foundation,.portal-foundation { grid-template-columns:1fr; padding:18px; } .account-foundation>aside,.portal-foundation>aside { overflow:auto; flex-direction:row; } .account-foundation>aside strong { display:none; } .foundation-grid { grid-template-columns:1fr; } }

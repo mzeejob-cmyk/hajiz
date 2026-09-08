@@ -1,12 +1,12 @@
 const freeze = (items) => Object.freeze(items.map((item) => Object.freeze(item)))
 export const PARTNER_MODEL = "model-b"
 export const PARTNER_SECTIONS = freeze([
-  { id: "overview", label: "نظرة عامة", state: "presentation-only" },
+  { id: "overview", label: "نظرة عامة", state: "authenticated-p2-read" },
   { id: "bookings", label: "الحجوزات", state: "read-contract-pending" },
   { id: "clients", label: "العملاء", state: "read-contract-pending" },
-  { id: "commission", label: "العمولات", state: "policy-owned" },
-  { id: "payouts", label: "الدفعات المستحقة", state: "contract-pending" },
-  { id: "kyc", label: "التحقق KYC", state: "contract-pending" },
+  { id: "commission", label: "العمولات", state: "authenticated-p2-read" },
+  { id: "payouts", label: "الدفعات المستحقة", state: "authenticated-p2-read" },
+  { id: "kyc", label: "التحقق KYC", state: "authenticated-p2-read" },
   { id: "referrals", label: "الإحالات", state: "contract-pending" },
   { id: "pricing-uplift", label: "هامش البيع", state: "policy-owned" },
 ])
