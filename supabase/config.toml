@@ -1,0 +1,5 @@
+[functions.product-p2]
+verify_jwt = true
+
+[functions.catalog-public]
+verify_jwt = false
