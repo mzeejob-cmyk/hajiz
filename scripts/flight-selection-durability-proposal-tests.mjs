@@ -1,0 +1,130 @@
+import assert from "node:assert/strict"
+import { execFileSync } from "node:child_process"
+import { access, readFile } from "node:fs/promises"
+
+const BASE = "8a74c5308d8b4cec464019897102c8ee4c51cfae"
+const root = new URL("../", import.meta.url)
+const docUrl = new URL("../docs/FLIGHT_SELECTION_DURABILITY_V1.md", import.meta.url)
+const sqlUrl = new URL("../docs/proposals/FLIGHT_SELECTION_DURABILITY_V1.sql", import.meta.url)
+const selfUrl = new URL(import.meta.url)
+const [doc, sql] = await Promise.all([readFile(docUrl, "utf8"), readFile(sqlUrl, "utf8")])
+const diffNames = (path) => execFileSync("git", ["diff", "--name-only", BASE, "--", path], { cwd: root, encoding: "utf8" }).trim()
+const normalized = (value) => value.replace(/\s+/g, " ")
+const compactSql = normalized(sql.toLowerCase())
+let passed = 0
+const test = async (name, fn) => { await fn(); passed += 1; console.log(`PASS ${name}`) }
+const has = (source, pattern) => assert.match(source, pattern)
+const lacks = (source, pattern) => assert.doesNotMatch(source, pattern)
+
+// Artifact control: 1–6
+await test("proposal doc exists", () => access(docUrl))
+await test("SQL proposal exists", () => access(sqlUrl))
+await test("focused test exists", () => access(selfUrl))
+await test("no migration changed", () => assert.equal(diffNames("supabase/migrations"), ""))
+await test("no runtime source changed", () => assert.equal(diffNames("src"), ""))
+await test("proposal ends with rollback", () => assert.match(sql.trimEnd(), /rollback;$/i))
+
+// Search table: 7–24
+await test("search table is private", () => has(sql, /create table app_private\.flight_search_selections/))
+await test("hca v2 exact check", () => has(sql, /\^hca_v2_\[0-9a-f\]\{32\}\$/))
+await test("alternative is primary identity", () => has(sql, /primary key \(alternative_id\)/))
+await test("internal offer bounded", () => has(sql, /char_length\(internal_offer_id\) between 1 and 255/))
+await test("provider bounded and validated", () => has(sql, /provider ~ '\^\[a-z0-9\]\[a-z0-9_-\]\{0,63\}\$'/))
+await test("provider ref bounded", () => has(sql, /char_length\(provider_offer_ref\) between 1 and 512/))
+await test("itinerary bounded", () => has(sql, /octet_length\(itinerary_snapshot::text\) <= 16384/))
+await test("fare bounded", () => has(sql, /octet_length\(fare_snapshot::text\) <= 8192/))
+await test("previous customer price bounded", () => has(sql, /octet_length\(previous_customer_price_snapshot::text\) <= 4096/))
+await test("passenger composition bounded", () => has(sql, /octet_length\(passenger_composition::text\) <= 1024/))
+await test("search expiry required", () => has(sql, /flight_search_selections_validity_check check \(expires_at > created_at\)/))
+await test("search digest required", () => has(sql, /flight_search_selections_payload_digest_check[\s\S]*?\^\[0-9a-f\]\{64\}\$/))
+await test("search has no owner id", () => { const block = sql.match(/create table app_private\.flight_search_selections[\s\S]*?\n\);/i)?.[0] ?? ""; lacks(block, /owner_id/) })
+await test("search has no booking FK", () => { const block = sql.match(/create table app_private\.flight_search_selections[\s\S]*?\n\);/i)?.[0] ?? ""; lacks(block, /references .*booking/i) })
+await test("search has no payment FK", () => { const block = sql.match(/create table app_private\.flight_search_selections[\s\S]*?\n\);/i)?.[0] ?? ""; lacks(block, /references .*payment/i) })
+await test("no raw supplier response column", () => lacks(sql, /raw_supplier_response|supplier_http_response/))
+await test("no supplier net column", () => lacks(sql, /supplier_net/))
+await test("no commission column", () => lacks(sql, /agent_commission|commission_snapshot/))
+
+// Priced table: 25–34
+await test("priced table is private", () => has(sql, /create table app_private\.flight_priced_selections/))
+await test("hpr v1 exact check", () => has(sql, /\^hpr_v1_\[0-9a-f\]\{40\}\$/))
+await test("priced id is primary identity", () => has(sql, /primary key \(priced_selection_id\)/))
+await test("priced row preserves hca v2", () => has(sql, /flight_priced_selections_alternative_id_check[\s\S]*?\^hca_v2_/))
+await test("priced row keeps representative privately", () => has(sql, /create table app_private\.flight_priced_selections[\s\S]*?internal_offer_id[\s\S]*?provider[\s\S]*?provider_offer_ref/))
+await test("priced row keeps customer price", () => has(sql, /customer_price_snapshot jsonb not null/))
+await test("priced row keeps passengers", () => has(sql, /create table app_private\.flight_priced_selections[\s\S]*?passenger_composition jsonb not null/))
+await test("priced expiry required", () => has(sql, /flight_priced_selections_validity_check check \(expires_at > created_at\)/))
+await test("priced digest required", () => has(sql, /flight_priced_selections_payload_digest_check[\s\S]*?\^\[0-9a-f\]\{64\}\$/))
+await test("priced has no owner id", () => { const block = sql.match(/create table app_private\.flight_priced_selections[\s\S]*?\n\);/i)?.[0] ?? ""; lacks(block, /owner_id/) })
+
+// Replay and concurrency: 35–41
+await test("identical search replay is idempotent", () => has(doc, /same ID and exact digest: idempotent success/))
+await test("conflicting search replay fails closed", () => has(sql, /search selection identity conflict.*FSD04/s))
+await test("search batch is one atomic RPC", () => { has(doc, /whole Search batch runs in one RPC statement\/transaction/); has(sql, /jsonb_array_elements\(p_batch\)/) })
+await test("identical priced replay is idempotent", () => has(doc, /Replay is insert \/ identical-digest idempotent success/))
+await test("conflicting priced replay fails closed", () => has(sql, /priced selection identity conflict.*FSD04/s))
+await test("no conflict update", () => lacks(compactSql, /on conflict[^;]+do update/))
+await test("digests cover authority fields", () => { has(sql, /flight-search-selection-payload\/v1[\s\S]*v_internal_offer_id[\s\S]*v_passengers/); has(sql, /flight-priced-selection-payload\/v1[\s\S]*p_alternative_id[\s\S]*p_passenger_composition/) })
+
+// Security: 42–54
+await test("RLS enabled on both", () => assert.equal((sql.match(/enable row level security/g) ?? []).length, 2))
+await test("NO FORCE RLS explicit", () => assert.equal((sql.match(/no force row level security/g) ?? []).length, 2))
+await test("anon direct access denied", () => has(sql, /for all to anon, authenticated[\s\S]*using \(false\) with check \(false\)/))
+await test("authenticated direct access denied", () => assert.equal((sql.match(/for all to anon, authenticated/g) ?? []).length, 2))
+await test("service role direct table access revoked", () => assert.equal((sql.match(/from public, anon, authenticated, service_role/g) ?? []).length, 2))
+await test("service role receives four named RPCs", () => assert.equal((sql.match(/grant execute on function public\./g) ?? []).length, 4))
+await test("anon RPC execute revoked", () => assert.equal((sql.match(/from public, anon, authenticated;/g) ?? []).length, 4))
+await test("authenticated RPC execute revoked", () => has(doc, /`PUBLIC`, `anon`, and `authenticated` have EXECUTE revoked/))
+await test("PUBLIC RPC execute revoked", () => has(sql, /revoke all on function public\.remember_flight_search_selections_v1/))
+await test("security definer on every RPC", () => assert.equal((sql.match(/security definer/g) ?? []).length, 4))
+await test("empty search path on every RPC", () => assert.equal((sql.match(/set search_path = ''/g) ?? []).length, 4))
+await test("table and function owner consistency guarded", () => has(sql, /RPC and private tables must share one owner/))
+await test("same-name drift guard covers relations and functions", () => { has(sql, /same-name relation exists; canonical drift review required/); has(sql, /same-name function exists; canonical drift review required/) })
+
+// Expiry: 55–58
+await test("persistence never revives expiry", () => has(doc, /Expiry never slides/))
+await test("server time controls expiry", () => assert.ok((sql.match(/transaction_timestamp\(\)/g) ?? []).length >= 6))
+await test("expiry cleanup indexes proposed", () => assert.equal((sql.match(/_expires_idx/g) ?? []).length >= 6, true))
+await test("no cleanup worker introduced", () => { has(doc, /No migration, runtime implementation, Redis, cleanup worker, cron/); lacks(sql, /pg_cron|cron\.schedule/) })
+
+// Async application contract: 59–68
+await test("future Search store is async", () => has(doc, /await store\.rememberSearch\(entries\)/))
+await test("Search waits for durable remember", () => has(doc, /No Customer alternative may be returned before its complete reverse-map batch commits/))
+await test("Reprice resolution is async", () => has(doc, /await resolver\.resolve\(alternativeId\)/))
+await test("priced persistence is async", () => has(doc, /await store\.createOrGet\(record\)/))
+await test("Checkout async dependency documented", () => has(doc, /Checkout:[\s\S]*must await priced-selection resolution/))
+await test("replacement persists before response", () => has(doc, /replacement `hpr_v1` must be durably stored before the response/))
+await test("traveler async propagation documented", () => has(doc, /Traveler Validation:[\s\S]*propagate async/))
+await test("Booking Intent awaits resolution", () => has(doc, /Booking Intent:[\s\S]*await durable priced-selection resolution/))
+await test("process local implementation retained conceptually", () => has(doc, /process-local-non-production/))
+await test("Supabase implementation shares interface", () => has(doc, /Both implementations will expose the same asynchronous shape/))
+
+// Authority preservation: 69–80
+await test("Search public contract unchanged", () => has(doc, /Search[\s\S]*public formats remain unchanged/))
+await test("Reprice public contract unchanged", () => has(doc, /Reprice[\s\S]*public formats remain unchanged/))
+await test("Checkout public contract unchanged", () => has(doc, /Checkout[\s\S]*public formats remain unchanged/))
+await test("Booking Intent public contract unchanged", () => has(doc, /Booking Intent public formats remain unchanged/))
+await test("hcg v1 unchanged", () => has(doc, /`hcg_v1`, `hca_v2`, `hpr_v1`/))
+await test("hca v2 unchanged", () => has(doc, /`hca_v2` is an opaque search-selection resolution handle/))
+await test("hpr v1 unchanged", () => has(doc, /`hpr_v1` is an opaque authoritative repriced-selection handle/))
+await test("pricing authority unchanged", () => has(doc, /Model B\/pricing\/FX change/))
+await test("Model B unchanged", () => has(doc, /No migration, runtime implementation[\s\S]*Model B\/pricing\/FX change/))
+await test("supplier selection backend authority retained", () => has(doc, /browser-supplied provider, internal ID, price, or expiry/))
+await test("browser cannot provide provider", () => has(doc, /browser-supplied provider/))
+await test("browser cannot provide internal offer id", () => has(doc, /browser-supplied provider, internal ID/))
+
+// Isolation: 81–92
+await test("supplier operations not repurposed", () => has(doc, /`supplier_operations` and `public\.offers` are not repurposed/))
+await test("public offers not repurposed", () => has(doc, /`supplier_operations` and `public\.offers` are not repurposed/))
+await test("no Travelport enablement", () => has(doc, /Travelport\/Duffel change/))
+await test("no Duffel enablement", () => has(doc, /Travelport\/Duffel change/))
+await test("no host composition", () => has(doc, /No migration[\s\S]*host, browser transport/))
+await test("no browser transports", () => has(doc, /host, browser transport/))
+await test("no Bankak change", () => has(doc, /Supabase contact, Bankak/))
+await test("no Hotels H2 change", () => has(doc, /Account\/Catalog, Hotels\/H2/))
+await test("no Account Catalog change", () => has(doc, /Account\/Catalog/))
+await test("no Production change", () => has(doc, /Production, or Legacy work/))
+await test("no Legacy change", () => has(doc, /Production, or Legacy work/))
+await test("no automation worker change", () => has(doc, /cleanup worker, cron, automation/))
+
+assert.equal(passed, 92)
+console.log(`\n${passed}/${passed} Flight Selection Durability V1 proposal tests passed`)

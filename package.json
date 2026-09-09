@@ -25,7 +25,8 @@
     "test:customer-auth": "node scripts/customer-auth-session-tests.mjs",
     "test:catalog-favorites": "node scripts/customer-public-catalog-favorites-tests.mjs",
     "test:account-favorites-enrichment": "node scripts/account-favorites-catalog-enrichment-tests.mjs",
-    "test:flight-selection-handle-v2": "node scripts/flight-selection-handle-v2-tests.mjs"
+    "test:flight-selection-handle-v2": "node scripts/flight-selection-handle-v2-tests.mjs",
+    "test:flight-selection-durability-proposal": "node scripts/flight-selection-durability-proposal-tests.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.1",
