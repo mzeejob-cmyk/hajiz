@@ -593,3 +593,7 @@ button { border: 0; cursor: pointer; }
 .public-catalog-card { padding: 1.25rem; border: 1px solid var(--border, #e3e7ed); border-radius: 1rem; background: var(--surface, #fff); }
 .public-catalog-card h2 { margin: 0 0 .75rem; }
 .public-catalog-card p { margin: 0; color: var(--text-muted, #5b6472); }
+.public-catalog-favorite { margin-top: 1rem; min-height: 2.5rem; display: flex; align-items: center; }
+.public-catalog-favorite button,.public-catalog-favorite a { width: 100%; text-align: center; }
+.public-catalog-favorite-status { color: var(--text-muted, #5b6472); font-size: .875rem; }
+.public-catalog-favorite-error { margin-top: 1rem; padding: .75rem 1rem; border-radius: .75rem; background: #fff4f2; color: #8a2f23; text-align: center; }

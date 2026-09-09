@@ -48,7 +48,7 @@ await test("Packages renders public collection", () => { assert.match(packagesCo
 await test("Offers renders public collection", () => assert.match(offersCode, /PublicCatalogCollection type="offer"/))
 await test("no synthetic fallback", () => { assert.equal(/مساحة الميزة جاهزة|بيانات اصطناعية/.test(packagesCode + offersCode), false); assert.match(packagesCode, /<FeaturePage[^>]*><PublicCatalogCollection/); assert.match(offersCode, /<FeaturePage[^>]*><PublicCatalogCollection/) })
 await test("no booking CTA", () => assert.equal(/Book now|Checkout|Payment|Reserve|Continue|احجز|الدفع|حجز الآن/.test(uiCode), false))
-await test("no favorite mutation", () => assert.equal(/favorite|مفضلة|addFavorite|removeFavorite/i.test(uiCode), false))
+await test("favorite wiring does not alter the public catalog data source", () => assert.equal(/favorite|مفضلة|accountP2/i.test(dataCode), false))
 await test("no publish or admin controls", () => { assert.equal(/publish|unpublish|admin|نشر|مسودة/i.test(componentCode), false); assert.match(packagesCode + offersCode, /data-publish-authority="false"/) })
 
 console.log(`\n${passed}/${passed} Customer Public Catalog frontend tests passed`)
