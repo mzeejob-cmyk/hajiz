@@ -7,6 +7,7 @@ import { createMockFlightSupplier } from "../src/server/suppliers/mockFlightSupp
 const tests = []
 const test = (name, fn) => tests.push({ name, fn })
 const NOW = "2026-09-15T02:00:00.000Z"
+const SEARCH_CONTEXT = Object.freeze({ tripType: "one_way", origin: "DXB", destination: "KRT", departureDate: "2026-09-15", returnDate: null, adults: 1, children: 0, infants: 0, cabinClass: "economy", customerCurrency: "AED" })
 const [baseOffer] = await createMockFlightSupplier().searchFlights({ origin: "DXB", destination: "KRT", departureDate: "2026-09-15", adults: 1 })
 let sequence = 0
 const offer = (changes = {}) => {
@@ -42,7 +43,7 @@ const ranked = (fareGroups, searchStatus = "COMPLETE") => ({
   rankingPolicyVersion: "ranking-private-v1", rankedAt: NOW,
   itineraryGroups: [{ itineraryFingerprint: "ifp_v1_customer_test", fareGroups }],
 })
-const project = (input, options = {}) => toCustomerFlightSearchV1(input, { customerCurrency: options.customerCurrency ?? "AED", now: options.now ?? NOW })
+const project = (input, options = {}) => toCustomerFlightSearchV1(input, { customerCurrency: options.customerCurrency ?? "AED", now: options.now ?? NOW, selectionContext: options.selectionContext ?? SEARCH_CONTEXT })
 
 test("A COMPLETE ranked search maps to customer-flight-search/v1", () => {
   const result = project(ranked([fareGroup([alternative(offer())])]))
@@ -128,7 +129,8 @@ test("customer IDs are opaque and contain no provider or supplier reference text
   const item = offer({ internalOfferId: "hfo_travelport_mock_tbo_duffel", providerOfferRef: "supplier-ref-travelport" })
   const result = project(ranked([fareGroup([alternative(item)])]))
   const ids = [result.groups[0].groupId, result.groups[0].alternatives[0].alternativeId]
-  assert.ok(ids.every((id) => /^hc[ag]_v1_[a-f0-9]{32}$/.test(id)))
+  assert.match(ids[0], /^hcg_v1_[a-f0-9]{32}$/)
+  assert.match(ids[1], /^hca_v2_[a-f0-9]{32}$/)
   assert.ok(ids.every((id) => !/travelport|duffel|tbo|mock|supplier/i.test(id)))
 })
 
@@ -136,8 +138,8 @@ test("B6-01 B6-02 customer IDs use canonical key ordering and domain separation"
   const left = { fare: { cabin: "Economy", baggage: "23kg" }, price: { amount: "100", currency: "AED" } }
   const right = { price: { currency: "AED", amount: "100" }, fare: { baggage: "23kg", cabin: "Economy" } }
   assert.equal(canonicalCustomerIdJsonV1(left), canonicalCustomerIdJsonV1(right))
-  assert.equal(customerOpaqueIdV1("hca_v1", left), customerOpaqueIdV1("hca_v1", right))
-  assert.notEqual(customerOpaqueIdV1("hca_v1", left).slice("hca_v1_".length), customerOpaqueIdV1("hcg_v1", left).slice("hcg_v1_".length))
+  assert.equal(customerOpaqueIdV1("hca_v2", left), customerOpaqueIdV1("hca_v2", right))
+  assert.notEqual(customerOpaqueIdV1("hca_v2", left).slice("hca_v2_".length), customerOpaqueIdV1("hcg_v1", left).slice("hcg_v1_".length))
 })
 
 test("B6-03 itinerary comes from first retained customer-visible alternative", () => {

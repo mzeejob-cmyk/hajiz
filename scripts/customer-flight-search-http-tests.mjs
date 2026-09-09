@@ -165,7 +165,7 @@ test("V-W-X stable public IDs are deterministic and domain separated through HTT
   const group = left.body.data.groups[0]
   assert.equal(group.groupId, right.body.data.groups[0].groupId)
   assert.equal(group.alternatives[0].alternativeId, right.body.data.groups[0].alternatives[0].alternativeId)
-  assert.notEqual(group.groupId.slice("hcg_v1_".length), group.alternatives[0].alternativeId.slice("hca_v1_".length))
+  assert.notEqual(group.groupId.slice("hcg_v1_".length), group.alternatives[0].alternativeId.slice("hca_v2_".length))
 })
 
 test("Y-AA adversarial full endpoint output contains no supplier economics or ranking internals", async () => {

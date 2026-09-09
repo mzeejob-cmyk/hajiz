@@ -8,7 +8,7 @@ const CURRENCIES = Object.freeze(["USD", "AED", "SDG"])
 
 export function validateCustomerFlightRepriceRequestV1(input) {
   if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).length !== 2 || !Object.hasOwn(input, "alternativeId") || !Object.hasOwn(input, "customerCurrency")) throw new TypeError("invalid reprice request")
-  if (typeof input.alternativeId !== "string" || !/^hca_v1_[A-Za-z0-9._-]+$/.test(input.alternativeId) || !CURRENCIES.includes(input.customerCurrency)) throw new TypeError("invalid reprice request")
+  if (typeof input.alternativeId !== "string" || !/^hca_v2_[a-f0-9]{32}$/.test(input.alternativeId) || !CURRENCIES.includes(input.customerCurrency)) throw new TypeError("invalid reprice request")
   return Object.freeze({ alternativeId: input.alternativeId, customerCurrency: input.customerCurrency })
 }
 const response = (status, body) => Object.freeze({ status, headers: Object.freeze({ "content-type": "application/json; charset=utf-8" }), body: Object.freeze(body) })

@@ -12,6 +12,7 @@ const ITINERARY_GROUP_FIELDS = Object.freeze(["itineraryFingerprint", "fareGroup
 const FARE_GROUP_FIELDS = Object.freeze(["fareFingerprint", "rankingStatus", "preferredInternalOfferId", "cheapestInternalOfferId", "alternatives"])
 const ALTERNATIVE_FIELDS = Object.freeze(["offer", "pricedOffer", "customerPrice", "ranking"])
 const RANKING_FIELDS = Object.freeze(["rankable", "rank", "isPreferred"])
+const SELECTION_CONTEXT_FIELDS = Object.freeze(["tripType", "origin", "destination", "departureDate", "returnDate", "adults", "children", "infants", "cabinClass", "customerCurrency"])
 
 const object = (value, field) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new TypeError(`${field} must be an object`)
@@ -37,7 +38,7 @@ const canonicalObject = (value) => {
 }
 export const canonicalCustomerIdJsonV1 = (value) => JSON.stringify(canonicalObject(value))
 export const customerOpaqueIdV1 = (domain, identity) => {
-  if (!["hcg_v1", "hca_v1"].includes(domain)) throw new TypeError("customer ID domain is invalid")
+  if (!["hcg_v1", "hca_v2"].includes(domain)) throw new TypeError("customer ID domain is invalid")
   const hash = createHash("sha256")
   hash["update"](canonicalCustomerIdJsonV1([domain, identity]))
   return `${domain}_${hash.digest("hex").slice(0, 32)}`
@@ -48,6 +49,18 @@ const deepFreeze = (value) => {
     for (const nested of Object.values(value)) deepFreeze(nested)
   }
   return value
+}
+export function createFlightSelectionContextV2(input) {
+  const value = object(input, "selection context")
+  exactKeys(value, SELECTION_CONTEXT_FIELDS, "selection context")
+  if (Object.keys(value).length !== SELECTION_CONTEXT_FIELDS.length || SELECTION_CONTEXT_FIELDS.some((field) => !Object.hasOwn(value, field))) throw new TypeError("selection context is incomplete")
+  return deepFreeze(Object.fromEntries(SELECTION_CONTEXT_FIELDS.map((field) => [field, value[field]])))
+}
+export function customerAlternativeIdV2({ groupIdentity, customerIdentity, selectionContext, representative }) {
+  const trustedRepresentative = object(representative, "selection representative")
+  exactKeys(trustedRepresentative, ["internalOfferId", "provider", "providerOfferRef"], "selection representative")
+  if (![trustedRepresentative.internalOfferId, trustedRepresentative.provider, trustedRepresentative.providerOfferRef].every((value) => typeof value === "string" && value.length > 0)) throw new TypeError("selection representative is invalid")
+  return customerOpaqueIdV1("hca_v2", { groupIdentity, customerIdentity, selectionContext: createFlightSelectionContextV2(selectionContext), representative: trustedRepresentative })
 }
 
 const customerItinerary = (offer) => ({
@@ -88,7 +101,7 @@ function assertRankedResult(input) {
   return result
 }
 
-function projectAlternative(input, expectedCurrency, projectedAt, groupIdentity) {
+function projectAlternative(input, expectedCurrency, projectedAt) {
   const alternative = object(input, "ranked alternative")
   exactKeys(alternative, ALTERNATIVE_FIELDS, "ranked alternative")
   const offer = assertFlightOfferV1(alternative.offer)
@@ -113,7 +126,6 @@ function projectAlternative(input, expectedCurrency, projectedAt, groupIdentity)
     offer,
     itinerary: customerItinerary(offer),
     customer: {
-      alternativeId: customerOpaqueIdV1("hca_v1", { groupIdentity, customerIdentity: identity }),
       fare,
       price: publicPrice,
       recommended: false,
@@ -121,10 +133,13 @@ function projectAlternative(input, expectedCurrency, projectedAt, groupIdentity)
   }
 }
 
-export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now, collectResolutionEntry }) {
+export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now, selectionContext, collectResolutionEntry }) {
   if (collectResolutionEntry !== undefined && typeof collectResolutionEntry !== "function") throw new TypeError("resolution collector must be a function")
   const ranked = assertRankedResult(rankedInput)
   const expectedCurrency = currency(customerCurrency)
+  const trustedSelectionContext = createFlightSelectionContextV2(selectionContext)
+  if (trustedSelectionContext.customerCurrency !== expectedCurrency) throw new TypeError("selection context currency is inconsistent")
+  const passengerComposition = deepFreeze({ ADT: trustedSelectionContext.adults, CHD: trustedSelectionContext.children, INF: trustedSelectionContext.infants })
   const projectedAt = iso(now, "projection time")
   const groups = []
 
@@ -142,25 +157,35 @@ export function toCustomerFlightSearchV1(rankedInput, { customerCurrency, now, c
       const groupIdentity = [itineraryGroup.itineraryFingerprint, fareGroup.fareFingerprint]
       const unique = new Map()
       for (const input of fareGroup.alternatives) {
-        const projected = ranked.searchStatus === "UNAVAILABLE" ? null : projectAlternative(input, expectedCurrency, projectedAt, groupIdentity)
+        const projected = ranked.searchStatus === "UNAVAILABLE" ? null : projectAlternative(input, expectedCurrency, projectedAt)
         if (!projected) continue
         const existing = unique.get(projected.identity)
         if (existing) { existing.internalOfferIds.push(projected.internalOfferId); existing.offers.push(projected.offer) }
-        else unique.set(projected.identity, { customer: projected.customer, itinerary: projected.itinerary, internalOfferIds: [projected.internalOfferId], offers: [projected.offer] })
+        else unique.set(projected.identity, { identity: projected.identity, customer: projected.customer, itinerary: projected.itinerary, internalOfferIds: [projected.internalOfferId], offers: [projected.offer] })
       }
 
       const retained = [...unique.values()]
       const preferred = fareGroup.rankingStatus === "RANKED"
         ? retained.find(({ internalOfferIds }) => internalOfferIds.includes(fareGroup.preferredInternalOfferId))
         : null
-      const alternatives = retained.map(({ customer }) => ({ ...customer, recommended: customer.alternativeId === preferred?.customer.alternativeId }))
-      retained.forEach((entry, index) => collectResolutionEntry?.(Object.freeze({ alternativeId: alternatives[index].alternativeId, offer: entry.offers[0], previousCustomerPrice: entry.customer.price, itinerary: entry.itinerary, fare: entry.customer.fare })))
+      const alternatives = retained.map((entry) => {
+        const representative = entry.offers[0]
+        const alternativeId = customerAlternativeIdV2({
+          groupIdentity,
+          customerIdentity: JSON.parse(entry.identity),
+          selectionContext: trustedSelectionContext,
+          representative: { internalOfferId: representative.internalOfferId, provider: representative.provider, providerOfferRef: representative.providerOfferRef },
+        })
+        collectResolutionEntry?.(Object.freeze({ alternativeId, offer: representative, previousCustomerPrice: entry.customer.price, itinerary: entry.itinerary, fare: entry.customer.fare, passengerComposition }))
+        return { ...entry.customer, alternativeId, recommended: entry === preferred }
+      })
       const groupStatus = alternatives.length === 0 ? "UNAVAILABLE" : preferred ? "RANKED" : "UNRANKED"
+      const preferredIndex = preferred ? retained.indexOf(preferred) : -1
       groups.push({
         groupId: customerOpaqueIdV1("hcg_v1", groupIdentity),
         status: groupStatus,
         recommendationAvailable: groupStatus === "RANKED",
-        preferredAlternativeId: preferred?.customer.alternativeId ?? null,
+        preferredAlternativeId: preferredIndex >= 0 ? alternatives[preferredIndex].alternativeId : null,
         itinerary: retained[0]?.itinerary ?? (firstOffer && alternatives.length ? customerItinerary(firstOffer) : null),
         alternatives,
       })

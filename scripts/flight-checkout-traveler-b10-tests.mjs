@@ -17,7 +17,7 @@ import { createFlightCheckoutCoordinatorV1 } from "../src/features/flights/data/
 const vite = await createServer({ server: { middlewareMode: true }, appType: "custom", logLevel: "silent" })
 const { TravelerCheckoutPanel, RepricePanel } = await vite.ssrLoadModule("/src/features/flights/FlightsPage.jsx")
 let passed = 0; const test = async (name, fn) => { await fn(); passed += 1; process.stdout.write(`✓ ${name}\n`) }
-const NOW = "2026-09-15T02:00:00.000Z"; const NOW_MS = Date.parse(NOW); const ALT = "hca_v1_checkout_selection"
+const NOW = "2026-09-15T02:00:00.000Z"; const NOW_MS = Date.parse(NOW); const ALT = "hca_v2_checkout_selection"
 const mock = createMockFlightSupplier(); const searchRequest = { tripType: "one_way", origin: "DXB", destination: "KRT", departureDate: "2026-09-15", returnDate: null, adults: 2, children: 1, infants: 0, cabinClass: "economy", customerCurrency: "AED" }; const offer = (await mock.searchFlights(searchRequest))[0]
 const itinerary = Object.freeze({ marketingCarrierName: offer.itinerary.marketingCarrierName, origin: offer.itinerary.origin, destination: offer.itinerary.destination, departureAt: offer.itinerary.departureAt, arrivalAt: offer.itinerary.arrivalAt, durationMinutes: offer.itinerary.durationMinutes, stops: offer.itinerary.stops, segments: Object.freeze(offer.itinerary.segments.map(({ marketingCarrier, flightNumber, origin, destination, departureAt, arrivalAt, cabin }) => Object.freeze({ marketingCarrier, flightNumber, origin, destination, departureAt, arrivalAt, cabin }))) })
 const fare = Object.freeze({ fareBrand: null, cabin: offer.fare.cabin, baggage: offer.fare.baggage, changeability: offer.fare.changeability, refundability: offer.fare.refundability })
