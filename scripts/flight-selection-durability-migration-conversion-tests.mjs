@@ -106,12 +106,54 @@ await test("postflight validates exact volatility", () => has(rpcPostflight, /ac
 await test("postflight validates exact return", () => has(rpcPostflight, /actual_return is distinct from item\.result_contract/))
 await test("generic TABLE shape acceptance removed", () => lacks(sql, /actual_return\s+not\s+like\s+'TABLE\(%'/i))
 
+// Exact constraint and index catalog guards.
+const constraintPreflight = sql.match(/do \$exact_constraints_preflight\$[\s\S]*?\$exact_constraints_preflight\$;/)?.[0] ?? ""
+const constraintRows = [...constraintPreflight.matchAll(/\('app_private\.(flight_(?:search|priced)_selections)','(flight_[^']+)','([cp])','([0-9a-f]{64})'\)/g)]
+const postflightConstraintRows = [...rpcPostflight.matchAll(/\('app_private\.(flight_(?:search|priced)_selections)','(flight_[^']+)','([cp])','([0-9a-f]{64})'\)/g)]
+await test("all 23 constraints have exact fingerprints", () => { assert.equal(constraintRows.length, 23); assert.equal(postflightConstraintRows.length, 23) })
+await test("Search exact constraint count is 11", () => assert.equal(constraintRows.filter((m) => m[2].includes("_search_")).length, 11))
+await test("Priced exact constraint count is 12", () => assert.equal(constraintRows.filter((m) => m[2].includes("_priced_")).length, 12))
+await test("preflight compares exact SHA-256 definition", () => { has(constraintPreflight, /pg_get_constraintdef\(c\.oid,false\)/); has(constraintPreflight, /actual_hash is distinct from item\.definition_hash/) })
+await test("postflight compares exact SHA-256 definition", () => { has(rpcPostflight, /pg_get_constraintdef\(c\.oid,false\)/); has(rpcPostflight, /actual_hash is distinct from item\.definition_hash/) })
+for (const [label, fragment] of [
+  ["internalOfferId", "internal_offer_id_check"], ["provider", "provider_check"],
+  ["providerOfferRef", "provider_offer_ref_check"], ["itinerary", "itinerary_snapshot_check"],
+  ["fare", "fare_snapshot_check"], ["Customer Price", "customer_price_snapshot_check"],
+  ["passenger", "passenger_composition_check"], ["validity", "validity_check"],
+  ["hca", "alternative_id_check"], ["hpr", "priced_id_check"],
+  ["digest", "payload_digest_check"], ["primary key", "_pkey"],
+]) await test(`${label} constraint covered by exact fingerprint`, () => {
+  assert.ok(constraintRows.some((m) => m[2].includes(fragment)))
+  assert.ok(postflightConstraintRows.some((m) => m[2].includes(fragment)))
+})
+await test("loose NOT LIKE constraint proof removed", () => lacks(sql, /pg_get_constraintdef\([^\n]+\)\s+not\s+like/i))
+
+const indexPreflight = rpcPreflight.match(/for item in select \* from \(values[\s\S]*?expiry index % has non-canonical structure[\s\S]*?end loop;/)?.[0] ?? ""
+const indexPostflight = rpcPostflight.match(/for item in select \* from \(values[\s\S]*?expiry index % drift[\s\S]*?end loop;/)?.[0] ?? ""
+await test("index target table exact", () => { has(indexPreflight,/i\.indrelid=item\.table_name::pg_catalog\.regclass/); has(indexPostflight,/i\.indrelid=item\.table_name::pg_catalog\.regclass/) })
+await test("index access method btree exact", () => { has(indexPreflight,/am\.amname='btree'/); has(indexPostflight,/am\.amname='btree'/) })
+await test("index non-unique exact", () => { has(indexPreflight,/not i\.indisunique/); has(indexPostflight,/not i\.indisunique/) })
+await test("index non-primary exact", () => { has(indexPreflight,/not i\.indisprimary/); has(indexPostflight,/not i\.indisprimary/) })
+await test("index validity exact", () => { has(indexPreflight,/i\.indisvalid/); has(indexPostflight,/i\.indisvalid/) })
+await test("index readiness exact", () => { has(indexPreflight,/i\.indisready/); has(indexPostflight,/i\.indisready/) })
+await test("index key count exact", () => { has(indexPreflight,/i\.indnkeyatts=1/); has(indexPostflight,/i\.indnkeyatts=1/) })
+await test("index total attribute count exact", () => { has(indexPreflight,/i\.indnatts=1/); has(indexPostflight,/i\.indnatts=1/) })
+await test("index predicate absent", () => { has(indexPreflight,/i\.indpred is null/); has(indexPostflight,/i\.indpred is null/) })
+await test("index expression absent", () => { has(indexPreflight,/i\.indexprs is null/); has(indexPostflight,/i\.indexprs is null/) })
+await test("index INCLUDE absent", () => { has(indexPreflight,/i\.indnkeyatts=1 and i\.indnatts=1/); has(indexPostflight,/i\.indnkeyatts=1 and i\.indnatts=1/) })
+await test("index expires_at key exact", () => { has(indexPreflight,/a\.attname='expires_at' and i\.indkey\[0\]=a\.attnum/); has(indexPostflight,/a\.attname='expires_at' and i\.indkey\[0\]=a\.attnum/) })
+await test("index ordering and null options canonical", () => { has(indexPreflight,/i\.indoption\[0\]=0/); has(indexPostflight,/i\.indoption\[0\]=0/) })
+await test("index owner matches table", () => { has(indexPreflight,/ic\.relowner=tc\.relowner/); has(indexPostflight,/ic\.relowner=tc\.relowner/) })
+await test("exact index guard present in preflight", () => has(indexPreflight,/index_exact is distinct from true/))
+await test("exact index guard present in postflight", () => has(indexPostflight,/index_exact is distinct from true/))
+await test("loose expires_at definition proof removed", () => lacks(sql, /actual_def(?:inition)?\s+not\s+like\s+'%\(expires_at\)%'/i))
+
 // Catalog drift validation.
 for (const [name, pattern] of [
   ["table canonical validation",/canonical catalog structure/], ["relkind validation",/relation_kind<>'r'/],
   ["owner validation",/relation_owner is distinct from current_owner/], ["column count and definitions",/actual_columns is distinct from item\.columns/],
   ["constraint set validation",/actual_constraints is distinct from/], ["constraint signatures",/constraint signature/],
-  ["important constraint definitions",/important constraint definition/], ["index validation",/expiry index .*non-canonical structure/],
+  ["important constraint definitions",/actual_hash is distinct from item\.definition_hash/], ["index validation",/expiry index .*non-canonical structure/],
   ["index signatures",/canonical_signature.*search-expiry-index/s], ["RLS enabled validation",/not rls_enabled/],
   ["FORCE RLS validation",/force_rls/], ["policy validation",/deny policy .*non-canonical structure/],
   ["policy signatures",/canonical_signature.*deny-policy/s], ["RPC identity validation",/to_regprocedure\(item\.name\)/],
@@ -122,7 +164,10 @@ for (const [name, pattern] of [
 
 // Indexes, policies and privileges.
 await test("two expiry indexes", () => { has(sql,/flight_search_selections_expires_idx/); has(sql,/flight_priced_selections_expires_idx/) })
-await test("indexes non-unique one-key", () => has(sql, /not i\.indisunique and i\.indnkeyatts=1/))
+await test("indexes non-unique one-key", () => {
+  has(sql, /not i\.indisunique/)
+  has(sql, /i\.indnkeyatts=1/)
+})
 await test("RLS enabled twice", () => count(sql, /alter table app_private\.flight_(?:search|priced)_selections enable row level security/g, 2))
 await test("NO FORCE RLS twice", () => count(sql, /alter table app_private\.flight_(?:search|priced)_selections no force row level security/g, 2))
 await test("two deny policies", () => count(sql, /create policy flight_(?:search|priced)_selections_direct_access_denied/g, 2))

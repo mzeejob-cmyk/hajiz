@@ -40,21 +40,57 @@ begin
         and pg_catalog.obj_description(c.oid,'pg_constraint') is distinct from
           'hajiz:flight-selection-durability:constraint:'||c.conname||':v1'
       ) then raise exception 'table % has a missing or drifted constraint signature',item.name; end if;
-      if exists (
-        select 1 from pg_catalog.pg_constraint c where c.conrelid=relation and (
-          (c.conname like '%pkey' and pg_catalog.pg_get_constraintdef(c.oid,false) not like 'PRIMARY KEY (%)') or
-          (c.conname like '%alternative_id_check' and pg_catalog.pg_get_constraintdef(c.oid,false) not like '%hca_v2_%') or
-          (c.conname like '%priced_id_check' and pg_catalog.pg_get_constraintdef(c.oid,false) not like '%hpr_v1_%') or
-          (c.conname like '%payload_digest_check' and pg_catalog.pg_get_constraintdef(c.oid,false) not like '%[0-9a-f]{64}%') or
-          (c.conname like '%customer_price_snapshot_check' and pg_catalog.pg_get_constraintdef(c.oid,false) not like '%validUntil%') or
-          (c.conname like '%passenger_composition_check' and pg_catalog.pg_get_constraintdef(c.oid,false) not like '%ADT%CHD%INF%') or
-          (c.conname like '%validity_check' and pg_catalog.pg_get_constraintdef(c.oid,false) not like '%expires_at%created_at%')
-        )
-      ) then raise exception 'table % has a drifted important constraint definition',item.name; end if;
     end if;
   end loop;
 end
 $preflight$;
+
+-- PostgreSQL 17.6 canonical pg_get_constraintdef fingerprints. These values
+-- were derived from isolated scratch tables created from the canonical DDL.
+do $exact_constraints_preflight$
+declare item record; constraint_oid oid; actual_kind "char"; actual_hash text; signature text;
+begin
+  for item in select * from (values
+    ('app_private.flight_search_selections','flight_search_selections_pkey','p','e061295e5a2aca140e0283a20495f6b39bc06ebcdb714ed50d4b265b84a2562b'),
+    ('app_private.flight_search_selections','flight_search_selections_alternative_id_check','c','920bddaf8364a890546376e361c46b99e1de3481f16504d052ea1e5d3bae165d'),
+    ('app_private.flight_search_selections','flight_search_selections_payload_digest_check','c','f52978615287b1c0249b5cb2c5251a5defbd0890d696c1074c1d5fd29275bfd0'),
+    ('app_private.flight_search_selections','flight_search_selections_internal_offer_id_check','c','2bf7488ac04df5ddc2f8cd82cd516db00efdcada002d85416a257e948dfc7c29'),
+    ('app_private.flight_search_selections','flight_search_selections_provider_check','c','109a679658abc2b55c6489def778ae27f74a8c766f3daec68959b145b73e35f3'),
+    ('app_private.flight_search_selections','flight_search_selections_provider_offer_ref_check','c','6c120b4f1b9141b3aae432424166b7340f62a3d27a6a9d76955c8fd3cd8e2da1'),
+    ('app_private.flight_search_selections','flight_search_selections_itinerary_snapshot_check','c','1b6aa85d541e52860c47c3b0ddf72ff21c1cd3a7de5a0ab5efd227be9c346661'),
+    ('app_private.flight_search_selections','flight_search_selections_fare_snapshot_check','c','572896018bbbb5211f194e367140664c6f76e86f053d787c949925619a00aea2'),
+    ('app_private.flight_search_selections','flight_search_selections_customer_price_snapshot_check','c','a52af7ab318d669b12ed7887d8d43bc5ff45e98dca4ddd31e413217e85c227f7'),
+    ('app_private.flight_search_selections','flight_search_selections_passenger_composition_check','c','f105ad85612be3e29b0190bccf4aae7d377da156702475372d8bb1cbd4576dc2'),
+    ('app_private.flight_search_selections','flight_search_selections_validity_check','c','ca080a4fca12635bde3cf110b81f65e8689ef1563489ae7287e329d391af6ad7'),
+    ('app_private.flight_priced_selections','flight_priced_selections_pkey','p','496dadeae65bc48c8a7827a89585466144a9f8bf0408e9b61a0aa34c11ada282'),
+    ('app_private.flight_priced_selections','flight_priced_selections_priced_id_check','c','1c02fd5b5f14d6c473d33650b4c24a5e8ebdf7ac87d03a54aa82da1eead08906'),
+    ('app_private.flight_priced_selections','flight_priced_selections_payload_digest_check','c','f52978615287b1c0249b5cb2c5251a5defbd0890d696c1074c1d5fd29275bfd0'),
+    ('app_private.flight_priced_selections','flight_priced_selections_alternative_id_check','c','920bddaf8364a890546376e361c46b99e1de3481f16504d052ea1e5d3bae165d'),
+    ('app_private.flight_priced_selections','flight_priced_selections_internal_offer_id_check','c','2bf7488ac04df5ddc2f8cd82cd516db00efdcada002d85416a257e948dfc7c29'),
+    ('app_private.flight_priced_selections','flight_priced_selections_provider_check','c','109a679658abc2b55c6489def778ae27f74a8c766f3daec68959b145b73e35f3'),
+    ('app_private.flight_priced_selections','flight_priced_selections_provider_offer_ref_check','c','6c120b4f1b9141b3aae432424166b7340f62a3d27a6a9d76955c8fd3cd8e2da1'),
+    ('app_private.flight_priced_selections','flight_priced_selections_customer_price_snapshot_check','c','e60e6a054d55e6e36beb0da8ec2ae48a50c1e6780084e5aae1d8397c98383aa2'),
+    ('app_private.flight_priced_selections','flight_priced_selections_itinerary_snapshot_check','c','1b6aa85d541e52860c47c3b0ddf72ff21c1cd3a7de5a0ab5efd227be9c346661'),
+    ('app_private.flight_priced_selections','flight_priced_selections_fare_snapshot_check','c','572896018bbbb5211f194e367140664c6f76e86f053d787c949925619a00aea2'),
+    ('app_private.flight_priced_selections','flight_priced_selections_passenger_composition_check','c','f105ad85612be3e29b0190bccf4aae7d377da156702475372d8bb1cbd4576dc2'),
+    ('app_private.flight_priced_selections','flight_priced_selections_validity_check','c','ca080a4fca12635bde3cf110b81f65e8689ef1563489ae7287e329d391af6ad7')
+  ) as expected(table_name,name,kind,definition_hash) loop
+    if pg_catalog.to_regclass(item.table_name) is not null then
+      select c.oid,c.contype,
+        pg_catalog.encode(extensions.digest(pg_catalog.convert_to(pg_catalog.pg_get_constraintdef(c.oid,false),'UTF8'),'sha256'),'hex'),
+        pg_catalog.obj_description(c.oid,'pg_constraint')
+        into constraint_oid,actual_kind,actual_hash,signature
+        from pg_catalog.pg_constraint c
+        where c.conrelid=item.table_name::pg_catalog.regclass and c.conname=item.name;
+      if constraint_oid is null or actual_kind::text is distinct from item.kind
+         or actual_hash is distinct from item.definition_hash
+         or signature is distinct from 'hajiz:flight-selection-durability:constraint:'||item.name||':v1' then
+        raise exception 'constraint % on % has non-canonical type, definition, or signature',item.name,item.table_name;
+      end if;
+    end if;
+  end loop;
+end
+$exact_constraints_preflight$;
 
 -- Validate every existing subordinate object before any mutation. Matching
 -- signatures are required, and catalog/body structure is checked separately.
@@ -70,6 +106,7 @@ declare
   actual_volatility "char";
   actual_return text;
   actual_retset boolean;
+  index_exact boolean;
   current_owner oid := (select oid from pg_catalog.pg_roles where rolname=current_user);
 begin
   for item in select * from (values
@@ -78,11 +115,26 @@ begin
   ) as expected(name,table_name,canonical_signature) loop
     obj:=pg_catalog.to_regclass(item.name);
     if obj is not null then
-      select pg_catalog.obj_description(i.indexrelid,'pg_class'),pg_catalog.pg_get_indexdef(i.indexrelid)
-        into signature,actual_definition from pg_catalog.pg_index i
-        where i.indexrelid=obj and i.indrelid=item.table_name::pg_catalog.regclass
-          and i.indisvalid and not i.indisunique and i.indnkeyatts=1;
-      if signature is distinct from item.canonical_signature or actual_definition not like '%(expires_at)' then
+      select pg_catalog.obj_description(i.indexrelid,'pg_class'),
+        i.indrelid=item.table_name::pg_catalog.regclass
+        and i.indisvalid and i.indisready and i.indislive
+        and not i.indisunique and not i.indisprimary and not i.indisreplident
+        and not i.indnullsnotdistinct
+        and i.indnkeyatts=1 and i.indnatts=1
+        and i.indpred is null and i.indexprs is null
+        and am.amname='btree' and a.attname='expires_at' and i.indkey[0]=a.attnum
+        and i.indoption[0]=0 and i.indcollation[0]=0
+        and opc.opcmethod=ic.relam and opc.opcdefault and opc.opcintype=a.atttypid
+        and ic.relowner=tc.relowner
+        into signature,index_exact
+        from pg_catalog.pg_index i
+        join pg_catalog.pg_class ic on ic.oid=i.indexrelid
+        join pg_catalog.pg_class tc on tc.oid=i.indrelid
+        join pg_catalog.pg_am am on am.oid=ic.relam
+        join pg_catalog.pg_attribute a on a.attrelid=i.indrelid and a.attnum=i.indkey[0]
+        join pg_catalog.pg_opclass opc on opc.oid=i.indclass[0]
+        where i.indexrelid=obj;
+      if signature is distinct from item.canonical_signature or index_exact is distinct from true then
         raise exception 'expiry index % has non-canonical structure',item.name;
       end if;
     end if;
@@ -734,17 +786,73 @@ $owner_guard$;
 do $postflight$
 declare
   item record; obj oid; signature text; owner_oid oid; common_owner oid; actual_body_hash text; actual_roles text[]; actual_def text;
-  actual_volatility "char"; actual_return text; actual_retset boolean;
+  constraint_oid oid; actual_kind "char"; actual_hash text;
+  actual_volatility "char"; actual_return text; actual_retset boolean; index_exact boolean;
 begin
   select relowner into common_owner from pg_catalog.pg_class where oid='app_private.flight_search_selections'::pg_catalog.regclass;
   if common_owner is distinct from (select relowner from pg_catalog.pg_class where oid='app_private.flight_priced_selections'::pg_catalog.regclass) then raise exception 'table owner drift'; end if;
+  for item in select * from (values
+    ('app_private.flight_search_selections','flight_search_selections_pkey','p','e061295e5a2aca140e0283a20495f6b39bc06ebcdb714ed50d4b265b84a2562b'),
+    ('app_private.flight_search_selections','flight_search_selections_alternative_id_check','c','920bddaf8364a890546376e361c46b99e1de3481f16504d052ea1e5d3bae165d'),
+    ('app_private.flight_search_selections','flight_search_selections_payload_digest_check','c','f52978615287b1c0249b5cb2c5251a5defbd0890d696c1074c1d5fd29275bfd0'),
+    ('app_private.flight_search_selections','flight_search_selections_internal_offer_id_check','c','2bf7488ac04df5ddc2f8cd82cd516db00efdcada002d85416a257e948dfc7c29'),
+    ('app_private.flight_search_selections','flight_search_selections_provider_check','c','109a679658abc2b55c6489def778ae27f74a8c766f3daec68959b145b73e35f3'),
+    ('app_private.flight_search_selections','flight_search_selections_provider_offer_ref_check','c','6c120b4f1b9141b3aae432424166b7340f62a3d27a6a9d76955c8fd3cd8e2da1'),
+    ('app_private.flight_search_selections','flight_search_selections_itinerary_snapshot_check','c','1b6aa85d541e52860c47c3b0ddf72ff21c1cd3a7de5a0ab5efd227be9c346661'),
+    ('app_private.flight_search_selections','flight_search_selections_fare_snapshot_check','c','572896018bbbb5211f194e367140664c6f76e86f053d787c949925619a00aea2'),
+    ('app_private.flight_search_selections','flight_search_selections_customer_price_snapshot_check','c','a52af7ab318d669b12ed7887d8d43bc5ff45e98dca4ddd31e413217e85c227f7'),
+    ('app_private.flight_search_selections','flight_search_selections_passenger_composition_check','c','f105ad85612be3e29b0190bccf4aae7d377da156702475372d8bb1cbd4576dc2'),
+    ('app_private.flight_search_selections','flight_search_selections_validity_check','c','ca080a4fca12635bde3cf110b81f65e8689ef1563489ae7287e329d391af6ad7'),
+    ('app_private.flight_priced_selections','flight_priced_selections_pkey','p','496dadeae65bc48c8a7827a89585466144a9f8bf0408e9b61a0aa34c11ada282'),
+    ('app_private.flight_priced_selections','flight_priced_selections_priced_id_check','c','1c02fd5b5f14d6c473d33650b4c24a5e8ebdf7ac87d03a54aa82da1eead08906'),
+    ('app_private.flight_priced_selections','flight_priced_selections_payload_digest_check','c','f52978615287b1c0249b5cb2c5251a5defbd0890d696c1074c1d5fd29275bfd0'),
+    ('app_private.flight_priced_selections','flight_priced_selections_alternative_id_check','c','920bddaf8364a890546376e361c46b99e1de3481f16504d052ea1e5d3bae165d'),
+    ('app_private.flight_priced_selections','flight_priced_selections_internal_offer_id_check','c','2bf7488ac04df5ddc2f8cd82cd516db00efdcada002d85416a257e948dfc7c29'),
+    ('app_private.flight_priced_selections','flight_priced_selections_provider_check','c','109a679658abc2b55c6489def778ae27f74a8c766f3daec68959b145b73e35f3'),
+    ('app_private.flight_priced_selections','flight_priced_selections_provider_offer_ref_check','c','6c120b4f1b9141b3aae432424166b7340f62a3d27a6a9d76955c8fd3cd8e2da1'),
+    ('app_private.flight_priced_selections','flight_priced_selections_customer_price_snapshot_check','c','e60e6a054d55e6e36beb0da8ec2ae48a50c1e6780084e5aae1d8397c98383aa2'),
+    ('app_private.flight_priced_selections','flight_priced_selections_itinerary_snapshot_check','c','1b6aa85d541e52860c47c3b0ddf72ff21c1cd3a7de5a0ab5efd227be9c346661'),
+    ('app_private.flight_priced_selections','flight_priced_selections_fare_snapshot_check','c','572896018bbbb5211f194e367140664c6f76e86f053d787c949925619a00aea2'),
+    ('app_private.flight_priced_selections','flight_priced_selections_passenger_composition_check','c','f105ad85612be3e29b0190bccf4aae7d377da156702475372d8bb1cbd4576dc2'),
+    ('app_private.flight_priced_selections','flight_priced_selections_validity_check','c','ca080a4fca12635bde3cf110b81f65e8689ef1563489ae7287e329d391af6ad7')
+  ) as expected(table_name,name,kind,definition_hash) loop
+    select c.oid,c.contype,
+      pg_catalog.encode(extensions.digest(pg_catalog.convert_to(pg_catalog.pg_get_constraintdef(c.oid,false),'UTF8'),'sha256'),'hex'),
+      pg_catalog.obj_description(c.oid,'pg_constraint')
+      into constraint_oid,actual_kind,actual_hash,signature
+      from pg_catalog.pg_constraint c
+      where c.conrelid=item.table_name::pg_catalog.regclass and c.conname=item.name;
+    if constraint_oid is null or actual_kind::text is distinct from item.kind
+       or actual_hash is distinct from item.definition_hash
+       or signature is distinct from 'hajiz:flight-selection-durability:constraint:'||item.name||':v1' then
+      raise exception 'constraint % on % has non-canonical type, definition, or signature',item.name,item.table_name;
+    end if;
+  end loop;
   for item in select * from (values
     ('app_private.flight_search_selections_expires_idx','app_private.flight_search_selections','hajiz:flight-selection-durability:search-expiry-index:v1'),
     ('app_private.flight_priced_selections_expires_idx','app_private.flight_priced_selections','hajiz:flight-selection-durability:priced-expiry-index:v1')
   ) as expected(name,table_name,canonical_signature) loop
     obj:=pg_catalog.to_regclass(item.name);
-    select pg_catalog.obj_description(i.indexrelid,'pg_class'),pg_catalog.pg_get_indexdef(i.indexrelid) into signature,actual_def from pg_catalog.pg_index i where i.indexrelid=obj and i.indrelid=item.table_name::pg_catalog.regclass and i.indisvalid and not i.indisunique and i.indnkeyatts=1;
-    if signature is distinct from item.canonical_signature or actual_def not like '%(expires_at)' then raise exception 'expiry index % drift',item.name; end if;
+    select pg_catalog.obj_description(i.indexrelid,'pg_class'),
+      i.indrelid=item.table_name::pg_catalog.regclass
+      and i.indisvalid and i.indisready and i.indislive
+      and not i.indisunique and not i.indisprimary and not i.indisreplident
+      and not i.indnullsnotdistinct
+      and i.indnkeyatts=1 and i.indnatts=1
+      and i.indpred is null and i.indexprs is null
+      and am.amname='btree' and a.attname='expires_at' and i.indkey[0]=a.attnum
+      and i.indoption[0]=0 and i.indcollation[0]=0
+      and opc.opcmethod=ic.relam and opc.opcdefault and opc.opcintype=a.atttypid
+      and ic.relowner=tc.relowner
+      into signature,index_exact
+      from pg_catalog.pg_index i
+      join pg_catalog.pg_class ic on ic.oid=i.indexrelid
+      join pg_catalog.pg_class tc on tc.oid=i.indrelid
+      join pg_catalog.pg_am am on am.oid=ic.relam
+      join pg_catalog.pg_attribute a on a.attrelid=i.indrelid and a.attnum=i.indkey[0]
+      join pg_catalog.pg_opclass opc on opc.oid=i.indclass[0]
+      where i.indexrelid=obj;
+    if signature is distinct from item.canonical_signature or index_exact is distinct from true then raise exception 'expiry index % drift',item.name; end if;
   end loop;
   for item in select * from (values
     ('app_private.flight_search_selections','flight_search_selections_direct_access_denied','hajiz:flight-selection-durability:search-deny-policy:v1'),
