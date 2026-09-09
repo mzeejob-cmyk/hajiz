@@ -260,7 +260,7 @@ begin
        or v_item->>'expiresAt' !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$' then
       raise exception 'invalid search selection expiry' using errcode = 'FSD11';
     end if;
-    if not pg_catalog.pg_input_is_valid(v_item->>'expiresAt', 'timestamptz'::pg_catalog.regtype) then
+    if not pg_catalog.pg_input_is_valid(v_item->>'expiresAt', 'timestamptz') then
       raise exception 'invalid search selection expiry' using errcode = 'FSD11';
     end if;
     v_expires_at := (v_item->>'expiresAt')::timestamptz;
@@ -278,7 +278,7 @@ begin
       raise exception 'invalid search customer price' using errcode = 'FSD11';
     end if;
     if (v_price->>'amount')::numeric <= 0
-       or not pg_catalog.pg_input_is_valid(v_price->>'validUntil', 'timestamptz'::pg_catalog.regtype) then
+       or not pg_catalog.pg_input_is_valid(v_price->>'validUntil', 'timestamptz') then
       raise exception 'invalid search customer price' using errcode = 'FSD11';
     end if;
 
@@ -401,7 +401,7 @@ begin
     raise exception 'invalid priced customer price' using errcode = 'FSD11';
   end if;
   if (p_customer_price_snapshot->>'amount')::numeric <= 0
-     or not pg_catalog.pg_input_is_valid(p_customer_price_snapshot->>'validUntil', 'timestamptz'::pg_catalog.regtype) then
+     or not pg_catalog.pg_input_is_valid(p_customer_price_snapshot->>'validUntil', 'timestamptz') then
     raise exception 'invalid priced customer price' using errcode = 'FSD11';
   end if;
   if p_expires_at <= pg_catalog.transaction_timestamp()
