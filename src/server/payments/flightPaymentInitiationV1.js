@@ -121,7 +121,7 @@ const waitForPsp = (promise, { timeoutMs, signal }) => new Promise((resolve, rej
   Promise.resolve(promise).then((value) => finish(resolve, value), (error) => finish(reject, error))
 })
 
-const publicResult = (result) => {
+const publicResult = (result, receiptUploadAvailable = false) => {
   const bankak = result.paymentMethod === "bankak"
   return Object.freeze({
     contractVersion: FLIGHT_PAYMENT_INITIATION_VERSION,
@@ -142,7 +142,7 @@ const publicResult = (result) => {
       paymentReference: result.paymentReference,
       bankAccountDisplayName: result.bankAccountDisplayName,
       maskedAccountNumber: result.maskedAccountNumber,
-      receiptUploadAvailable: false,
+      receiptUploadAvailable: receiptUploadAvailable === true,
     }) : Object.freeze({
       type: "PSP_SESSION",
       sessionToken: result.providerSession,
@@ -161,6 +161,9 @@ const mapStoreError = (failure) => {
 
 export function createFlightPaymentInitiationServiceV1({ intentStore, paymentStore, commercialRevalidator, pspRegistry, pspConfig, bankakConfig, clock = Date.now }) {
   if (!intentStore?.resolveForOwner || !paymentStore?.prepare || !paymentStore?.materialize || !commercialRevalidator?.revalidate || typeof clock !== "function") throw new TypeError("trusted payment initiation dependencies are required")
+  const bankakKeys = bankakConfig && Object.keys(bankakConfig)
+  const bankakShapeValid = bankakKeys && bankakKeys.every((key) => ["bankAccountDisplayName", "maskedAccountNumber", "amountSdgResolver", "receiptUploadAvailable"].includes(key)) && ["bankAccountDisplayName", "maskedAccountNumber", "amountSdgResolver"].every((key) => bankakKeys.includes(key)) && (!bankakKeys.includes("receiptUploadAvailable") || typeof bankakConfig.receiptUploadAvailable === "boolean")
+  const receiptUploadAvailable = bankakShapeValid && bankakConfig.receiptUploadAvailable === true
   const active = new Map()
   const initiateOnce = async ({ owner, bookingIntentId, paymentMethod, idempotencyKey }, { signal } = {}) => {
     let rawIntent
@@ -173,18 +176,19 @@ export function createFlightPaymentInitiationServiceV1({ intentStore, paymentSto
     const requestDigest = digest([owner.ownerId, bookingIntentId, paymentMethod, intent.internalOfferId, intent.provider, intent.providerOfferRef, intent.customerPrice, intent.validUntil])
     let reservation
     try { reservation = await paymentStore.prepare({ ownerId: owner.ownerId, bookingIntentId, paymentMethod, idempotencyKey, requestDigest }) } catch (failure) { throw mapStoreError(failure) }
-    if (reservation.state === "MATERIALIZED") return publicResult(reservation)
+    if (reservation.state === "MATERIALIZED") return publicResult(reservation, paymentMethod === "bankak" && receiptUploadAvailable)
 
     if (paymentMethod === "bankak") {
-      if (!bankakConfig || !exact(bankakConfig, ["bankAccountDisplayName", "maskedAccountNumber", "amountSdgResolver"]) || typeof bankakConfig.amountSdgResolver !== "function") throw new FlightPaymentInitiationError("PAYMENT_CONFIGURATION_UNAVAILABLE")
+      if (!bankakShapeValid || typeof bankakConfig.amountSdgResolver !== "function") throw new FlightPaymentInitiationError("PAYMENT_CONFIGURATION_UNAVAILABLE")
       const safeBankak = Object.freeze({
         bankAccountDisplayName: requiredText(bankakConfig.bankAccountDisplayName, "Bankak display name", 120),
         maskedAccountNumber: requiredText(bankakConfig.maskedAccountNumber, "Bankak masked account", 64),
         amountSdg: positiveAmount(await bankakConfig.amountSdgResolver(intent.customerPrice), "Bankak SDG amount"),
+        receiptUploadAvailable,
       })
       const paymentExpiresAt = new Date(clock() + 24 * 60 * 60 * 1000).toISOString()
       const handoffDigest = digest(["bankak", safeBankak.bankAccountDisplayName, safeBankak.maskedAccountNumber, safeBankak.amountSdg])
-      try { return publicResult(await paymentStore.materialize({ reservation, intent, providerHandoff: null, bankakConfig: safeBankak, paymentExpiresAt, handoffDigest })) } catch (failure) { throw mapStoreError(failure) }
+      try { return publicResult(await paymentStore.materialize({ reservation, intent, providerHandoff: null, bankakConfig: safeBankak, paymentExpiresAt, handoffDigest }), receiptUploadAvailable) } catch (failure) { throw mapStoreError(failure) }
     }
 
     if (!pspRegistry || !pspConfig || !exact(pspConfig, ["pspProvider", "returnUrl", "redirectUrlHosts", "timeoutMs", "paymentExpiryMs"]) || !Array.isArray(pspConfig.redirectUrlHosts) || pspConfig.redirectUrlHosts.some((host) => typeof host !== "string" || host !== host.toLowerCase() || !/^[a-z0-9.-]+$/.test(host))) throw new FlightPaymentInitiationError("PSP_CONFIGURATION_UNAVAILABLE")

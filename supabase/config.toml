@@ -1,3 +1,6 @@
+[functions.inspect-payment-receipt]
+verify_jwt = true
+
 [functions.product-p2]
 verify_jwt = true
 
