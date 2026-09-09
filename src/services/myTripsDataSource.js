@@ -43,6 +43,11 @@ export function createMyTripsDataSource({ client } = {}) {
       if (result.error) throw new Error("MY_TRIPS_TICKET_READ_FAILED")
       return toMyTicketDetails(result.data)
     },
+    async loadBooking(reference) {
+      if (typeof reference !== "string" || !/^HJZ-[A-Z0-9-]{4,40}$/.test(reference)) throw new Error("MY_TRIPS_INVALID_BOOKING_REFERENCE")
+      const trips = await this.load()
+      return trips.find(trip => trip.reference === reference) ?? null
+    },
   })
 }
 
