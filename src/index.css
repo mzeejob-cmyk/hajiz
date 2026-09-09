@@ -581,6 +581,10 @@ button { border: 0; cursor: pointer; }
 .account-p2-list { display:grid; gap:8px; padding:0; list-style:none; }
 .account-p2-list li { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #eef0f4; }
 .account-p2-list li div { display:flex; gap:6px; }
+.account-favorites-list li>div { display:grid; gap:4px; }
+.account-favorites-list li>div p { margin:0; color:#5a6474; }
+.account-favorites-list li>div bdi { font-size:.8rem; color:#6b7280; }
+.account-catalog-enrichment-error { padding:10px 12px; border-radius:8px; background:#fff7e6; color:#7a4a00; }
 .account-p2-empty { padding:12px; border-radius:8px; background:#f7f8fa; }
 .partner-p2-list { display:grid; gap:8px; padding:0; list-style:none; }
 .partner-p2-list li { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #eef0f4; }

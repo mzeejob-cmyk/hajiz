@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react"
 import { accountDataSource } from "../../../services/accountDataSource.js"
 import { accountP2DataSource } from "../../../services/accountP2DataSource.js"
+import { publicCatalogDataSource } from "../../../services/publicCatalogDataSource.js"
 import { PROFILE_FIELDS, ACCOUNT_PRIVACY_CONTRACT } from "../data/accountPresentation.js"
+import { joinFavoriteCatalogPresentation, requiredFavoriteCatalogTypes } from "../data/favoriteCatalogPresentation.js"
 
 export function ProfileFoundation({ dataSource = accountDataSource }) {
   const [state, setState] = useState("loading")
@@ -61,15 +63,45 @@ export function TravelersFoundation({ dataSource = accountP2DataSource }) {
   </div>
 }
 
-const favoriteKinds = Object.freeze({ hotel: "فندق", package: "باقة", offer: "عرض" })
-export function FavoritesFoundation({ dataSource = accountP2DataSource }) {
-  const [state, setState] = useState("loading"), [favorites, setFavorites] = useState([]), [locale, setLocale] = useState("ar"), [revision, setRevision] = useState(0)
-  useEffect(() => { let active = true; setState("loading"); Promise.all([dataSource.listFavorites(), dataSource.loadPreference()]).then(([rows, preference]) => { if (active) { setFavorites(rows); setLocale(preference?.locale ?? "ar"); setState("ready") } }).catch(() => { if (active) setState("error") }); return () => { active = false } }, [dataSource, revision])
-  async function remove(id) { setState("saving"); try { await dataSource.deleteFavorite(id); setFavorites(rows => rows.filter(row => row.id !== id)); setState("saved") } catch { setState("error") } }
-  async function saveLocale(next) { setLocale(next); setState("saving"); try { await dataSource.savePreference(next); setState("saved") } catch { setState("error") } }
-  const busy = state === "loading" || state === "saving"
-  return <div className="foundation-grid" data-boundary="authenticated-p2-edge" data-state={state}>
-    <section className="foundation-card account-p2-card"><span>حساب موثّق</span><h1>المفضلة</h1><p aria-live="polite">{{ loading: "جارٍ تحميل المفضلة والتفضيلات", saving: "جارٍ الحفظ", saved: "تم حفظ التغيير", error: "تعذر تحميل البيانات أو حفظها. حاول مجددًا." }[state]}</p>{state === "error" && <button type="button" onClick={() => setRevision(value => value + 1)}>إعادة المحاولة</button>}{!busy && favorites.length === 0 && <p className="account-p2-empty">لا توجد عناصر مفضلة بعد.</p>}<ul className="account-p2-list">{favorites.map(row => <li key={row.id}><span>{favoriteKinds[row.kind]} · <bdi dir="ltr">{row.canonicalId}</bdi></span><button type="button" onClick={() => remove(row.id)}>حذف</button></li>)}</ul></section>
-    <section className="foundation-card account-p2-card"><h2>تفضيل اللغة</h2><p>يُحفظ الاختيار للحساب دون تغيير لغة التطبيق في هذه المرحلة.</p><fieldset disabled={busy}><legend>اللغة المفضلة</legend><label><input type="radio" name="locale" value="ar" checked={locale === "ar"} onChange={() => saveLocale("ar")} /> العربية</label><label><input type="radio" name="locale" value="en" checked={locale === "en"} onChange={() => saveLocale("en")} /> English</label></fieldset></section>
+const emptyCatalogState = () => ({ package: { status: "idle", rows: [] }, offer: { status: "idle", rows: [] } })
+export function FavoritesFoundation({ dataSource = accountP2DataSource, catalogDataSource = publicCatalogDataSource }) {
+  const [favoriteState, setFavoriteState] = useState("loading"), [favoritesKnown, setFavoritesKnown] = useState(false), [favorites, setFavorites] = useState([])
+  const [preferenceState, setPreferenceState] = useState("loading"), [locale, setLocale] = useState("ar"), [revision, setRevision] = useState(0)
+  const [catalogState, setCatalogState] = useState(emptyCatalogState), catalogGeneration = useRef(0)
+  useEffect(() => {
+    let active = true
+    setFavoriteState("loading"); setFavoritesKnown(false); setFavorites([])
+    setPreferenceState("loading")
+    dataSource.listFavorites().then(rows => { if (active) { setFavorites(rows); setFavoritesKnown(true); setFavoriteState("ready") } }).catch(() => { if (active) setFavoriteState("error") })
+    dataSource.loadPreference().then(preference => { if (active) { setLocale(preference?.locale ?? "ar"); setPreferenceState("ready") } }).catch(() => { if (active) setPreferenceState("error") })
+    return () => { active = false }
+  }, [dataSource, revision])
+  useEffect(() => {
+    const version = ++catalogGeneration.current
+    if (!favoritesKnown) { setCatalogState(emptyCatalogState()); return }
+    const required = requiredFavoriteCatalogTypes(favorites)
+    setCatalogState({
+      package: { status: required.package ? "loading" : "idle", rows: [] },
+      offer: { status: required.offer ? "loading" : "idle", rows: [] },
+    })
+    let active = true
+    const load = (kind, operation) => operation().then(rows => {
+      if (active && version === catalogGeneration.current) setCatalogState(current => ({ ...current, [kind]: { status: "ready", rows } }))
+    }).catch(() => {
+      if (active && version === catalogGeneration.current) setCatalogState(current => ({ ...current, [kind]: { status: "error", rows: [] } }))
+    })
+    if (required.package) load("package", catalogDataSource.loadPackages)
+    if (required.offer) load("offer", catalogDataSource.loadOffers)
+    return () => { active = false }
+  }, [favoritesKnown, favorites, catalogDataSource])
+  async function remove(favorite) { setFavoriteState("saving"); try { await dataSource.deleteFavorite(favorite.id); setFavorites(rows => rows.filter(row => row.id !== favorite.id)); setFavoriteState("saved") } catch { setFavoriteState("error") } }
+  async function saveLocale(next) { setLocale(next); setPreferenceState("saving"); try { await dataSource.savePreference(next); setPreferenceState("saved") } catch { setPreferenceState("error") } }
+  const favoriteBusy = favoriteState === "loading" || favoriteState === "saving"
+  const preferenceBusy = preferenceState === "loading" || preferenceState === "saving"
+  const catalogError = catalogState.package.status === "error" || catalogState.offer.status === "error"
+  const presentedFavorites = joinFavoriteCatalogPresentation({ favorites, packages: catalogState.package.rows, offers: catalogState.offer.rows, packageStatus: catalogState.package.status, offerStatus: catalogState.offer.status })
+  return <div className="foundation-grid" data-boundary="authenticated-p2-edge" data-state={favoriteState} data-catalog-enrichment={catalogError ? "partial" : "available"}>
+    <section className="foundation-card account-p2-card"><span>حساب موثّق</span><h1>المفضلة</h1><p aria-live="polite">{{ loading: "جارٍ تحميل المفضلة", saving: "جارٍ حفظ التغيير", saved: "تم حفظ التغيير", ready: "المفضلة جاهزة", error: "تعذر تحميل المفضلة أو تحديثها. حاول مجددًا." }[favoriteState]}</p>{favoriteState === "error" && <button type="button" onClick={() => setRevision(value => value + 1)}>إعادة المحاولة</button>}{catalogError && <p className="account-catalog-enrichment-error" role="status">تعذر تحميل تفاصيل بعض العناصر المحفوظة.</p>}{!favoriteBusy && favoritesKnown && favorites.length === 0 && <p className="account-p2-empty">لا توجد عناصر مفضلة بعد.</p>}<ul className="account-p2-list account-favorites-list">{presentedFavorites.map(({ favorite, presentation }) => <li key={favorite.id}><div><span>{presentation.label}</span><strong>{presentation.title}</strong><p>{presentation.summary}</p>{!presentation.published && <bdi dir="ltr">{favorite.canonicalId}</bdi>}</div><button type="button" disabled={favoriteBusy} onClick={() => remove(favorite)}>حذف</button></li>)}</ul></section>
+    <section className="foundation-card account-p2-card"><h2>تفضيل اللغة</h2><p>يُحفظ الاختيار للحساب دون تغيير لغة التطبيق في هذه المرحلة.</p>{preferenceState === "error" && <p role="alert">تعذر تحميل تفضيل اللغة أو حفظه.</p>}<fieldset disabled={preferenceBusy}><legend>اللغة المفضلة</legend><label><input type="radio" name="locale" value="ar" checked={locale === "ar"} onChange={() => saveLocale("ar")} /> العربية</label><label><input type="radio" name="locale" value="en" checked={locale === "en"} onChange={() => saveLocale("en")} /> English</label></fieldset></section>
   </div>
 }
