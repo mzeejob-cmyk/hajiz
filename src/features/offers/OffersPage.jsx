@@ -1,4 +1,4 @@
 import { FeaturePage } from "../../design-system/patterns/FeaturePage.jsx"
-import { toCatalogPresentation } from "../../services/contracts/catalogPresentation.js"
-const contract = toCatalogPresentation({ type: "offer", title: "فرص مختارة لرحلتك القادمة", summary: "عقد عرض CMS فقط؛ لا نشر حي ولا صلاحية تسعير من المتصفح." })
-export default function OffersPage() { return <div data-catalog-type={contract.type} data-publish-authority={contract.publishAuthority} data-dynamic-builder={contract.dynamicBuilder}><FeaturePage eyebrow="العروض" title={contract.title} description={contract.summary} /></div> }
+import { PublicCatalogCollection } from "../catalog/components/PublicCatalogCollection.jsx"
+
+export default function OffersPage() { return <div data-catalog-type="offer" data-publish-authority="false" data-dynamic-builder="false"><FeaturePage eyebrow="العروض" title="فرص مختارة لرحلتك القادمة" description="استعرض العروض المنشورة المتاحة حاليًا."><PublicCatalogCollection type="offer" /></FeaturePage></div> }

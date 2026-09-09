@@ -586,3 +586,10 @@ button { border: 0; cursor: pointer; }
 .partner-p2-list li { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #eef0f4; }
 .portal-foundation>main>header { margin-bottom:20px; } .portal-foundation>main>header h1 { margin:.25rem 0; }
 @media (max-width:900px) { .account-foundation,.portal-foundation { grid-template-columns:1fr; padding:18px; } .account-foundation>aside,.portal-foundation>aside { overflow:auto; flex-direction:row; } .account-foundation>aside strong { display:none; } .foundation-grid { grid-template-columns:1fr; } }
+
+.public-catalog-state { padding: 2rem; text-align: center; color: var(--text-muted, #5b6472); }
+.public-catalog-state button { margin-top: 1rem; }
+.public-catalog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; width: 100%; }
+.public-catalog-card { padding: 1.25rem; border: 1px solid var(--border, #e3e7ed); border-radius: 1rem; background: var(--surface, #fff); }
+.public-catalog-card h2 { margin: 0 0 .75rem; }
+.public-catalog-card p { margin: 0; color: var(--text-muted, #5b6472); }

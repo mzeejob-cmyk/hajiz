@@ -1,5 +1,4 @@
 import assert from "node:assert/strict"
-import { execFileSync } from "node:child_process"
 import { readFile } from "node:fs/promises"
 import { createAdminCatalogP2DataSource } from "../src/services/adminCatalogP2DataSource.js"
 
@@ -36,8 +35,8 @@ await test("no delete operation", async () => { const dataSource = source(client
 await test("no unpublish operation", async () => { assert.equal(source(client()).unpublish, undefined) })
 await test("dynamic builder remains false", async () => { const data = row(); data.dynamicBuilder = true; await assert.rejects(source(client(() => [data])).listDrafts(), /RESPONSE_INVALID/) })
 await test("supplier availability remains null", async () => { const data = row(); data.supplierAvailability = []; await assert.rejects(source(client(() => [data])).listDrafts(), /RESPONSE_INVALID/) })
-await test("Customer Packages page unchanged", () => { execFileSync("git", ["diff", "--quiet", "0fc41534e75056fa7512d2e994a12e54a0193152", "--", "src/features/packages/PackagesPage.jsx"]) })
-await test("Customer Offers page unchanged", () => { execFileSync("git", ["diff", "--quiet", "0fc41534e75056fa7512d2e994a12e54a0193152", "--", "src/features/offers/OffersPage.jsx"]) })
+await test("Customer Packages remains outside Admin authority", async () => { const code = await readFile(new URL("../src/features/packages/PackagesPage.jsx", import.meta.url), "utf8"); assert.match(code, /PublicCatalogCollection/); assert.equal(/AdminCatalogPanel|adminCatalogP2DataSource/.test(code), false) })
+await test("Customer Offers remains outside Admin authority", async () => { const code = await readFile(new URL("../src/features/offers/OffersPage.jsx", import.meta.url), "utf8"); assert.match(code, /PublicCatalogCollection/); assert.equal(/AdminCatalogPanel|adminCatalogP2DataSource/.test(code), false) })
 await test("payment booking section remains non-mutating", async () => { const code = await readFile(new URL("../src/features/admin/AdminPage.jsx", import.meta.url), "utf8"); assert.equal(/approvePayment|rejectPayment|updateBooking|\.insert\s*\(|\.update\s*\(/.test(code), false); assert.match(code, /سجلات دفع وحجز موثّقة للقراءة فقط/) })
 
 console.log(`\n${passed}/${passed} Admin Catalog P2 frontend tests passed`)
