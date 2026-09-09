@@ -69,7 +69,22 @@ create table app_private.flight_search_selections (
   constraint flight_search_selections_fare_snapshot_check
     check (pg_catalog.jsonb_typeof(fare_snapshot) = 'object' and pg_catalog.octet_length(fare_snapshot::text) <= 8192),
   constraint flight_search_selections_customer_price_snapshot_check
-    check (pg_catalog.jsonb_typeof(previous_customer_price_snapshot) = 'object' and pg_catalog.octet_length(previous_customer_price_snapshot::text) <= 4096),
+    check (
+      pg_catalog.jsonb_typeof(previous_customer_price_snapshot) = 'object'
+      and pg_catalog.octet_length(previous_customer_price_snapshot::text) <= 4096
+      and previous_customer_price_snapshot ?& array['amount','currency','validUntil']
+      and previous_customer_price_snapshot - array['amount','currency','validUntil'] = '{}'::jsonb
+      and pg_catalog.jsonb_typeof(previous_customer_price_snapshot->'amount') = 'string'
+      and pg_catalog.char_length(previous_customer_price_snapshot->>'amount') <= 40
+      and previous_customer_price_snapshot->>'amount' ~ '^(0|[1-9][0-9]*)(\.[0-9]{1,8})?$'
+      and (previous_customer_price_snapshot->>'amount')::numeric > 0
+      and pg_catalog.jsonb_typeof(previous_customer_price_snapshot->'currency') = 'string'
+      and previous_customer_price_snapshot->>'currency' in ('USD','AED','SDG')
+      and pg_catalog.jsonb_typeof(previous_customer_price_snapshot->'validUntil') = 'string'
+      and previous_customer_price_snapshot->>'validUntil' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$'
+      and (previous_customer_price_snapshot->>'validUntil')::timestamptz > created_at
+      and expires_at <= (previous_customer_price_snapshot->>'validUntil')::timestamptz
+    ),
   constraint flight_search_selections_passenger_composition_check
     check (
       pg_catalog.jsonb_typeof(passenger_composition) = 'object'
@@ -80,6 +95,7 @@ create table app_private.flight_search_selections (
       and pg_catalog.jsonb_typeof(passenger_composition->'CHD') = 'number'
       and pg_catalog.jsonb_typeof(passenger_composition->'INF') = 'number'
       and passenger_composition->>'ADT' ~ '^(0|[1-9][0-9]*)$'
+      and (passenger_composition->>'ADT')::numeric >= 1
       and passenger_composition->>'CHD' ~ '^(0|[1-9][0-9]*)$'
       and passenger_composition->>'INF' ~ '^(0|[1-9][0-9]*)$'
     ),
@@ -121,7 +137,22 @@ create table app_private.flight_priced_selections (
   constraint flight_priced_selections_provider_offer_ref_check
     check (pg_catalog.char_length(provider_offer_ref) between 1 and 512),
   constraint flight_priced_selections_customer_price_snapshot_check
-    check (pg_catalog.jsonb_typeof(customer_price_snapshot) = 'object' and pg_catalog.octet_length(customer_price_snapshot::text) <= 4096),
+    check (
+      pg_catalog.jsonb_typeof(customer_price_snapshot) = 'object'
+      and pg_catalog.octet_length(customer_price_snapshot::text) <= 4096
+      and customer_price_snapshot ?& array['amount','currency','validUntil']
+      and customer_price_snapshot - array['amount','currency','validUntil'] = '{}'::jsonb
+      and pg_catalog.jsonb_typeof(customer_price_snapshot->'amount') = 'string'
+      and pg_catalog.char_length(customer_price_snapshot->>'amount') <= 40
+      and customer_price_snapshot->>'amount' ~ '^(0|[1-9][0-9]*)(\.[0-9]{1,8})?$'
+      and (customer_price_snapshot->>'amount')::numeric > 0
+      and pg_catalog.jsonb_typeof(customer_price_snapshot->'currency') = 'string'
+      and customer_price_snapshot->>'currency' in ('USD','AED','SDG')
+      and pg_catalog.jsonb_typeof(customer_price_snapshot->'validUntil') = 'string'
+      and customer_price_snapshot->>'validUntil' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$'
+      and (customer_price_snapshot->>'validUntil')::timestamptz > created_at
+      and expires_at = (customer_price_snapshot->>'validUntil')::timestamptz
+    ),
   constraint flight_priced_selections_itinerary_snapshot_check
     check (pg_catalog.jsonb_typeof(itinerary_snapshot) = 'object' and pg_catalog.octet_length(itinerary_snapshot::text) <= 16384),
   constraint flight_priced_selections_fare_snapshot_check
@@ -136,6 +167,7 @@ create table app_private.flight_priced_selections (
       and pg_catalog.jsonb_typeof(passenger_composition->'CHD') = 'number'
       and pg_catalog.jsonb_typeof(passenger_composition->'INF') = 'number'
       and passenger_composition->>'ADT' ~ '^(0|[1-9][0-9]*)$'
+      and (passenger_composition->>'ADT')::numeric >= 1
       and passenger_composition->>'CHD' ~ '^(0|[1-9][0-9]*)$'
       and passenger_composition->>'INF' ~ '^(0|[1-9][0-9]*)$'
     ),
@@ -195,7 +227,8 @@ declare
   v_existing_digest text;
   v_inserted boolean;
 begin
-  if pg_catalog.jsonb_typeof(p_batch) <> 'array'
+  if p_batch is null
+     or pg_catalog.jsonb_typeof(p_batch) <> 'array'
      or pg_catalog.jsonb_array_length(p_batch) < 1
      or pg_catalog.jsonb_array_length(p_batch) > 500 then
     raise exception 'invalid search selection batch' using errcode = 'FSD10';
@@ -222,9 +255,37 @@ begin
     v_fare := v_item->'fare';
     v_price := v_item->'previousCustomerPrice';
     v_passengers := v_item->'passengerComposition';
+
+    if pg_catalog.jsonb_typeof(v_item->'expiresAt') <> 'string'
+       or v_item->>'expiresAt' !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$' then
+      raise exception 'invalid search selection expiry' using errcode = 'FSD11';
+    end if;
+    if not pg_catalog.pg_input_is_valid(v_item->>'expiresAt', 'timestamptz'::pg_catalog.regtype) then
+      raise exception 'invalid search selection expiry' using errcode = 'FSD11';
+    end if;
     v_expires_at := (v_item->>'expiresAt')::timestamptz;
 
-    if v_expires_at <= pg_catalog.transaction_timestamp() then
+    if pg_catalog.jsonb_typeof(v_price) <> 'object'
+       or not (v_price ?& array['amount','currency','validUntil'])
+       or v_price - array['amount','currency','validUntil'] <> '{}'::jsonb
+       or pg_catalog.jsonb_typeof(v_price->'amount') <> 'string'
+       or pg_catalog.char_length(v_price->>'amount') > 40
+       or v_price->>'amount' !~ '^(0|[1-9][0-9]*)(\.[0-9]{1,8})?$'
+       or pg_catalog.jsonb_typeof(v_price->'currency') <> 'string'
+       or v_price->>'currency' not in ('USD','AED','SDG')
+       or pg_catalog.jsonb_typeof(v_price->'validUntil') <> 'string'
+       or v_price->>'validUntil' !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$' then
+      raise exception 'invalid search customer price' using errcode = 'FSD11';
+    end if;
+    if (v_price->>'amount')::numeric <= 0
+       or not pg_catalog.pg_input_is_valid(v_price->>'validUntil', 'timestamptz'::pg_catalog.regtype) then
+      raise exception 'invalid search customer price' using errcode = 'FSD11';
+    end if;
+
+    if v_expires_at is null
+       or v_expires_at <= pg_catalog.transaction_timestamp()
+       or (v_price->>'validUntil')::timestamptz <= pg_catalog.transaction_timestamp()
+       or v_expires_at > (v_price->>'validUntil')::timestamptz then
       raise exception 'search selection is expired' using errcode = 'FSD02';
     end if;
 
@@ -323,8 +384,32 @@ declare
   v_existing_digest text;
   v_inserted boolean;
 begin
-  if p_expires_at <= pg_catalog.transaction_timestamp() then
+  if p_expires_at is null then
+    raise exception 'invalid priced selection expiry' using errcode = 'FSD11';
+  end if;
+  if p_customer_price_snapshot is null
+     or pg_catalog.jsonb_typeof(p_customer_price_snapshot) <> 'object'
+     or not (p_customer_price_snapshot ?& array['amount','currency','validUntil'])
+     or p_customer_price_snapshot - array['amount','currency','validUntil'] <> '{}'::jsonb
+     or pg_catalog.jsonb_typeof(p_customer_price_snapshot->'amount') <> 'string'
+     or pg_catalog.char_length(p_customer_price_snapshot->>'amount') > 40
+     or p_customer_price_snapshot->>'amount' !~ '^(0|[1-9][0-9]*)(\.[0-9]{1,8})?$'
+     or pg_catalog.jsonb_typeof(p_customer_price_snapshot->'currency') <> 'string'
+     or p_customer_price_snapshot->>'currency' not in ('USD','AED','SDG')
+     or pg_catalog.jsonb_typeof(p_customer_price_snapshot->'validUntil') <> 'string'
+     or p_customer_price_snapshot->>'validUntil' !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$' then
+    raise exception 'invalid priced customer price' using errcode = 'FSD11';
+  end if;
+  if (p_customer_price_snapshot->>'amount')::numeric <= 0
+     or not pg_catalog.pg_input_is_valid(p_customer_price_snapshot->>'validUntil', 'timestamptz'::pg_catalog.regtype) then
+    raise exception 'invalid priced customer price' using errcode = 'FSD11';
+  end if;
+  if p_expires_at <= pg_catalog.transaction_timestamp()
+     or (p_customer_price_snapshot->>'validUntil')::timestamptz <= pg_catalog.transaction_timestamp() then
     raise exception 'priced selection is expired' using errcode = 'FSD02';
+  end if;
+  if p_expires_at <> (p_customer_price_snapshot->>'validUntil')::timestamptz then
+    raise exception 'priced selection expiry mismatch' using errcode = 'FSD11';
   end if;
 
   v_digest := pg_catalog.encode(extensions.digest(pg_catalog.convert_to(

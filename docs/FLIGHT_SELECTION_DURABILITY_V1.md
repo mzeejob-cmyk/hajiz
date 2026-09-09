@@ -25,6 +25,8 @@ Primary identity is `alternative_id`, constrained to `^hca_v2_[0-9a-f]{32}$`. St
 - `passenger_composition`
 - authoritative `expires_at` and server `created_at`
 
+`previous_customer_price_snapshot` is exactly `{amount, currency, validUntil}`. No additional key is accepted. `amount` is the existing bounded positive decimal-string grammar (maximum 40 characters and eight decimal places; no exponent, NaN, sign, or zero), without a new currency precision rule. `currency` is exactly `USD`, `AED`, or `SDG`. `validUntil` is a valid ISO timestamp in the future according to database time. Search `expires_at` must be at or before that Customer Price expiry because a trusted supplier-offer expiry can be earlier.
+
 Expiry is the earliest trusted applicable expiry: supplier-offer expiry and previous Customer Price `validUntil`. The trusted server calculates it before persistence; the RPC also refuses an already-expired value against `transaction_timestamp()`. Expiry never slides and cannot be supplied by a browser.
 
 Replay policy:
@@ -47,6 +49,8 @@ Primary identity is `priced_selection_id`, constrained to `^hpr_v1_[0-9a-f]{40}$
 - `customer_price_snapshot`, `itinerary_snapshot`, `fare_snapshot`
 - `passenger_composition`
 - authoritative `expires_at` and server `created_at`
+
+`customer_price_snapshot` uses the same exact three-key public-price shape and validation. Its normalized `validUntil` instant must equal `expires_at`; a mismatch, null expiry, missing/null timestamp, unsupported currency, or malformed/non-positive amount fails as typed invalid input before persistence.
 
 Expiry is exactly the current authoritative Customer Price `validUntil`. Replay is insert / identical-digest idempotent success / different-digest fail closed. `create_or_get_flight_priced_selection_v1(...)` and `get_flight_priced_selection_v1(text)` are service-only.
 
@@ -127,6 +131,22 @@ await store.resolve(pricedSelectionId)
 
 Durability labels remain explicit: `process-local-non-production` and `supabase-private-persistence`. Persistence is extracted from the Reprice domain service and injected; it is not hidden inside the service.
 
+### Supabase adapter result verification
+
+An RPC transport success is not durable-store success by itself.
+
+For `rememberSearch(entries)`, the adapter constructs the set of expected `alternativeId` values before calling the RPC. It accepts the response only when it is a non-empty array with an exact row shape of `{alternative_id, replayed}`, every `alternative_id` is a valid expected `hca_v2`, every replay flag is boolean, every expected ID occurs exactly once, and there is no missing, unexpected, or duplicate ID. Empty or malformed output fails as `PERSISTENCE_UNAVAILABLE`. Search must not return Customer alternatives until this complete confirmation succeeds.
+
+For `createOrGet(record)`, the adapter accepts exactly one result row with exact shape `{priced_selection_id, replayed}`. The returned ID must exactly equal the requested `hpr_v1`, and `replayed` must be boolean. Missing, extra, duplicate, malformed, or mismatched output is `PERSISTENCE_UNAVAILABLE`.
+
+### Supabase adapter row validation
+
+RPC read rows are untrusted transport data until validated by the future adapter. Malformed persisted authority maps to `PERSISTENCE_UNAVAILABLE` before it can reach Reprice, Checkout, Traveler Validation, or Booking Intent.
+
+A Search row validator requires an exact `hca_v2`, bounded non-empty `internalOfferId`, canonical provider and bounded `providerOfferRef`, object itinerary and fare, exact validated `{amount,currency,validUntil}` Customer Price, exact `{ADT,CHD,INF}` non-negative integer composition with `ADT >= 1`, a valid future expiry, and `expiry <= validUntil` after timestamp normalization.
+
+A priced row validator requires an exact `hpr_v1`, source `hca_v2`, the same exact representative checks, object itinerary and fare, exact validated Customer Price, exact passenger composition with `ADT >= 1`, a future expiry, and `expiry === validUntil` after timestamp normalization. There is deliberately no maximum passenger count, `INF <= ADT`, or child-age policy in this proposal.
+
 ## Required async propagation (later implementation only)
 
 1. **Search HTTP:** await `rememberSearch(resolutionEntries)`. Any persistence failure fails Search closed. No Customer alternative may be returned before its complete reverse-map batch commits.
@@ -135,7 +155,7 @@ Durability labels remain explicit: `process-local-non-production` and `supabase-
 4. **Traveler Validation:** propagate async through the current synchronous priced-selection resolution without weakening exact ADT/CHD/INF validation.
 5. **Booking Intent:** await durable priced-selection resolution before computing `pricedSelectionDigest`, `payloadDigest`, trusted provider identity, or validating travelers. Existing Booking Intent durability and ownership remain unchanged.
 
-Internal failures are classified as `NOT_FOUND`, `EXPIRED`, `PERSISTENCE_UNAVAILABLE`, and `IDENTITY_DIGEST_CONFLICT`. Public mapping should preserve existing B9/B10/B11 semantics where possible and must never expose SQLSTATE text, database bodies, provider identity, internal IDs, or stacks. Any unavoidable public taxonomy change requires a separate review.
+Internal failures are classified as `INVALID_INPUT`, `NOT_FOUND`, `EXPIRED`, `PERSISTENCE_UNAVAILABLE`, and `IDENTITY_DIGEST_CONFLICT`. Public mapping should preserve existing B9/B10/B11 semantics where possible and must never expose SQLSTATE text, database bodies, provider identity, internal IDs, or stacks. Any unavoidable public taxonomy change requires a separate review.
 
 ## Explicit non-scope
 
