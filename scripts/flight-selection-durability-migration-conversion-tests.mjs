@@ -83,6 +83,29 @@ await test("digest conflict fail closed", () => assert.ok((sql.match(/errcode = 
 await test("search batch is atomic RPC", () => has(sql, /jsonb_array_elements\(p_batch\)/))
 await test("stable search lock order", () => has(sql, /order by item->>'alternativeId'/))
 
+// Exact RPC metadata remediation.
+const rpcPreflight = sql.match(/do \$drift_preflight\$[\s\S]*?\$drift_preflight\$;/)?.[0] ?? ""
+const rpcPostflight = sql.match(/do \$postflight\$[\s\S]*?\$postflight\$;/)?.[0] ?? ""
+const rememberResult = "TABLE(alternative_id text, replayed boolean)"
+const getSearchResult = "TABLE(alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, itinerary_snapshot jsonb, fare_snapshot jsonb, previous_customer_price_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)"
+const createPricedResult = "TABLE(priced_selection_id text, replayed boolean)"
+const getPricedResult = "TABLE(priced_selection_id text, alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, customer_price_snapshot jsonb, itinerary_snapshot jsonb, fare_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)"
+await test("remember Search exact volatility v", () => assert.equal((sql.match(/remember_flight_search_selections_v1\(jsonb\)'[^\n]*'v'/g) ?? []).length, 2))
+await test("get Search exact volatility s", () => assert.equal((sql.match(/get_flight_search_selection_v1\(text\)'[^\n]*'s'/g) ?? []).length, 2))
+await test("create Priced exact volatility v", () => assert.equal((sql.match(/create_or_get_flight_priced_selection_v1\(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz\)'[^\n]*'v'/g) ?? []).length, 2))
+await test("get Priced exact volatility s", () => assert.equal((sql.match(/get_flight_priced_selection_v1\(text\)'[^\n]*'s'/g) ?? []).length, 2))
+await test("generic volatility acceptance removed", () => lacks(sql, /actual_volatility\s+not\s+in\s*\('v','s'\)/i))
+await test("remember exact return contract", () => assert.equal(sql.split(rememberResult).length - 1, 2))
+await test("get Search exact return contract", () => assert.equal(sql.split(getSearchResult).length - 1, 2))
+await test("create Priced exact return contract", () => assert.equal(sql.split(createPricedResult).length - 1, 2))
+await test("get Priced exact return contract", () => assert.equal(sql.split(getPricedResult).length - 1, 2))
+await test("set-returning contract required", () => { assert.equal((sql.match(/p\.proretset/g) ?? []).length, 2); assert.equal((sql.match(/actual_retset is distinct from true/g) ?? []).length, 2) })
+await test("preflight validates exact volatility", () => has(rpcPreflight, /actual_volatility::text is distinct from item\.volatility/))
+await test("preflight validates exact return", () => has(rpcPreflight, /actual_return is distinct from item\.result_contract/))
+await test("postflight validates exact volatility", () => has(rpcPostflight, /actual_volatility::text is distinct from item\.volatility/))
+await test("postflight validates exact return", () => has(rpcPostflight, /actual_return is distinct from item\.result_contract/))
+await test("generic TABLE shape acceptance removed", () => lacks(sql, /actual_return\s+not\s+like\s+'TABLE\(%'/i))
+
 // Catalog drift validation.
 for (const [name, pattern] of [
   ["table canonical validation",/canonical catalog structure/], ["relkind validation",/relation_kind<>'r'/],

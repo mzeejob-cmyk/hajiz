@@ -69,6 +69,7 @@ declare
   actual_body_hash text;
   actual_volatility "char";
   actual_return text;
+  actual_retset boolean;
   current_owner oid := (select oid from pg_catalog.pg_roles where rolname=current_user);
 begin
   for item in select * from (values
@@ -107,23 +108,25 @@ begin
   end loop;
 
   for item in select * from (values
-    ('public.remember_flight_search_selections_v1(jsonb)','hajiz:flight-selection-durability:remember-search-rpc:v1','66db8708fdd0f890d085a06e405dac9cb7722647b274aef8d3703e5fd9cfb42a'),
-    ('public.get_flight_search_selection_v1(text)','hajiz:flight-selection-durability:get-search-rpc:v1','1cfb9d4fac9c497e45ebe4913dc4176cfe0514b39b5a4f0fe2f2dbdd8cf614d0'),
-    ('public.create_or_get_flight_priced_selection_v1(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz)','hajiz:flight-selection-durability:create-priced-rpc:v1','282c1249556a54a1c7fc762938e6898c6d448d124a0b485c2c29deebafe9d842'),
-    ('public.get_flight_priced_selection_v1(text)','hajiz:flight-selection-durability:get-priced-rpc:v1','1b0f98407d1975fd650a93b6f02dd7112da417b33d461eb2bd4278db99ba0c01')
-  ) as expected(name,canonical_signature,body_hash) loop
+    ('public.remember_flight_search_selections_v1(jsonb)','hajiz:flight-selection-durability:remember-search-rpc:v1','66db8708fdd0f890d085a06e405dac9cb7722647b274aef8d3703e5fd9cfb42a','v','TABLE(alternative_id text, replayed boolean)'),
+    ('public.get_flight_search_selection_v1(text)','hajiz:flight-selection-durability:get-search-rpc:v1','1cfb9d4fac9c497e45ebe4913dc4176cfe0514b39b5a4f0fe2f2dbdd8cf614d0','s','TABLE(alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, itinerary_snapshot jsonb, fare_snapshot jsonb, previous_customer_price_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)'),
+    ('public.create_or_get_flight_priced_selection_v1(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz)','hajiz:flight-selection-durability:create-priced-rpc:v1','282c1249556a54a1c7fc762938e6898c6d448d124a0b485c2c29deebafe9d842','v','TABLE(priced_selection_id text, replayed boolean)'),
+    ('public.get_flight_priced_selection_v1(text)','hajiz:flight-selection-durability:get-priced-rpc:v1','1b0f98407d1975fd650a93b6f02dd7112da417b33d461eb2bd4278db99ba0c01','s','TABLE(priced_selection_id text, alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, customer_price_snapshot jsonb, itinerary_snapshot jsonb, fare_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)')
+  ) as expected(name,canonical_signature,body_hash,volatility,result_contract) loop
     obj:=pg_catalog.to_regprocedure(item.name);
     if obj is not null then
       select p.proowner,pg_catalog.obj_description(p.oid,'pg_proc'),
         pg_catalog.encode(extensions.digest(pg_catalog.convert_to(p.prosrc,'UTF8'),'sha256'),'hex'),
-        p.provolatile,pg_catalog.pg_get_function_result(p.oid)
-        into actual_owner,signature,actual_body_hash,actual_volatility,actual_return
+        p.provolatile,pg_catalog.pg_get_function_result(p.oid),p.proretset
+        into actual_owner,signature,actual_body_hash,actual_volatility,actual_return,actual_retset
         from pg_catalog.pg_proc p join pg_catalog.pg_language l on l.oid=p.prolang
         where p.oid=obj and l.lanname='plpgsql' and p.prokind='f' and p.prosecdef
           and p.proconfig=array['search_path=']::text[];
       if actual_owner is distinct from current_owner or signature is distinct from item.canonical_signature
          or actual_body_hash is distinct from item.body_hash
-         or actual_volatility not in ('v','s') or actual_return not like 'TABLE(%' then
+         or actual_volatility::text is distinct from item.volatility
+         or actual_return is distinct from item.result_contract
+         or actual_retset is distinct from true then
         raise exception 'RPC % has non-canonical metadata or body',item.name;
       end if;
     end if;
@@ -731,6 +734,7 @@ $owner_guard$;
 do $postflight$
 declare
   item record; obj oid; signature text; owner_oid oid; common_owner oid; actual_body_hash text; actual_roles text[]; actual_def text;
+  actual_volatility "char"; actual_return text; actual_retset boolean;
 begin
   select relowner into common_owner from pg_catalog.pg_class where oid='app_private.flight_search_selections'::pg_catalog.regclass;
   if common_owner is distinct from (select relowner from pg_catalog.pg_class where oid='app_private.flight_priced_selections'::pg_catalog.regclass) then raise exception 'table owner drift'; end if;
@@ -750,18 +754,28 @@ begin
       into signature,actual_roles,actual_def from pg_catalog.pg_policy p where p.polrelid=item.table_name::pg_catalog.regclass and p.polname=item.name and p.polcmd='*' and p.polpermissive;
     if signature is distinct from item.canonical_signature or actual_roles is distinct from array['anon','authenticated']::text[] or pg_catalog.regexp_replace(actual_def,'[()[:space:]]','','g')<>'false:false' then raise exception 'deny policy % drift',item.name; end if;
   end loop;
-  obj:=pg_catalog.to_regprocedure('public.remember_flight_search_selections_v1(jsonb)');
-  select p.proowner,pg_catalog.obj_description(p.oid,'pg_proc'),pg_catalog.encode(extensions.digest(pg_catalog.convert_to(p.prosrc,'UTF8'),'sha256'),'hex') into owner_oid,signature,actual_body_hash from pg_catalog.pg_proc p join pg_catalog.pg_language l on l.oid=p.prolang where p.oid=obj and l.lanname='plpgsql' and p.prokind='f' and p.prosecdef and p.proconfig=array['search_path=']::text[];
-  if owner_oid is distinct from common_owner or signature is distinct from 'hajiz:flight-selection-durability:remember-search-rpc:v1' or actual_body_hash is distinct from '66db8708fdd0f890d085a06e405dac9cb7722647b274aef8d3703e5fd9cfb42a' then raise exception 'RPC public.remember_flight_search_selections_v1(jsonb) catalog/body drift'; end if;
-  obj:=pg_catalog.to_regprocedure('public.get_flight_search_selection_v1(text)');
-  select p.proowner,pg_catalog.obj_description(p.oid,'pg_proc'),pg_catalog.encode(extensions.digest(pg_catalog.convert_to(p.prosrc,'UTF8'),'sha256'),'hex') into owner_oid,signature,actual_body_hash from pg_catalog.pg_proc p join pg_catalog.pg_language l on l.oid=p.prolang where p.oid=obj and l.lanname='plpgsql' and p.prokind='f' and p.prosecdef and p.proconfig=array['search_path=']::text[];
-  if owner_oid is distinct from common_owner or signature is distinct from 'hajiz:flight-selection-durability:get-search-rpc:v1' or actual_body_hash is distinct from '1cfb9d4fac9c497e45ebe4913dc4176cfe0514b39b5a4f0fe2f2dbdd8cf614d0' then raise exception 'RPC public.get_flight_search_selection_v1(text) catalog/body drift'; end if;
-  obj:=pg_catalog.to_regprocedure('public.create_or_get_flight_priced_selection_v1(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz)');
-  select p.proowner,pg_catalog.obj_description(p.oid,'pg_proc'),pg_catalog.encode(extensions.digest(pg_catalog.convert_to(p.prosrc,'UTF8'),'sha256'),'hex') into owner_oid,signature,actual_body_hash from pg_catalog.pg_proc p join pg_catalog.pg_language l on l.oid=p.prolang where p.oid=obj and l.lanname='plpgsql' and p.prokind='f' and p.prosecdef and p.proconfig=array['search_path=']::text[];
-  if owner_oid is distinct from common_owner or signature is distinct from 'hajiz:flight-selection-durability:create-priced-rpc:v1' or actual_body_hash is distinct from '282c1249556a54a1c7fc762938e6898c6d448d124a0b485c2c29deebafe9d842' then raise exception 'RPC public.create_or_get_flight_priced_selection_v1(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz) catalog/body drift'; end if;
-  obj:=pg_catalog.to_regprocedure('public.get_flight_priced_selection_v1(text)');
-  select p.proowner,pg_catalog.obj_description(p.oid,'pg_proc'),pg_catalog.encode(extensions.digest(pg_catalog.convert_to(p.prosrc,'UTF8'),'sha256'),'hex') into owner_oid,signature,actual_body_hash from pg_catalog.pg_proc p join pg_catalog.pg_language l on l.oid=p.prolang where p.oid=obj and l.lanname='plpgsql' and p.prokind='f' and p.prosecdef and p.proconfig=array['search_path=']::text[];
-  if owner_oid is distinct from common_owner or signature is distinct from 'hajiz:flight-selection-durability:get-priced-rpc:v1' or actual_body_hash is distinct from '1b0f98407d1975fd650a93b6f02dd7112da417b33d461eb2bd4278db99ba0c01' then raise exception 'RPC public.get_flight_priced_selection_v1(text) catalog/body drift'; end if;
+  for item in select * from (values
+    ('public.remember_flight_search_selections_v1(jsonb)','hajiz:flight-selection-durability:remember-search-rpc:v1','66db8708fdd0f890d085a06e405dac9cb7722647b274aef8d3703e5fd9cfb42a','v','TABLE(alternative_id text, replayed boolean)'),
+    ('public.get_flight_search_selection_v1(text)','hajiz:flight-selection-durability:get-search-rpc:v1','1cfb9d4fac9c497e45ebe4913dc4176cfe0514b39b5a4f0fe2f2dbdd8cf614d0','s','TABLE(alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, itinerary_snapshot jsonb, fare_snapshot jsonb, previous_customer_price_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)'),
+    ('public.create_or_get_flight_priced_selection_v1(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz)','hajiz:flight-selection-durability:create-priced-rpc:v1','282c1249556a54a1c7fc762938e6898c6d448d124a0b485c2c29deebafe9d842','v','TABLE(priced_selection_id text, replayed boolean)'),
+    ('public.get_flight_priced_selection_v1(text)','hajiz:flight-selection-durability:get-priced-rpc:v1','1b0f98407d1975fd650a93b6f02dd7112da417b33d461eb2bd4278db99ba0c01','s','TABLE(priced_selection_id text, alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, customer_price_snapshot jsonb, itinerary_snapshot jsonb, fare_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)')
+  ) as expected(name,canonical_signature,body_hash,volatility,result_contract) loop
+    obj:=pg_catalog.to_regprocedure(item.name);
+    select p.proowner,pg_catalog.obj_description(p.oid,'pg_proc'),
+      pg_catalog.encode(extensions.digest(pg_catalog.convert_to(p.prosrc,'UTF8'),'sha256'),'hex'),
+      p.provolatile,pg_catalog.pg_get_function_result(p.oid),p.proretset
+      into owner_oid,signature,actual_body_hash,actual_volatility,actual_return,actual_retset
+      from pg_catalog.pg_proc p join pg_catalog.pg_language l on l.oid=p.prolang
+      where p.oid=obj and l.lanname='plpgsql' and p.prokind='f' and p.prosecdef
+        and p.proconfig=array['search_path=']::text[];
+    if owner_oid is distinct from common_owner or signature is distinct from item.canonical_signature
+       or actual_body_hash is distinct from item.body_hash
+       or actual_volatility::text is distinct from item.volatility
+       or actual_return is distinct from item.result_contract
+       or actual_retset is distinct from true then
+      raise exception 'RPC % catalog/body metadata drift',item.name;
+    end if;
+  end loop;
   if exists(select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(pg_catalog.coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) a where c.oid='app_private.flight_search_selections'::pg_catalog.regclass and a.grantee=0 and a.privilege_type in ('SELECT','INSERT','UPDATE','DELETE')) or pg_catalog.has_table_privilege('anon','app_private.flight_search_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('authenticated','app_private.flight_search_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('service_role','app_private.flight_search_selections','SELECT,INSERT,UPDATE,DELETE') then raise exception 'search table direct privilege drift'; end if;
   if exists(select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(pg_catalog.coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) a where c.oid='app_private.flight_priced_selections'::pg_catalog.regclass and a.grantee=0 and a.privilege_type in ('SELECT','INSERT','UPDATE','DELETE')) or pg_catalog.has_table_privilege('anon','app_private.flight_priced_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('authenticated','app_private.flight_priced_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('service_role','app_private.flight_priced_selections','SELECT,INSERT,UPDATE,DELETE') then raise exception 'priced table direct privilege drift'; end if;
 end
