@@ -2,31 +2,32 @@ import { useEffect, useRef, useState } from "react"
 import { useParams } from "react-router-dom"
 import { PaymentStatusBadge } from "../flights/components/PaymentStatusBadge.jsx"
 import { myTripsDataSource } from "../../services/myTripsDataSource.js"
+import { makeBookingRequestState, selectVisibleBookingRequest } from "./data/bookingRequestState.js"
 import { createTicketRequestGuard, hasAuthoritativeAmount } from "./data/ticketRequestGuard.js"
 
 export default function BookingPage({ dataSource = myTripsDataSource }) {
   const { reference = "" } = useParams()
   const valid = /^HJZ-[A-Z0-9-]{4,40}$/.test(reference)
   const [attempt, setAttempt] = useState(0)
-  const [request, setRequest] = useState({ status: valid ? "loading" : "invalid_reference", booking: null })
+  const [request, setRequest] = useState(makeBookingRequestState(reference, valid ? "loading" : "invalid_reference"))
   const [tickets, setTickets] = useState({ reference, status: "idle", rows: [] })
   const ticketGuard = useRef(createTicketRequestGuard(reference))
-  if (!ticketGuard.current.isActiveReference(reference)) ticketGuard.current.activate(reference)
+  const visibleRequest = selectVisibleBookingRequest(request, reference, valid)
   const visibleTickets = tickets.reference === reference ? tickets : { reference, status: "idle", rows: [] }
   useEffect(() => {
     ticketGuard.current.activate(reference)
     setTickets({ reference, status: "idle", rows: [] })
-    if (!valid) { setRequest({ status: "invalid_reference", booking: null }); return }
+    if (!valid) { setRequest(makeBookingRequestState(reference, "invalid_reference")); return }
     let active = true
-    setRequest({ status: "loading", booking: null })
-    dataSource.loadBooking(reference).then(booking => { if (active) setRequest({ status: booking ? "ready" : "not_found", booking }) }).catch(() => { if (active) setRequest({ status: "error", booking: null }) })
+    setRequest(makeBookingRequestState(reference, "loading"))
+    dataSource.loadBooking(reference).then(booking => { if (active) setRequest(makeBookingRequestState(reference, booking ? "ready" : "not_found", booking)) }).catch(() => { if (active) setRequest(makeBookingRequestState(reference, "error")) })
     return () => { active = false }
   }, [attempt, dataSource, reference, valid])
-  if (request.status === "invalid_reference") return <section role="alert">مرجع الحجز غير صالح.</section>
-  if (request.status === "loading") return <section role="status">جارٍ تحميل تفاصيل الحجز الآمنة…</section>
-  if (request.status === "not_found") return <section role="status">تعذر العثور على هذا الحجز ضمن حجوزات حسابك.</section>
-  if (request.status === "error") return <section role="alert"><p>تعذر تحميل تفاصيل الحجز.</p><button type="button" onClick={() => setAttempt(value => value + 1)}>إعادة المحاولة</button></section>
-  const booking = request.booking
+  if (visibleRequest.status === "invalid_reference") return <section role="alert">مرجع الحجز غير صالح.</section>
+  if (visibleRequest.status === "loading") return <section role="status">جارٍ تحميل تفاصيل الحجز الآمنة…</section>
+  if (visibleRequest.status === "not_found") return <section role="status">تعذر العثور على هذا الحجز ضمن حجوزات حسابك.</section>
+  if (visibleRequest.status === "error") return <section role="alert"><p>تعذر تحميل تفاصيل الحجز.</p><button type="button" onClick={() => setAttempt(value => value + 1)}>إعادة المحاولة</button></section>
+  const booking = visibleRequest.booking
   const loadTickets = () => {
     const request = ticketGuard.current.begin(reference)
     setTickets({ reference, status: "loading", rows: [] })
