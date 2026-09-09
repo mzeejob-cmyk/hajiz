@@ -13,6 +13,7 @@ const [sql, proposal, migrationFiles] = await Promise.all([
 ])
 const normalized = (value) => value.replace(/\s+/g, " ")
 const compact = normalized(sql.toLowerCase())
+const baseMigration = execFileSync("git", ["show", `HEAD:supabase/migrations/${migrationName}`], { cwd: root, encoding: "utf8" })
 const trackedChanged = execFileSync("git", ["diff", "--name-only", BASE], { cwd: root, encoding: "utf8" }).trim().split(/\r?\n/).filter(Boolean)
 const untracked = execFileSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: root, encoding: "utf8" }).trim().split(/\r?\n/).filter(Boolean)
 const changed = [...new Set([...trackedChanged, ...untracked])]
@@ -106,10 +107,133 @@ await test("postflight validates exact volatility", () => has(rpcPostflight, /ac
 await test("postflight validates exact return", () => has(rpcPostflight, /actual_return is distinct from item\.result_contract/))
 await test("generic TABLE shape acceptance removed", () => lacks(sql, /actual_return\s+not\s+like\s+'TABLE\(%'/i))
 
+// PostgreSQL 17.6 exposes SET search_path = '' as the exact proconfig element search_path="".
+const rpcCatalogSelects = [...sql.matchAll(/select p\.proowner,pg_catalog\.obj_description\(p\.oid,'pg_proc'\),[\s\S]*?where p\.oid=obj;/g)].map((match) => match[0])
+await test("canonical proconfig expects quoted empty search path", () => count(sql, /array\['search_path=""'\]::text\[\]/g, 2))
+await test("stale unquoted empty proconfig absent", () => lacks(sql, /array\['search_path='\]::text\[\]/))
+await test("RPC catalog rows selected twice by identity", () => assert.equal(rpcCatalogSelects.length, 2))
+await test("preflight catalog SELECT does not filter language", () => lacks(rpcCatalogSelects[0], /where[^;]*lanname='plpgsql'/))
+await test("preflight catalog SELECT does not filter prokind", () => lacks(rpcCatalogSelects[0], /where[^;]*prokind='f'/))
+await test("preflight catalog SELECT does not filter SECURITY DEFINER", () => lacks(rpcCatalogSelects[0], /where[^;]*prosecdef/))
+await test("preflight catalog SELECT does not filter proconfig", () => lacks(rpcCatalogSelects[0], /where[^;]*proconfig/))
+await test("preflight explicitly compares language", () => has(rpcPreflight, /actual_language is distinct from 'plpgsql'/))
+await test("preflight explicitly compares prokind", () => has(rpcPreflight, /actual_prokind::text is distinct from 'f'/))
+await test("preflight explicitly compares SECURITY DEFINER", () => has(rpcPreflight, /actual_security_definer is distinct from true/))
+await test("preflight explicitly compares proconfig", () => has(rpcPreflight, /actual_proconfig is distinct from array\['search_path=""'\]::text\[\]/))
+await test("postflight repeats all explicit metadata comparisons", () => {
+  has(rpcPostflight, /actual_language is distinct from 'plpgsql'/)
+  has(rpcPostflight, /actual_prokind::text is distinct from 'f'/)
+  has(rpcPostflight, /actual_security_definer is distinct from true/)
+  has(rpcPostflight, /actual_proconfig is distinct from array\['search_path=""'\]::text\[\]/)
+})
+await test("postflight explicitly rejects missing canonical RPC", () => has(rpcPostflight, /if obj is null then\s*raise exception 'canonical RPC % is missing'/))
+await test("RPC volatility checks retained after catalog SELECT", () => assert.equal((sql.match(/actual_volatility::text is distinct from item\.volatility/g) ?? []).length, 2))
+await test("RPC exact result checks retained after catalog SELECT", () => assert.equal((sql.match(/actual_return is distinct from item\.result_contract/g) ?? []).length, 2))
+await test("RPC set-returning checks retained after catalog SELECT", () => assert.equal((sql.match(/actual_retset is distinct from true/g) ?? []).length, 2))
+await test("RPC body hash checks retained after catalog SELECT", () => assert.equal((sql.match(/actual_body_hash is distinct from item\.body_hash/g) ?? []).length, 2))
+await test("four pinned RPC body fingerprints remain unchanged", () => {
+  for (const hash of ["5ce16e3b0a1978a29117fe3b60942c947bc02f828d176f7dad0deaa886c0bf2e", "590424781780b1c02a41650b43b2f07d6914b89b649b28c40a6525a09f176325", "1dd689399db967ae48a4f5a57eb9ade4394832698abe9ab4f44b8321b1877a09", "73bd415cb8ecc333a31ab21355355ace8357ebcf4bdc8b7a73efaea1397d3960"]) assert.equal(sql.split(hash).length - 1, 2)
+})
+await test("zero dynamic regclass rule retained after RPC remediation", () => lacks(sql, /item\.table_name::(?:pg_catalog\.)?regclass/))
+
+// Canonical PostgreSQL 17.6 pg_proc.prosrc fingerprints, independently reproduced twice.
+const staleRpcHashes = ["66db8708fdd0f890d085a06e405dac9cb7722647b274aef8d3703e5fd9cfb42a", "1cfb9d4fac9c497e45ebe4913dc4176cfe0514b39b5a4f0fe2f2dbdd8cf614d0", "282c1249556a54a1c7fc762938e6898c6d448d124a0b485c2c29deebafe9d842", "1b0f98407d1975fd650a93b6f02dd7112da417b33d461eb2bd4278db99ba0c01"]
+const canonicalRpcHashes = ["5ce16e3b0a1978a29117fe3b60942c947bc02f828d176f7dad0deaa886c0bf2e", "590424781780b1c02a41650b43b2f07d6914b89b649b28c40a6525a09f176325", "1dd689399db967ae48a4f5a57eb9ade4394832698abe9ab4f44b8321b1877a09", "73bd415cb8ecc333a31ab21355355ace8357ebcf4bdc8b7a73efaea1397d3960"]
+const functionBodies = (source) => Object.fromEntries([...source.matchAll(/execute \$ddl\$(create function public\.([a-z0-9_]+)[\s\S]*?)\$ddl\$;/g)].map((match) => [match[2], match[1]]))
+await test("stale remember hash absent", () => lacks(sql, new RegExp(staleRpcHashes[0])))
+await test("stale get Search hash absent", () => lacks(sql, new RegExp(staleRpcHashes[1])))
+await test("stale create Priced hash absent", () => lacks(sql, new RegExp(staleRpcHashes[2])))
+await test("stale get Priced hash absent", () => lacks(sql, new RegExp(staleRpcHashes[3])))
+await test("canonical remember hash present in preflight", () => has(rpcPreflight, new RegExp(canonicalRpcHashes[0])))
+await test("canonical remember hash present in postflight", () => has(rpcPostflight, new RegExp(canonicalRpcHashes[0])))
+await test("canonical get Search hash appears twice", () => assert.equal(sql.split(canonicalRpcHashes[1]).length - 1, 2))
+await test("canonical create Priced hash appears twice", () => assert.equal(sql.split(canonicalRpcHashes[2]).length - 1, 2))
+await test("canonical get Priced hash appears twice", () => assert.equal(sql.split(canonicalRpcHashes[3]).length - 1, 2))
+await test("four canonical RPC hashes are distinct", () => assert.equal(new Set(canonicalRpcHashes).size, 4))
+await test("read RPC bodies remain byte-identical", () => {
+  const current = functionBodies(sql)
+  const base = functionBodies(baseMigration)
+  assert.equal(current.get_flight_search_selection_v1, base.get_flight_search_selection_v1)
+  assert.equal(current.get_flight_priced_selection_v1, base.get_flight_priced_selection_v1)
+})
+await test("write RPC bodies differ only by approved syntax remediations", () => {
+  const current = functionBodies(sql)
+  const base = functionBodies(baseMigration)
+  for (const name of ["remember_flight_search_selections_v1", "create_or_get_flight_priced_selection_v1"])
+    assert.equal(current[name], base[name]
+      .replaceAll("pg_catalog.coalesce", "coalesce")
+      .replace("on conflict (alternative_id) do nothing", "on conflict on constraint flight_search_selections_pkey do nothing")
+      .replace("on conflict (priced_selection_id) do nothing", "on conflict on constraint flight_priced_selections_pkey do nothing"))
+})
+
+// PL/pgSQL ambiguous conflict-target remediation.
+await test("Search inferred conflict target removed", () => lacks(functionBodies(sql).remember_flight_search_selections_v1, /on conflict \(alternative_id\)/i))
+await test("Priced inferred conflict target removed", () => lacks(functionBodies(sql).create_or_get_flight_priced_selection_v1, /on conflict \(priced_selection_id\)/i))
+await test("Search uses exact canonical PK conflict target", () => has(functionBodies(sql).remember_flight_search_selections_v1, /on conflict on constraint flight_search_selections_pkey do nothing/i))
+await test("Priced uses exact canonical PK conflict target", () => has(functionBodies(sql).create_or_get_flight_priced_selection_v1, /on conflict on constraint flight_priced_selections_pkey do nothing/i))
+await test("canonical Search PK exists", () => has(sql, /constraint flight_search_selections_pkey primary key \(alternative_id\)/i))
+await test("canonical Priced PK exists", () => has(sql, /constraint flight_priced_selections_pkey primary key \(priced_selection_id\)/i))
+await test("Search conflict path remains DO NOTHING", () => has(functionBodies(sql).remember_flight_search_selections_v1, /flight_search_selections_pkey do nothing/i))
+await test("Priced conflict path remains DO NOTHING", () => has(functionBodies(sql).create_or_get_flight_priced_selection_v1, /flight_priced_selections_pkey do nothing/i))
+await test("Search post-conflict digest comparison retained", () => has(functionBodies(sql).remember_flight_search_selections_v1, /row\.payload_digest[\s\S]*v_existing_digest is distinct from v_digest/))
+await test("Priced post-conflict digest comparison retained", () => has(functionBodies(sql).create_or_get_flight_priced_selection_v1, /row\.payload_digest[\s\S]*v_existing_digest is distinct from v_digest/))
+await test("Search FSD04 retained", () => has(functionBodies(sql).remember_flight_search_selections_v1, /errcode = 'FSD04'/))
+await test("Priced FSD04 retained", () => has(functionBodies(sql).create_or_get_flight_priced_selection_v1, /errcode = 'FSD04'/))
+await test("no function variable-conflict directive", () => lacks(sql, /#variable_conflict\s+use_column/i))
+await test("no global variable-conflict setting", () => lacks(sql, /plpgsql\.variable_conflict|set\s+variable_conflict/i))
+await test("read RPC fingerprints unchanged after conflict remediation", () => { assert.equal(sql.split(canonicalRpcHashes[1]).length - 1, 2); assert.equal(sql.split(canonicalRpcHashes[3]).length - 1, 2) })
+await test("new Remember fingerprint is guarded twice", () => assert.equal(sql.split(canonicalRpcHashes[0]).length - 1, 2))
+await test("new Create fingerprint is guarded twice", () => assert.equal(sql.split(canonicalRpcHashes[2]).length - 1, 2))
+await test("prior Remember fingerprint removed", () => lacks(sql, /95366243eb18aac132aed90eeb254afbac2f884ce9565c5aab243d93e412e362/))
+await test("prior Create fingerprint removed", () => lacks(sql, /9dc43cda82e1cedf2b1b392636394526690ff78a6c782427d01ba5feffe9a494/))
+await test("both conflict targets use canonical constraint identity", () => count(sql, /on conflict on constraint flight_(?:search|priced)_selections_pkey do nothing/gi, 2))
+
+// PostgreSQL 17.6 conditional-expression syntax class remediation.
+await test("no schema-qualified coalesce remains", () => lacks(sql, /pg_catalog\.coalesce\s*\(/i))
+await test("no schema-qualified nullif remains", () => lacks(sql, /pg_catalog\.nullif\s*\(/i))
+await test("no schema-qualified greatest remains", () => lacks(sql, /pg_catalog\.greatest\s*\(/i))
+await test("no schema-qualified least remains", () => lacks(sql, /pg_catalog\.least\s*\(/i))
+await test("seven canonical unqualified coalesce calls remain", () => count(sql, /\bcoalesce\s*\(/gi, 7))
+await test("column preflight uses unqualified coalesce", () => has(sql, /coalesce\(pg_catalog\.pg_get_expr\(d\.adbin,d\.adrelid,false\),'<NO_DEFAULT>'\)/))
+await test("remember RPC has two unqualified coalesce calls", () => count(functionBodies(sql).remember_flight_search_selections_v1, /\bcoalesce\s*\(/g, 2))
+await test("priced write RPC has two unqualified coalesce calls", () => count(functionBodies(sql).create_or_get_flight_priced_selection_v1, /\bcoalesce\s*\(/g, 2))
+await test("search ACL guard uses unqualified coalesce", () => has(sql, /aclexplode\(coalesce\(c\.relacl,pg_catalog\.acldefault\('r',c\.relowner\)\)\).*flight_search_selections/s))
+await test("priced ACL guard uses unqualified coalesce", () => has(sql, /aclexplode\(coalesce\(c\.relacl,pg_catalog\.acldefault\('r',c\.relowner\)\)\).*flight_priced_selections/s))
+await test("ACL fallback arguments remain unchanged", () => count(sql, /coalesce\(c\.relacl,pg_catalog\.acldefault\('r',c\.relowner\)\)/g, 2))
+await test("obsolete remember body hash removed", () => lacks(sql, /48dc6eb1e8432cbddbcf31da15ea568b97db8beaa02313f95a6bc3353609823a/))
+await test("obsolete priced body hash removed", () => lacks(sql, /29c6728c86b4805dd4add332c8c7b7bcd26f2b917ac9bcb8159f8a5891e8c498/))
+await test("new remember body hash appears preflight and postflight", () => assert.equal(sql.split(canonicalRpcHashes[0]).length - 1, 2))
+await test("new priced body hash appears preflight and postflight", () => assert.equal(sql.split(canonicalRpcHashes[2]).length - 1, 2))
+await test("search read body hash remains exact", () => assert.equal(sql.split(canonicalRpcHashes[1]).length - 1, 2))
+await test("priced read body hash remains exact", () => assert.equal(sql.split(canonicalRpcHashes[3]).length - 1, 2))
+await test("exact RPC search_path guard retained", () => count(sql, /array\['search_path=""'\]::text\[\]/g, 2))
+await test("dynamic regclass string cast remains absent", () => lacks(sql, /item\.table_name::(?:pg_catalog\.)?regclass/))
+await test("all 23 exact constraint fingerprints retained", () => assert.equal((sql.match(/'[0-9a-f]{64}'/g) ?? []).filter((value) => !canonicalRpcHashes.includes(value.slice(1, -1))).length >= 46, true))
+await test("exact expiry index guards retained", () => assert.ok((sql.match(/index_exact is distinct from true/g) ?? []).length >= 2))
+await test("prosrc remains fingerprint source", () => assert.equal((sql.match(/convert_to\(p\.prosrc,'UTF8'\)/g) ?? []).length, 2))
+await test("RPC fingerprint remains SHA-256 UTF-8", () => assert.equal((sql.match(/digest\(pg_catalog\.convert_to\(p\.prosrc,'UTF8'\),'sha256'\)/g) ?? []).length, 2))
+await test("explicit RPC metadata contract remains intact", () => { has(sql, /actual_language is distinct from 'plpgsql'/); has(sql, /actual_prokind::text is distinct from 'f'/); has(sql, /actual_security_definer is distinct from true/) })
+await test("quoted empty search path contract remains intact", () => count(sql, /actual_proconfig is distinct from array\['search_path=""'\]::text\[\]/g, 2))
+await test("dynamic regclass remains eliminated", () => lacks(sql, /item\.table_name::(?:pg_catalog\.)?regclass/))
+
 // Exact constraint and index catalog guards.
 const constraintPreflight = sql.match(/do \$exact_constraints_preflight\$[\s\S]*?\$exact_constraints_preflight\$;/)?.[0] ?? ""
 const constraintRows = [...constraintPreflight.matchAll(/\('app_private\.(flight_(?:search|priced)_selections)','(flight_[^']+)','([cp])','([0-9a-f]{64})'\)/g)]
 const postflightConstraintRows = [...rpcPostflight.matchAll(/\('app_private\.(flight_(?:search|priced)_selections)','(flight_[^']+)','([cp])','([0-9a-f]{64})'\)/g)]
+const canonicalConstraintHashes = [
+  "e061295e5a2aca140e0283a20495f6b39bc06ebcdb714ed50d4b265b84a2562b", "920bddaf8364a890546376e361c46b99e1de3481f16504d052ea1e5d3bae165d",
+  "f52978615287b1c0249b5cb2c5251a5defbd0890d696c1074c1d5fd29275bfd0", "2bf7488ac04df5ddc2f8cd82cd516db00efdcada002d85416a257e948dfc7c29",
+  "109a679658abc2b55c6489def778ae27f74a8c766f3daec68959b145b73e35f3", "6c120b4f1b9141b3aae432424166b7340f62a3d27a6a9d76955c8fd3cd8e2da1",
+  "1b6aa85d541e52860c47c3b0ddf72ff21c1cd3a7de5a0ab5efd227be9c346661", "572896018bbbb5211f194e367140664c6f76e86f053d787c949925619a00aea2",
+  "a52af7ab318d669b12ed7887d8d43bc5ff45e98dca4ddd31e413217e85c227f7", "f105ad85612be3e29b0190bccf4aae7d377da156702475372d8bb1cbd4576dc2",
+  "ca080a4fca12635bde3cf110b81f65e8689ef1563489ae7287e329d391af6ad7", "496dadeae65bc48c8a7827a89585466144a9f8bf0408e9b61a0aa34c11ada282",
+  "1c02fd5b5f14d6c473d33650b4c24a5e8ebdf7ac87d03a54aa82da1eead08906", "f52978615287b1c0249b5cb2c5251a5defbd0890d696c1074c1d5fd29275bfd0",
+  "920bddaf8364a890546376e361c46b99e1de3481f16504d052ea1e5d3bae165d", "2bf7488ac04df5ddc2f8cd82cd516db00efdcada002d85416a257e948dfc7c29",
+  "109a679658abc2b55c6489def778ae27f74a8c766f3daec68959b145b73e35f3", "6c120b4f1b9141b3aae432424166b7340f62a3d27a6a9d76955c8fd3cd8e2da1",
+  "e60e6a054d55e6e36beb0da8ec2ae48a50c1e6780084e5aae1d8397c98383aa2", "1b6aa85d541e52860c47c3b0ddf72ff21c1cd3a7de5a0ab5efd227be9c346661",
+  "572896018bbbb5211f194e367140664c6f76e86f053d787c949925619a00aea2", "f105ad85612be3e29b0190bccf4aae7d377da156702475372d8bb1cbd4576dc2",
+  "ca080a4fca12635bde3cf110b81f65e8689ef1563489ae7287e329d391af6ad7",
+]
 await test("all 23 constraints have exact fingerprints", () => { assert.equal(constraintRows.length, 23); assert.equal(postflightConstraintRows.length, 23) })
 await test("Search exact constraint count is 11", () => assert.equal(constraintRows.filter((m) => m[2].includes("_search_")).length, 11))
 await test("Priced exact constraint count is 12", () => assert.equal(constraintRows.filter((m) => m[2].includes("_priced_")).length, 12))
@@ -128,9 +252,28 @@ for (const [label, fragment] of [
 })
 await test("loose NOT LIKE constraint proof removed", () => lacks(sql, /pg_get_constraintdef\([^\n]+\)\s+not\s+like/i))
 
+// Fresh-install-safe dynamic relation resolution.
+const policyPreflight = rpcPreflight.match(/for item in select \* from \(values\s*\('app_private\.flight_search_selections','flight_search_selections_direct_access_denied'[\s\S]*?end loop;/)?.[0] ?? ""
+await test("no dynamic pg_catalog regclass cast", () => lacks(sql, /item\.table_name::pg_catalog\.regclass/))
+await test("no dynamic short regclass cast", () => lacks(sql, /item\.table_name::regclass/))
+await test("constraint preflight resolves table", () => has(constraintPreflight, /relation_oid := pg_catalog\.to_regclass\(item\.table_name\)/))
+await test("constraint preflight uses resolved OID", () => has(constraintPreflight, /c\.conrelid=relation_oid/))
+await test("index preflight resolves expected table separately", () => has(rpcPreflight, /table_oid:=pg_catalog\.to_regclass\(item\.table_name\)/))
+await test("orphan same-name index fails closed", () => has(rpcPreflight, /if table_oid is null then\s*raise exception 'expiry index % exists without its canonical target table %'/))
+await test("policy preflight resolves table before query", () => has(policyPreflight, /table_oid:=pg_catalog\.to_regclass\(item\.table_name\);\s*if table_oid is not null then/))
+await test("policy preflight query uses resolved OID", () => has(policyPreflight, /p\.polrelid=table_oid/))
+await test("policy existence validation is procedural", () => has(policyPreflight, /if table_oid is not null then\s*if exists\([\s\S]*?end if;\s*end if;/))
+await test("no boolean existence plus unsafe cast guard", () => lacks(sql, /to_regclass\(item\.table_name\)[\s\S]{0,160}\band\b[\s\S]{0,160}item\.table_name::/i))
+await test("fresh absent table skips policy lookup safely", () => { has(policyPreflight, /if table_oid is not null then/); lacks(policyPreflight, /else\s+raise exception/i) })
+await test("all canonical constraint hashes unchanged", () => assert.deepEqual(constraintRows.map((m) => m[4]), canonicalConstraintHashes))
+await test("RPC body hashes unchanged", () => {
+  for (const hash of canonicalRpcHashes) assert.equal(sql.split(hash).length - 1, 2)
+})
+await test("exact index semantic guards unchanged", () => { has(rpcPreflight, /i\.indisvalid and i\.indisready and i\.indislive/); has(rpcPreflight, /i\.indpred is null and i\.indexprs is null/); has(rpcPreflight, /i\.indnkeyatts=1 and i\.indnatts=1/) })
+
 const indexPreflight = rpcPreflight.match(/for item in select \* from \(values[\s\S]*?expiry index % has non-canonical structure[\s\S]*?end loop;/)?.[0] ?? ""
 const indexPostflight = rpcPostflight.match(/for item in select \* from \(values[\s\S]*?expiry index % drift[\s\S]*?end loop;/)?.[0] ?? ""
-await test("index target table exact", () => { has(indexPreflight,/i\.indrelid=item\.table_name::pg_catalog\.regclass/); has(indexPostflight,/i\.indrelid=item\.table_name::pg_catalog\.regclass/) })
+await test("index target table exact", () => { has(indexPreflight,/i\.indrelid=table_oid/); has(indexPostflight,/i\.indrelid=table_oid/) })
 await test("index access method btree exact", () => { has(indexPreflight,/am\.amname='btree'/); has(indexPostflight,/am\.amname='btree'/) })
 await test("index non-unique exact", () => { has(indexPreflight,/not i\.indisunique/); has(indexPostflight,/not i\.indisunique/) })
 await test("index non-primary exact", () => { has(indexPreflight,/not i\.indisprimary/); has(indexPostflight,/not i\.indisprimary/) })
@@ -157,8 +300,8 @@ for (const [name, pattern] of [
   ["index signatures",/canonical_signature.*search-expiry-index/s], ["RLS enabled validation",/not rls_enabled/],
   ["FORCE RLS validation",/force_rls/], ["policy validation",/deny policy .*non-canonical structure/],
   ["policy signatures",/canonical_signature.*deny-policy/s], ["RPC identity validation",/to_regprocedure\(item\.name\)/],
-  ["RPC language validation",/lanname='plpgsql'/], ["SECURITY DEFINER validation",/p\.prosecdef/],
-  ["search path validation",/p\.proconfig=array\['search_path='\]::text\[\]/], ["RPC owner validation",/actual_owner is distinct from current_owner/],
+  ["RPC language validation",/actual_language is distinct from 'plpgsql'/], ["SECURITY DEFINER validation",/actual_security_definer is distinct from true/],
+  ["search path validation",/actual_proconfig is distinct from array\['search_path=""'\]::text\[\]/], ["RPC owner validation",/actual_owner is distinct from current_owner/],
   ["function body validation",/actual_body_hash is distinct from item\.body_hash/], ["same-name drift fails",/has non-canonical|drifted/],
 ]) await test(name, () => has(sql, pattern))
 

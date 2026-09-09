@@ -25,7 +25,7 @@ begin
     if relation is not null then
       select c.relowner,c.relkind,c.relrowsecurity,c.relforcerowsecurity,pg_catalog.obj_description(c.oid,'pg_class')
         into relation_owner,relation_kind,rls_enabled,force_rls,signature from pg_catalog.pg_class c where c.oid=relation;
-      select pg_catalog.array_agg(pg_catalog.format('%s:%s:%s:%s',a.attname,pg_catalog.format_type(a.atttypid,a.atttypmod),case when a.attnotnull then 'true' else 'false' end,pg_catalog.coalesce(pg_catalog.pg_get_expr(d.adbin,d.adrelid,false),'<NO_DEFAULT>')) order by a.attnum)
+      select pg_catalog.array_agg(pg_catalog.format('%s:%s:%s:%s',a.attname,pg_catalog.format_type(a.atttypid,a.atttypmod),case when a.attnotnull then 'true' else 'false' end,coalesce(pg_catalog.pg_get_expr(d.adbin,d.adrelid,false),'<NO_DEFAULT>')) order by a.attnum)
         into actual_columns from pg_catalog.pg_attribute a left join pg_catalog.pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
         where a.attrelid=relation and a.attnum>0 and not a.attisdropped;
       select pg_catalog.array_agg(c.conname||':'||c.contype order by c.conname) into actual_constraints from pg_catalog.pg_constraint c where c.conrelid=relation;
@@ -48,7 +48,7 @@ $preflight$;
 -- PostgreSQL 17.6 canonical pg_get_constraintdef fingerprints. These values
 -- were derived from isolated scratch tables created from the canonical DDL.
 do $exact_constraints_preflight$
-declare item record; constraint_oid oid; actual_kind "char"; actual_hash text; signature text;
+declare item record; relation_oid oid; constraint_oid oid; actual_kind "char"; actual_hash text; signature text;
 begin
   for item in select * from (values
     ('app_private.flight_search_selections','flight_search_selections_pkey','p','e061295e5a2aca140e0283a20495f6b39bc06ebcdb714ed50d4b265b84a2562b'),
@@ -75,13 +75,14 @@ begin
     ('app_private.flight_priced_selections','flight_priced_selections_passenger_composition_check','c','f105ad85612be3e29b0190bccf4aae7d377da156702475372d8bb1cbd4576dc2'),
     ('app_private.flight_priced_selections','flight_priced_selections_validity_check','c','ca080a4fca12635bde3cf110b81f65e8689ef1563489ae7287e329d391af6ad7')
   ) as expected(table_name,name,kind,definition_hash) loop
-    if pg_catalog.to_regclass(item.table_name) is not null then
+    relation_oid := pg_catalog.to_regclass(item.table_name);
+    if relation_oid is not null then
       select c.oid,c.contype,
         pg_catalog.encode(extensions.digest(pg_catalog.convert_to(pg_catalog.pg_get_constraintdef(c.oid,false),'UTF8'),'sha256'),'hex'),
         pg_catalog.obj_description(c.oid,'pg_constraint')
         into constraint_oid,actual_kind,actual_hash,signature
         from pg_catalog.pg_constraint c
-        where c.conrelid=item.table_name::pg_catalog.regclass and c.conname=item.name;
+        where c.conrelid=relation_oid and c.conname=item.name;
       if constraint_oid is null or actual_kind::text is distinct from item.kind
          or actual_hash is distinct from item.definition_hash
          or signature is distinct from 'hajiz:flight-selection-durability:constraint:'||item.name||':v1' then
@@ -106,7 +107,12 @@ declare
   actual_volatility "char";
   actual_return text;
   actual_retset boolean;
+  actual_language text;
+  actual_prokind "char";
+  actual_security_definer boolean;
+  actual_proconfig text[];
   index_exact boolean;
+  table_oid oid;
   current_owner oid := (select oid from pg_catalog.pg_roles where rolname=current_user);
 begin
   for item in select * from (values
@@ -114,9 +120,13 @@ begin
     ('app_private.flight_priced_selections_expires_idx','app_private.flight_priced_selections','hajiz:flight-selection-durability:priced-expiry-index:v1')
   ) as expected(name,table_name,canonical_signature) loop
     obj:=pg_catalog.to_regclass(item.name);
+    table_oid:=pg_catalog.to_regclass(item.table_name);
     if obj is not null then
+      if table_oid is null then
+        raise exception 'expiry index % exists without its canonical target table %',item.name,item.table_name;
+      end if;
       select pg_catalog.obj_description(i.indexrelid,'pg_class'),
-        i.indrelid=item.table_name::pg_catalog.regclass
+        i.indrelid=table_oid
         and i.indisvalid and i.indisready and i.indislive
         and not i.indisunique and not i.indisprimary and not i.indisreplident
         and not i.indnullsnotdistinct
@@ -144,41 +154,48 @@ begin
     ('app_private.flight_search_selections','flight_search_selections_direct_access_denied','hajiz:flight-selection-durability:search-deny-policy:v1'),
     ('app_private.flight_priced_selections','flight_priced_selections_direct_access_denied','hajiz:flight-selection-durability:priced-deny-policy:v1')
   ) as expected(table_name,name,canonical_signature) loop
-    if pg_catalog.to_regclass(item.table_name) is not null
-       and exists(select 1 from pg_catalog.pg_policy p where p.polrelid=item.table_name::pg_catalog.regclass and p.polname=item.name) then
-      select pg_catalog.obj_description(p.oid,'pg_policy'),
-        array(select r.rolname from pg_catalog.unnest(p.polroles) x(role_oid) join pg_catalog.pg_roles r on r.oid=x.role_oid order by r.rolname),
-        pg_catalog.pg_get_expr(p.polqual,p.polrelid)||':'||pg_catalog.pg_get_expr(p.polwithcheck,p.polrelid)
-        into signature,actual_roles,actual_definition from pg_catalog.pg_policy p
-        where p.polrelid=item.table_name::pg_catalog.regclass and p.polname=item.name and p.polcmd='*' and p.polpermissive;
-      if signature is distinct from item.canonical_signature
-         or actual_roles is distinct from array['anon','authenticated']::text[]
-         or pg_catalog.regexp_replace(actual_definition,'[()[:space:]]','','g') <> 'false:false' then
-        raise exception 'deny policy % has non-canonical structure',item.name;
+    table_oid:=pg_catalog.to_regclass(item.table_name);
+    if table_oid is not null then
+      if exists(select 1 from pg_catalog.pg_policy p where p.polrelid=table_oid and p.polname=item.name) then
+        select pg_catalog.obj_description(p.oid,'pg_policy'),
+          array(select r.rolname from pg_catalog.unnest(p.polroles) x(role_oid) join pg_catalog.pg_roles r on r.oid=x.role_oid order by r.rolname),
+          pg_catalog.pg_get_expr(p.polqual,p.polrelid)||':'||pg_catalog.pg_get_expr(p.polwithcheck,p.polrelid)
+          into signature,actual_roles,actual_definition from pg_catalog.pg_policy p
+          where p.polrelid=table_oid and p.polname=item.name and p.polcmd='*' and p.polpermissive;
+        if signature is distinct from item.canonical_signature
+           or actual_roles is distinct from array['anon','authenticated']::text[]
+           or pg_catalog.regexp_replace(actual_definition,'[()[:space:]]','','g') <> 'false:false' then
+          raise exception 'deny policy % has non-canonical structure',item.name;
+        end if;
       end if;
     end if;
   end loop;
 
   for item in select * from (values
-    ('public.remember_flight_search_selections_v1(jsonb)','hajiz:flight-selection-durability:remember-search-rpc:v1','66db8708fdd0f890d085a06e405dac9cb7722647b274aef8d3703e5fd9cfb42a','v','TABLE(alternative_id text, replayed boolean)'),
-    ('public.get_flight_search_selection_v1(text)','hajiz:flight-selection-durability:get-search-rpc:v1','1cfb9d4fac9c497e45ebe4913dc4176cfe0514b39b5a4f0fe2f2dbdd8cf614d0','s','TABLE(alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, itinerary_snapshot jsonb, fare_snapshot jsonb, previous_customer_price_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)'),
-    ('public.create_or_get_flight_priced_selection_v1(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz)','hajiz:flight-selection-durability:create-priced-rpc:v1','282c1249556a54a1c7fc762938e6898c6d448d124a0b485c2c29deebafe9d842','v','TABLE(priced_selection_id text, replayed boolean)'),
-    ('public.get_flight_priced_selection_v1(text)','hajiz:flight-selection-durability:get-priced-rpc:v1','1b0f98407d1975fd650a93b6f02dd7112da417b33d461eb2bd4278db99ba0c01','s','TABLE(priced_selection_id text, alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, customer_price_snapshot jsonb, itinerary_snapshot jsonb, fare_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)')
+    ('public.remember_flight_search_selections_v1(jsonb)','hajiz:flight-selection-durability:remember-search-rpc:v1','5ce16e3b0a1978a29117fe3b60942c947bc02f828d176f7dad0deaa886c0bf2e','v','TABLE(alternative_id text, replayed boolean)'),
+    ('public.get_flight_search_selection_v1(text)','hajiz:flight-selection-durability:get-search-rpc:v1','590424781780b1c02a41650b43b2f07d6914b89b649b28c40a6525a09f176325','s','TABLE(alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, itinerary_snapshot jsonb, fare_snapshot jsonb, previous_customer_price_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)'),
+    ('public.create_or_get_flight_priced_selection_v1(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz)','hajiz:flight-selection-durability:create-priced-rpc:v1','1dd689399db967ae48a4f5a57eb9ade4394832698abe9ab4f44b8321b1877a09','v','TABLE(priced_selection_id text, replayed boolean)'),
+    ('public.get_flight_priced_selection_v1(text)','hajiz:flight-selection-durability:get-priced-rpc:v1','73bd415cb8ecc333a31ab21355355ace8357ebcf4bdc8b7a73efaea1397d3960','s','TABLE(priced_selection_id text, alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, customer_price_snapshot jsonb, itinerary_snapshot jsonb, fare_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)')
   ) as expected(name,canonical_signature,body_hash,volatility,result_contract) loop
     obj:=pg_catalog.to_regprocedure(item.name);
     if obj is not null then
       select p.proowner,pg_catalog.obj_description(p.oid,'pg_proc'),
         pg_catalog.encode(extensions.digest(pg_catalog.convert_to(p.prosrc,'UTF8'),'sha256'),'hex'),
-        p.provolatile,pg_catalog.pg_get_function_result(p.oid),p.proretset
-        into actual_owner,signature,actual_body_hash,actual_volatility,actual_return,actual_retset
+        p.provolatile,pg_catalog.pg_get_function_result(p.oid),p.proretset,
+        l.lanname,p.prokind,p.prosecdef,p.proconfig
+        into actual_owner,signature,actual_body_hash,actual_volatility,actual_return,actual_retset,
+          actual_language,actual_prokind,actual_security_definer,actual_proconfig
         from pg_catalog.pg_proc p join pg_catalog.pg_language l on l.oid=p.prolang
-        where p.oid=obj and l.lanname='plpgsql' and p.prokind='f' and p.prosecdef
-          and p.proconfig=array['search_path=']::text[];
+        where p.oid=obj;
       if actual_owner is distinct from current_owner or signature is distinct from item.canonical_signature
          or actual_body_hash is distinct from item.body_hash
          or actual_volatility::text is distinct from item.volatility
          or actual_return is distinct from item.result_contract
-         or actual_retset is distinct from true then
+         or actual_retset is distinct from true
+         or actual_language is distinct from 'plpgsql'
+         or actual_prokind::text is distinct from 'f'
+         or actual_security_definer is distinct from true
+         or actual_proconfig is distinct from array['search_path=""']::text[] then
         raise exception 'RPC % has non-canonical metadata or body',item.name;
       end if;
     end if;
@@ -381,7 +398,7 @@ begin
     ('flight_priced_selections_passenger_composition_check','app_private.flight_priced_selections'),
     ('flight_priced_selections_validity_check','app_private.flight_priced_selections')
   ) as expected(name,table_name) loop
-    target:=item.table_name::pg_catalog.regclass;
+    target:=pg_catalog.to_regclass(item.table_name);
     select pg_catalog.obj_description(c.oid,'pg_constraint') into existing from pg_catalog.pg_constraint c where c.conrelid=target and c.conname=item.name;
     if existing is null then execute pg_catalog.format('comment on constraint %I on %s is %L',item.name,item.table_name,'hajiz:flight-selection-durability:constraint:'||item.name||':v1');
     elsif existing is distinct from 'hajiz:flight-selection-durability:constraint:'||item.name||':v1' then raise exception 'constraint % has non-canonical signature',item.name; end if;
@@ -524,10 +541,10 @@ begin
     ) values (
       v_id, v_digest, v_internal_offer_id, v_provider, v_provider_offer_ref,
       v_itinerary, v_fare, v_price, v_passengers, v_expires_at
-    ) on conflict (alternative_id) do nothing
+    ) on conflict on constraint flight_search_selections_pkey do nothing
     returning true into v_inserted;
 
-    if not pg_catalog.coalesce(v_inserted, false) then
+    if not coalesce(v_inserted, false) then
       select row.payload_digest into strict v_existing_digest
       from app_private.flight_search_selections as row
       where row.alternative_id = v_id
@@ -538,7 +555,7 @@ begin
     end if;
 
     alternative_id := v_id;
-    replayed := not pg_catalog.coalesce(v_inserted, false);
+    replayed := not coalesce(v_inserted, false);
     return next;
     v_inserted := false;
   end loop;
@@ -662,10 +679,10 @@ begin
     p_priced_selection_id, v_digest, p_alternative_id, p_internal_offer_id,
     p_provider, p_provider_offer_ref, p_customer_price_snapshot,
     p_itinerary_snapshot, p_fare_snapshot, p_passenger_composition, p_expires_at
-  ) on conflict (priced_selection_id) do nothing
+  ) on conflict on constraint flight_priced_selections_pkey do nothing
   returning true into v_inserted;
 
-  if not pg_catalog.coalesce(v_inserted, false) then
+  if not coalesce(v_inserted, false) then
     select row.payload_digest into strict v_existing_digest
     from app_private.flight_priced_selections as row
     where row.priced_selection_id = p_priced_selection_id
@@ -676,7 +693,7 @@ begin
   end if;
 
   priced_selection_id := p_priced_selection_id;
-  replayed := not pg_catalog.coalesce(v_inserted, false);
+  replayed := not coalesce(v_inserted, false);
   return next;
 end
 $function$;
@@ -786,8 +803,9 @@ $owner_guard$;
 do $postflight$
 declare
   item record; obj oid; signature text; owner_oid oid; common_owner oid; actual_body_hash text; actual_roles text[]; actual_def text;
-  constraint_oid oid; actual_kind "char"; actual_hash text;
+  constraint_oid oid; relation_oid oid; table_oid oid; actual_kind "char"; actual_hash text;
   actual_volatility "char"; actual_return text; actual_retset boolean; index_exact boolean;
+  actual_language text; actual_prokind "char"; actual_security_definer boolean; actual_proconfig text[];
 begin
   select relowner into common_owner from pg_catalog.pg_class where oid='app_private.flight_search_selections'::pg_catalog.regclass;
   if common_owner is distinct from (select relowner from pg_catalog.pg_class where oid='app_private.flight_priced_selections'::pg_catalog.regclass) then raise exception 'table owner drift'; end if;
@@ -816,12 +834,13 @@ begin
     ('app_private.flight_priced_selections','flight_priced_selections_passenger_composition_check','c','f105ad85612be3e29b0190bccf4aae7d377da156702475372d8bb1cbd4576dc2'),
     ('app_private.flight_priced_selections','flight_priced_selections_validity_check','c','ca080a4fca12635bde3cf110b81f65e8689ef1563489ae7287e329d391af6ad7')
   ) as expected(table_name,name,kind,definition_hash) loop
+    relation_oid:=pg_catalog.to_regclass(item.table_name);
     select c.oid,c.contype,
       pg_catalog.encode(extensions.digest(pg_catalog.convert_to(pg_catalog.pg_get_constraintdef(c.oid,false),'UTF8'),'sha256'),'hex'),
       pg_catalog.obj_description(c.oid,'pg_constraint')
       into constraint_oid,actual_kind,actual_hash,signature
       from pg_catalog.pg_constraint c
-      where c.conrelid=item.table_name::pg_catalog.regclass and c.conname=item.name;
+      where c.conrelid=relation_oid and c.conname=item.name;
     if constraint_oid is null or actual_kind::text is distinct from item.kind
        or actual_hash is distinct from item.definition_hash
        or signature is distinct from 'hajiz:flight-selection-durability:constraint:'||item.name||':v1' then
@@ -833,8 +852,9 @@ begin
     ('app_private.flight_priced_selections_expires_idx','app_private.flight_priced_selections','hajiz:flight-selection-durability:priced-expiry-index:v1')
   ) as expected(name,table_name,canonical_signature) loop
     obj:=pg_catalog.to_regclass(item.name);
+    table_oid:=pg_catalog.to_regclass(item.table_name);
     select pg_catalog.obj_description(i.indexrelid,'pg_class'),
-      i.indrelid=item.table_name::pg_catalog.regclass
+      i.indrelid=table_oid
       and i.indisvalid and i.indisready and i.indislive
       and not i.indisunique and not i.indisprimary and not i.indisreplident
       and not i.indnullsnotdistinct
@@ -858,33 +878,42 @@ begin
     ('app_private.flight_search_selections','flight_search_selections_direct_access_denied','hajiz:flight-selection-durability:search-deny-policy:v1'),
     ('app_private.flight_priced_selections','flight_priced_selections_direct_access_denied','hajiz:flight-selection-durability:priced-deny-policy:v1')
   ) as expected(table_name,name,canonical_signature) loop
+    table_oid:=pg_catalog.to_regclass(item.table_name);
     select pg_catalog.obj_description(p.oid,'pg_policy'),array(select r.rolname from pg_catalog.unnest(p.polroles) x(role_oid) join pg_catalog.pg_roles r on r.oid=x.role_oid order by r.rolname),pg_catalog.pg_get_expr(p.polqual,p.polrelid)||':'||pg_catalog.pg_get_expr(p.polwithcheck,p.polrelid)
-      into signature,actual_roles,actual_def from pg_catalog.pg_policy p where p.polrelid=item.table_name::pg_catalog.regclass and p.polname=item.name and p.polcmd='*' and p.polpermissive;
+      into signature,actual_roles,actual_def from pg_catalog.pg_policy p where p.polrelid=table_oid and p.polname=item.name and p.polcmd='*' and p.polpermissive;
     if signature is distinct from item.canonical_signature or actual_roles is distinct from array['anon','authenticated']::text[] or pg_catalog.regexp_replace(actual_def,'[()[:space:]]','','g')<>'false:false' then raise exception 'deny policy % drift',item.name; end if;
   end loop;
   for item in select * from (values
-    ('public.remember_flight_search_selections_v1(jsonb)','hajiz:flight-selection-durability:remember-search-rpc:v1','66db8708fdd0f890d085a06e405dac9cb7722647b274aef8d3703e5fd9cfb42a','v','TABLE(alternative_id text, replayed boolean)'),
-    ('public.get_flight_search_selection_v1(text)','hajiz:flight-selection-durability:get-search-rpc:v1','1cfb9d4fac9c497e45ebe4913dc4176cfe0514b39b5a4f0fe2f2dbdd8cf614d0','s','TABLE(alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, itinerary_snapshot jsonb, fare_snapshot jsonb, previous_customer_price_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)'),
-    ('public.create_or_get_flight_priced_selection_v1(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz)','hajiz:flight-selection-durability:create-priced-rpc:v1','282c1249556a54a1c7fc762938e6898c6d448d124a0b485c2c29deebafe9d842','v','TABLE(priced_selection_id text, replayed boolean)'),
-    ('public.get_flight_priced_selection_v1(text)','hajiz:flight-selection-durability:get-priced-rpc:v1','1b0f98407d1975fd650a93b6f02dd7112da417b33d461eb2bd4278db99ba0c01','s','TABLE(priced_selection_id text, alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, customer_price_snapshot jsonb, itinerary_snapshot jsonb, fare_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)')
+    ('public.remember_flight_search_selections_v1(jsonb)','hajiz:flight-selection-durability:remember-search-rpc:v1','5ce16e3b0a1978a29117fe3b60942c947bc02f828d176f7dad0deaa886c0bf2e','v','TABLE(alternative_id text, replayed boolean)'),
+    ('public.get_flight_search_selection_v1(text)','hajiz:flight-selection-durability:get-search-rpc:v1','590424781780b1c02a41650b43b2f07d6914b89b649b28c40a6525a09f176325','s','TABLE(alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, itinerary_snapshot jsonb, fare_snapshot jsonb, previous_customer_price_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)'),
+    ('public.create_or_get_flight_priced_selection_v1(text,text,text,text,text,jsonb,jsonb,jsonb,jsonb,timestamptz)','hajiz:flight-selection-durability:create-priced-rpc:v1','1dd689399db967ae48a4f5a57eb9ade4394832698abe9ab4f44b8321b1877a09','v','TABLE(priced_selection_id text, replayed boolean)'),
+    ('public.get_flight_priced_selection_v1(text)','hajiz:flight-selection-durability:get-priced-rpc:v1','73bd415cb8ecc333a31ab21355355ace8357ebcf4bdc8b7a73efaea1397d3960','s','TABLE(priced_selection_id text, alternative_id text, internal_offer_id text, provider text, provider_offer_ref text, customer_price_snapshot jsonb, itinerary_snapshot jsonb, fare_snapshot jsonb, passenger_composition jsonb, expires_at timestamp with time zone, payload_digest text)')
   ) as expected(name,canonical_signature,body_hash,volatility,result_contract) loop
     obj:=pg_catalog.to_regprocedure(item.name);
+    if obj is null then
+      raise exception 'canonical RPC % is missing',item.name;
+    end if;
     select p.proowner,pg_catalog.obj_description(p.oid,'pg_proc'),
       pg_catalog.encode(extensions.digest(pg_catalog.convert_to(p.prosrc,'UTF8'),'sha256'),'hex'),
-      p.provolatile,pg_catalog.pg_get_function_result(p.oid),p.proretset
-      into owner_oid,signature,actual_body_hash,actual_volatility,actual_return,actual_retset
+      p.provolatile,pg_catalog.pg_get_function_result(p.oid),p.proretset,
+      l.lanname,p.prokind,p.prosecdef,p.proconfig
+      into owner_oid,signature,actual_body_hash,actual_volatility,actual_return,actual_retset,
+        actual_language,actual_prokind,actual_security_definer,actual_proconfig
       from pg_catalog.pg_proc p join pg_catalog.pg_language l on l.oid=p.prolang
-      where p.oid=obj and l.lanname='plpgsql' and p.prokind='f' and p.prosecdef
-        and p.proconfig=array['search_path=']::text[];
+      where p.oid=obj;
     if owner_oid is distinct from common_owner or signature is distinct from item.canonical_signature
        or actual_body_hash is distinct from item.body_hash
        or actual_volatility::text is distinct from item.volatility
        or actual_return is distinct from item.result_contract
-       or actual_retset is distinct from true then
+       or actual_retset is distinct from true
+       or actual_language is distinct from 'plpgsql'
+       or actual_prokind::text is distinct from 'f'
+       or actual_security_definer is distinct from true
+       or actual_proconfig is distinct from array['search_path=""']::text[] then
       raise exception 'RPC % catalog/body metadata drift',item.name;
     end if;
   end loop;
-  if exists(select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(pg_catalog.coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) a where c.oid='app_private.flight_search_selections'::pg_catalog.regclass and a.grantee=0 and a.privilege_type in ('SELECT','INSERT','UPDATE','DELETE')) or pg_catalog.has_table_privilege('anon','app_private.flight_search_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('authenticated','app_private.flight_search_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('service_role','app_private.flight_search_selections','SELECT,INSERT,UPDATE,DELETE') then raise exception 'search table direct privilege drift'; end if;
-  if exists(select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(pg_catalog.coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) a where c.oid='app_private.flight_priced_selections'::pg_catalog.regclass and a.grantee=0 and a.privilege_type in ('SELECT','INSERT','UPDATE','DELETE')) or pg_catalog.has_table_privilege('anon','app_private.flight_priced_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('authenticated','app_private.flight_priced_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('service_role','app_private.flight_priced_selections','SELECT,INSERT,UPDATE,DELETE') then raise exception 'priced table direct privilege drift'; end if;
+  if exists(select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) a where c.oid='app_private.flight_search_selections'::pg_catalog.regclass and a.grantee=0 and a.privilege_type in ('SELECT','INSERT','UPDATE','DELETE')) or pg_catalog.has_table_privilege('anon','app_private.flight_search_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('authenticated','app_private.flight_search_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('service_role','app_private.flight_search_selections','SELECT,INSERT,UPDATE,DELETE') then raise exception 'search table direct privilege drift'; end if;
+  if exists(select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(coalesce(c.relacl,pg_catalog.acldefault('r',c.relowner))) a where c.oid='app_private.flight_priced_selections'::pg_catalog.regclass and a.grantee=0 and a.privilege_type in ('SELECT','INSERT','UPDATE','DELETE')) or pg_catalog.has_table_privilege('anon','app_private.flight_priced_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('authenticated','app_private.flight_priced_selections','SELECT,INSERT,UPDATE,DELETE') or pg_catalog.has_table_privilege('service_role','app_private.flight_priced_selections','SELECT,INSERT,UPDATE,DELETE') then raise exception 'priced table direct privilege drift'; end if;
 end
 $postflight$;
