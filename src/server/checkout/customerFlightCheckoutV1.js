@@ -11,10 +11,10 @@ const unavailable = (now) => Object.freeze({ contractVersion: CUSTOMER_FLIGHT_CH
 
 export function createCustomerFlightCheckoutServiceV1({ repriceService, supplierRegistry, pricingPolicy, fxSnapshotsByPair, clock = Date.now }) {
   if (!repriceService?.resolvePricedSelection || !repriceService?.issueReplacementPricedSelection || !supplierRegistry?.getByServerProviderName || typeof clock !== "function") throw new TypeError("trusted checkout dependencies are required")
-  const resolve = (token) => { try { return repriceService.resolvePricedSelection(token) } catch (error) { if (error instanceof FlightRepriceServiceError) throw new FlightCheckoutError("CHECKOUT_SELECTION_EXPIRED"); throw error } }
+  const resolve = async (token) => { try { return await repriceService.resolvePricedSelection(token) } catch (error) { if (error instanceof FlightRepriceServiceError && error.code === "PRICED_SELECTION_EXPIRED") throw new FlightCheckoutError("CHECKOUT_SELECTION_EXPIRED"); if (error instanceof FlightRepriceServiceError) throw new FlightCheckoutError("CHECKOUT_UNAVAILABLE"); throw error } }
   return Object.freeze({
     async prepare({ pricedSelectionId }, { signal } = {}) {
-      const selected = resolve(pricedSelectionId)
+      const selected = await resolve(pricedSelectionId)
       let adapter
       try { adapter = supplierRegistry.getByServerProviderName(selected.provider); requireCapability(adapter, "reprice") } catch { throw new FlightCheckoutError("REPRICE_UNAVAILABLE") }
       let offer
@@ -28,12 +28,12 @@ export function createCustomerFlightCheckoutServiceV1({ repriceService, supplier
       const changed = current.amount !== selected.customerPrice.amount
       let currentPricedSelectionId = pricedSelectionId
       if (changed) {
-        try { currentPricedSelectionId = repriceService.issueReplacementPricedSelection({ pricedSelectionId, currentOffer: offer, currentCustomerPrice: authoritativeCustomerPrice }) } catch { throw new FlightCheckoutError("REPRICE_UNAVAILABLE") }
+        try { currentPricedSelectionId = await repriceService.issueReplacementPricedSelection({ pricedSelectionId, currentOffer: offer, currentCustomerPrice: authoritativeCustomerPrice }) } catch { throw new FlightCheckoutError("REPRICE_UNAVAILABLE") }
       }
       return Object.freeze({ contractVersion: CUSTOMER_FLIGHT_CHECKOUT_VERSION, checkoutStatus: changed ? "PRICE_CHANGED" : "READY", pricedSelectionId: currentPricedSelectionId, itinerary: selected.itinerary, fare: selected.fare, previousCustomerPrice: selected.customerPrice, currentCustomerPrice: current, expectedPassengers: selected.passengerComposition, revalidatedAt: now, validUntil: changed ? current.validUntil : [selected.expiresAt, current.validUntil].sort()[0] })
     },
-    validateTravelers({ pricedSelectionId, travelerData }) {
-      const selected = resolve(pricedSelectionId)
+    async validateTravelers({ pricedSelectionId, travelerData }) {
+      const selected = await resolve(pricedSelectionId)
       validateFlightTravelersV1(travelerData, { expectedComposition: selected.passengerComposition, today: new Date(clock()).toISOString().slice(0, 10) })
       return Object.freeze({ contractVersion: "customer-flight-travelers-validation/v1", status: "VALID", travelerCount: selected.passengerComposition.ADT + selected.passengerComposition.CHD + selected.passengerComposition.INF })
     },

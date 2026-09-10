@@ -7,7 +7,8 @@ import { createMockFlightSupplier } from "../src/server/suppliers/mockFlightSupp
 import { createSupplierRegistry } from "../src/server/suppliers/supplierRegistry.js"
 import { createFxSnapshotV1, createPricingPolicyV1 } from "../src/server/pricing/pricingFxV1.js"
 import { createProcessLocalFlightSelectionResolverV1 } from "../src/server/search/flightSelectionResolverV1.js"
-import { createCustomerFlightRepriceServiceV1 } from "../src/server/search/customerFlightRepriceV1.js"
+import { createCustomerFlightRepriceServiceV1 as createRawCustomerFlightRepriceServiceV1 } from "../src/server/search/customerFlightRepriceV1.js"
+import { createProcessLocalFlightPricedSelectionStoreV1 } from "../src/server/search/flightPricedSelectionStoreV1.js"
 import { createCustomerFlightCheckoutServiceV1 } from "../src/server/checkout/customerFlightCheckoutV1.js"
 import { createFlightBookingIntentServiceV1 } from "../src/server/bookings/flightBookingIntentV1.js"
 import { createProcessLocalFlightBookingIntentStoreV1, FlightBookingIntentStoreError } from "../src/server/bookings/flightBookingIntentStoreV1.js"
@@ -18,8 +19,9 @@ import { createFlightBookingIntentCoordinatorV1 } from "../src/features/flights/
 const vite = await createServer({ server: { middlewareMode: true }, appType: "custom", logLevel: "silent" })
 const { BookingIntentPanel } = await vite.ssrLoadModule("/src/features/flights/FlightsPage.jsx")
 let passed = 0
+const createCustomerFlightRepriceServiceV1 = (options) => createRawCustomerFlightRepriceServiceV1({ ...options, pricedSelectionStore: options.pricedSelectionStore ?? createProcessLocalFlightPricedSelectionStoreV1({ clock: options.clock }) })
 const test = async (name, fn) => { await fn(); passed += 1; process.stdout.write(`✓ ${name}\n`) }
-const NOW = "2026-09-15T02:00:00.000Z"; const NOW_MS = Date.parse(NOW); const ALT = "hca_v2_b11_selection"; const OWNER = "11111111-1111-4111-8111-111111111111"; const OTHER_OWNER = "22222222-2222-4222-8222-222222222222"
+const NOW = "2026-09-15T02:00:00.000Z"; const NOW_MS = Date.parse(NOW); const ALT = `hca_v2_${"c".repeat(32)}`; const OWNER = "11111111-1111-4111-8111-111111111111"; const OTHER_OWNER = "22222222-2222-4222-8222-222222222222"
 const mock = createMockFlightSupplier(); const searchRequest = { tripType: "one_way", origin: "DXB", destination: "KRT", departureDate: "2026-09-15", returnDate: null, adults: 2, children: 1, infants: 0, cabinClass: "economy", customerCurrency: "AED" }; const offer = (await mock.searchFlights(searchRequest))[0]
 const itinerary = Object.freeze({ marketingCarrierName: offer.itinerary.marketingCarrierName, origin: offer.itinerary.origin, destination: offer.itinerary.destination, departureAt: offer.itinerary.departureAt, arrivalAt: offer.itinerary.arrivalAt, durationMinutes: offer.itinerary.durationMinutes, stops: offer.itinerary.stops, segments: Object.freeze(offer.itinerary.segments.map(({ marketingCarrier, flightNumber, origin, destination, departureAt, arrivalAt, cabin }) => Object.freeze({ marketingCarrier, flightNumber, origin, destination, departureAt, arrivalAt, cabin }))) })
 const fare = Object.freeze({ fareBrand: null, cabin: offer.fare.cabin, baggage: offer.fare.baggage, changeability: offer.fare.changeability, refundability: offer.fare.refundability })

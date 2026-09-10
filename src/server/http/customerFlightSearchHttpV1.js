@@ -93,8 +93,8 @@ export function createCustomerFlightSearchHttpHandlerV1({
       const ranked = rankPricedGroupedFlightSearchV1(priced, { rankingPolicy, now: requestNow })
       const resolutionEntries = []
       const customer = toCustomerFlightSearchV1(ranked, { customerCurrency: publicRequest.customerCurrency, now: requestNow, selectionContext: publicRequest, collectResolutionEntry: selectionResolver ? (entry) => resolutionEntries.push(entry) : undefined })
-      if (selectionResolver) selectionResolver.rememberSearch(resolutionEntries)
       if (customer.searchStatus === "UNAVAILABLE") return errorResponse(503, "SEARCH_UNAVAILABLE", "Flight search is temporarily unavailable.")
+      if (selectionResolver && resolutionEntries.length > 0) await selectionResolver.rememberSearch(resolutionEntries)
       return response(200, { contractVersion: CUSTOMER_FLIGHT_SEARCH_HTTP_VERSION, data: customer })
     } catch (error) {
       if (error instanceof FlightSearchTimeoutError || error?.code === "FLIGHT_SEARCH_TIMEOUT") return errorResponse(504, "REQUEST_TIMEOUT", "Flight search timed out.")

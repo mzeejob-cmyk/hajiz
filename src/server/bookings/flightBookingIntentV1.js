@@ -42,7 +42,7 @@ export function createFlightBookingIntentServiceV1({ checkoutService, repriceSer
       if (prepared.checkoutStatus === "UNAVAILABLE") return baseResult("UNAVAILABLE", prepared)
       if (prepared.checkoutStatus !== "READY") throw new FlightBookingIntentError("BOOKING_INTENT_UNAVAILABLE")
 
-      const selected = repriceService.resolvePricedSelection(prepared.pricedSelectionId)
+      const selected = await repriceService.resolvePricedSelection(prepared.pricedSelectionId)
       if (selected.customerPrice.amount !== prepared.currentCustomerPrice.amount || selected.customerPrice.currency !== prepared.currentCustomerPrice.currency || selected.customerPrice.validUntil !== prepared.currentCustomerPrice.validUntil) throw new FlightBookingIntentError("REVALIDATION_REQUIRED")
       const normalized = validateFlightTravelersV1(travelerData, { expectedComposition: selected.passengerComposition, today: new Date(clock()).toISOString().slice(0, 10) })
       const pricedSelectionDigest = digest(prepared.pricedSelectionId)
