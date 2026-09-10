@@ -61,6 +61,7 @@ export function createSupabaseFlightPricedSelectionStoreV1({ client, clock = Dat
       if (result?.error) throw mapError(result.error)
       if (!Array.isArray(result?.data) || result.data.length !== 1 || !hasExactKeys(result.data[0], PRICED_ROW_KEYS)) throw classified("PERSISTENCE_UNAVAILABLE")
       const row = result.data[0]
+      if (row.priced_selection_id !== pricedSelectionId) throw classified("PERSISTENCE_UNAVAILABLE")
       if (!isPayloadDigest(row.payload_digest)) throw classified("PERSISTENCE_UNAVAILABLE")
       let record
       try { record = normalizePricedSelectionRecord({ pricedSelectionId: row.priced_selection_id, alternativeId: row.alternative_id, internalOfferId: row.internal_offer_id, provider: row.provider, providerOfferRef: row.provider_offer_ref, customerPrice: row.customer_price_snapshot, itinerary: row.itinerary_snapshot, fare: row.fare_snapshot, passengerComposition: row.passenger_composition, expiresAt: row.expires_at }) } catch { throw classified("PERSISTENCE_UNAVAILABLE") }

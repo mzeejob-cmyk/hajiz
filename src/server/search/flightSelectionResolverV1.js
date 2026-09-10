@@ -89,6 +89,7 @@ export function createSupabaseFlightSelectionResolverV1({ client, clock = Date.n
       }
       if (!Array.isArray(result?.data) || result.data.length !== 1 || !hasExactKeys(result.data[0], SEARCH_ROW_KEYS)) throw persistenceError("PERSISTENCE_UNAVAILABLE")
       const row = result.data[0]
+      if (row.alternative_id !== alternativeId) throw persistenceError("PERSISTENCE_UNAVAILABLE")
       if (!isPayloadDigest(row.payload_digest)) throw persistenceError("PERSISTENCE_UNAVAILABLE")
       try {
         if (!isAlternativeId(row.alternative_id)) throw new TypeError("invalid alternative")
