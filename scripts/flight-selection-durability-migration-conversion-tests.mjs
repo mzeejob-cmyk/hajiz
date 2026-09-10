@@ -216,6 +216,23 @@ await test("explicit RPC metadata contract remains intact", () => { has(sql, /ac
 await test("quoted empty search path contract remains intact", () => count(sql, /actual_proconfig is distinct from array\['search_path=""'\]::text\[\]/g, 2))
 await test("dynamic regclass remains eliminated", () => lacks(sql, /item\.table_name::(?:pg_catalog\.)?regclass/))
 
+// PostgreSQL 17.6 internal "char" catalog replay remediation.
+await test("unsafe constraint type concatenation absent", () => lacks(sql, /c\.conname\s*\|\|\s*':'\s*\|\|\s*c\.contype(?!::text)/))
+await test("constraint type explicitly cast to text", () => has(sql, /c\.conname\|\|':'\|\|c\.contype::text/))
+await test("constraint-set aggregation remains ordered", () => has(sql, /array_agg\(c\.conname\|\|':'\|\|c\.contype::text order by c\.conname\)/))
+await test("Search expected constraint set unchanged", () => has(sql, /actual_constraints is distinct from array\['flight_search_selections_alternative_id_check:c'[\s\S]*?'flight_search_selections_validity_check:c'\]::text\[\]/))
+await test("Priced expected constraint set unchanged", () => has(sql, /actual_constraints is distinct from array\['flight_priced_selections_alternative_id_check:c'[\s\S]*?'flight_priced_selections_validity_check:c'\]::text\[\]/))
+await test("all RPC bodies remain byte-identical for replay cast", () => assert.deepEqual(functionBodies(sql), functionBodies(baseMigration)))
+await test("all four RPC hashes remain byte-identical for replay cast", () => { for (const hash of canonicalRpcHashes) assert.equal(sql.split(hash).length - 1, 2) })
+await test("all constraint fingerprints remain byte-identical for replay cast", () => {
+  const fingerprints = (source) => [...source.matchAll(/\('app_private\.flight_(?:search|priced)_selections','flight_[^']+','[cp]','([0-9a-f]{64})'\)/g)].map((match) => match[1])
+  assert.deepEqual(fingerprints(sql), fingerprints(baseMigration))
+})
+await test("relkind is stored as internal char and compared safely", () => { has(sql, /actual_kind "char"/); has(sql, /actual_kind::text is distinct from item\.kind/) })
+await test("prokind remains explicitly converted", () => has(sql, /actual_prokind::text is distinct from 'f'/))
+await test("provolatile remains explicitly converted", () => has(sql, /actual_volatility::text is distinct from item\.volatility/))
+await test("no internal char catalog field is concatenated unsafely", () => lacks(sql, /\|\|\s*(?:c\.contype|c\.relkind|p\.prokind|p\.provolatile)(?!::text)/))
+
 // Exact constraint and index catalog guards.
 const constraintPreflight = sql.match(/do \$exact_constraints_preflight\$[\s\S]*?\$exact_constraints_preflight\$;/)?.[0] ?? ""
 const constraintRows = [...constraintPreflight.matchAll(/\('app_private\.(flight_(?:search|priced)_selections)','(flight_[^']+)','([cp])','([0-9a-f]{64})'\)/g)]

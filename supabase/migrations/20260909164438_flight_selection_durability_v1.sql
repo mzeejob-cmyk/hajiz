@@ -28,7 +28,7 @@ begin
       select pg_catalog.array_agg(pg_catalog.format('%s:%s:%s:%s',a.attname,pg_catalog.format_type(a.atttypid,a.atttypmod),case when a.attnotnull then 'true' else 'false' end,coalesce(pg_catalog.pg_get_expr(d.adbin,d.adrelid,false),'<NO_DEFAULT>')) order by a.attnum)
         into actual_columns from pg_catalog.pg_attribute a left join pg_catalog.pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
         where a.attrelid=relation and a.attnum>0 and not a.attisdropped;
-      select pg_catalog.array_agg(c.conname||':'||c.contype order by c.conname) into actual_constraints from pg_catalog.pg_constraint c where c.conrelid=relation;
+      select pg_catalog.array_agg(c.conname||':'||c.contype::text order by c.conname) into actual_constraints from pg_catalog.pg_constraint c where c.conrelid=relation;
       if relation_owner is distinct from current_owner or relation_kind<>'r' or signature is distinct from item.canonical_signature
          or actual_columns is distinct from item.columns or not rls_enabled or force_rls then
         raise exception 'flight selection table % has non-canonical catalog structure',item.name;
