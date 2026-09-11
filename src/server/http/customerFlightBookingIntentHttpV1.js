@@ -21,6 +21,7 @@ export function validateCustomerFlightBookingIntentRequestV1(input) {
 
 const response = (status, body) => Object.freeze({ status, headers: Object.freeze({ "content-type": "application/json; charset=utf-8" }), body: Object.freeze(body) })
 const error = (status, code, message) => response(status, { contractVersion: CUSTOMER_FLIGHT_BOOKING_INTENT_HTTP_ERROR_VERSION, error: Object.freeze({ code, message }) })
+const authVerificationUnavailable = (failure) => failure?.name === "FlightOwnerContextResolverError" && failure?.code === "AUTH_VERIFICATION_UNAVAILABLE"
 
 export function createCustomerFlightBookingIntentHttpHandlerV1({ service, resolveOwnerContext }) {
   if (!service?.create || typeof resolveOwnerContext !== "function") throw new TypeError("trusted booking intent HTTP dependencies are required")
@@ -29,7 +30,10 @@ export function createCustomerFlightBookingIntentHttpHandlerV1({ service, resolv
     let input
     try { input = validateCustomerFlightBookingIntentRequestV1(request.body) } catch { return error(400, "VALIDATION_ERROR", "Invalid booking intent request.") }
     let ownerContext
-    try { ownerContext = await resolveOwnerContext(request) } catch { return error(401, "AUTH_REQUIRED", "Authentication is required.") }
+    try { ownerContext = await resolveOwnerContext(request) } catch (failure) {
+      if (authVerificationUnavailable(failure)) return error(503, "INTERNAL_ERROR", "Authentication service is temporarily unavailable.")
+      return error(500, "INTERNAL_ERROR", "Booking intent creation failed.")
+    }
     if (!ownerContext) return error(401, "AUTH_REQUIRED", "Authentication is required.")
     try {
       const data = await service.create({ ...input, ownerContext }, { signal: request.signal })

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict"
 import { readFile } from "node:fs/promises"
 import { createMockFlightSupplier } from "../src/server/suppliers/mockFlightSupplier.js"
+import { createCustomerFlightBookingIntentHttpHandlerV1 } from "../src/server/http/customerFlightBookingIntentHttpV1.js"
+import { createCustomerFlightPaymentInitiationHttpHandlerV1 } from "../src/server/http/customerFlightPaymentInitiationHttpV1.js"
 import {
   FLIGHT_HTTP_HOST_PATHS,
   FLIGHT_HTTP_MAX_BODY_BYTES,
@@ -12,6 +14,7 @@ import {
   createFlightDurabilityAdapterPairV1,
   createHajizFlightServerCompositionV1,
   createSupabaseFlightOwnerContextResolverV1,
+  FlightOwnerContextResolverError,
   readFlightServerEnvironmentV1,
 } from "../src/server/host/flightServerCompositionV1.js"
 
@@ -108,7 +111,31 @@ test("secret never appears in public failure", async () => { const custom = { ..
 
 test("owner resolver verifies bearer through Supabase Auth", async () => { let token; const resolve = createSupabaseFlightOwnerContextResolverV1({ client: { auth: { async getUser(value) { token = value; return { data: { user: { id: "11111111-1111-4111-8111-111111111111" } }, error: null } } } } }); assert.deepEqual(await resolve({ headers: { authorization: "Bearer verified-user-token" } }), { ownerId: "11111111-1111-4111-8111-111111111111", source: "authenticated" }); assert.equal(token, "verified-user-token") })
 test("owner resolver rejects missing token", async () => { const resolve = createSupabaseFlightOwnerContextResolverV1({ client: { auth: { async getUser() { assert.fail("must not run") } } } }); assert.equal(await resolve({ headers: {} }), null) })
-test("owner resolver rejects Auth failure", async () => { const resolve = createSupabaseFlightOwnerContextResolverV1({ client: { auth: { async getUser() { return { data: {}, error: {} } } } } }); assert.equal(await resolve({ headers: { authorization: "Bearer rejected" } }), null) })
+test("owner resolver rejects malformed bearer without Auth call", async () => { const resolve = createSupabaseFlightOwnerContextResolverV1({ client: { auth: { async getUser() { assert.fail("must not run") } } } }); assert.equal(await resolve({ headers: { authorization: "Basic rejected" } }), null) })
+test("owner resolver maps Auth 401 to invalid token", async () => { const resolve = createSupabaseFlightOwnerContextResolverV1({ client: { auth: { async getUser() { return { data: { user: null }, error: { status: 401 } } } } } }); assert.equal(await resolve({ headers: { authorization: "Bearer rejected" } }), null) })
+test("owner resolver maps Auth 403 to invalid token", async () => { const resolve = createSupabaseFlightOwnerContextResolverV1({ client: { auth: { async getUser() { return { data: { user: null }, error: { status: 403 } } } } } }); assert.equal(await resolve({ headers: { authorization: "Bearer forbidden" } }), null) })
+test("owner resolver classifies Auth network exception as unavailable", async () => { const resolve = createSupabaseFlightOwnerContextResolverV1({ client: { auth: { async getUser() { throw new TypeError("fetch failed with token") } } } }); await assert.rejects(() => resolve({ headers: { authorization: "Bearer private-token" } }), failure => failure instanceof FlightOwnerContextResolverError && failure.code === "AUTH_VERIFICATION_UNAVAILABLE") })
+test("owner resolver classifies Auth 5xx as unavailable", async () => { const resolve = createSupabaseFlightOwnerContextResolverV1({ client: { auth: { async getUser() { return { data: { user: null }, error: { status: 503 } } } } } }); await assert.rejects(() => resolve({ headers: { authorization: "Bearer private-token" } }), failure => failure instanceof FlightOwnerContextResolverError && failure.code === "AUTH_VERIFICATION_UNAVAILABLE") })
+test("owner resolver classifies malformed success as unavailable", async () => { const resolve = createSupabaseFlightOwnerContextResolverV1({ client: { auth: { async getUser() { return { data: { user: { id: "not-a-uuid" } }, error: null } } } } }); await assert.rejects(() => resolve({ headers: { authorization: "Bearer private-token" } }), failure => failure instanceof FlightOwnerContextResolverError && failure.code === "AUTH_VERIFICATION_UNAVAILABLE") })
+
+const bookingAuthRequest = Object.freeze({
+  method: "POST",
+  body: Object.freeze({ contractVersion: "flight-booking-intent-request/v1", pricedSelectionId: `hpr_v1_${"a".repeat(40)}`, idempotencyKey: "hbi_req_auth_test_000001", travelers: Object.freeze([]), bookingContact: Object.freeze({}) }),
+})
+const paymentAuthRequest = Object.freeze({
+  method: "POST",
+  body: Object.freeze({ contractVersion: "flight-payment-initiation-request/v1", bookingIntentId: `hbi_v1_${"b".repeat(32)}`, paymentMethod: "bankak", idempotencyKey: "hpi_req_auth_test_000001" }),
+})
+const neverBookingService = Object.freeze({ async create() { assert.fail("booking service must not run") } })
+const neverPaymentService = Object.freeze({ async initiate() { assert.fail("payment service must not run") } })
+const publicAuthFailureIsSafe = value => !/AUTH_VERIFICATION_UNAVAILABLE|Supabase|private-token|stack/i.test(JSON.stringify(value))
+
+test("Booking Intent maps null owner to 401 AUTH_REQUIRED", async () => { const handler = createCustomerFlightBookingIntentHttpHandlerV1({ service: neverBookingService, resolveOwnerContext: async () => null }); const value = await handler(bookingAuthRequest); assert.equal(value.status, 401); assert.equal(value.body.error.code, "AUTH_REQUIRED") })
+test("Booking Intent maps Auth verifier unavailable to safe 503", async () => { const handler = createCustomerFlightBookingIntentHttpHandlerV1({ service: neverBookingService, resolveOwnerContext: async () => { throw new FlightOwnerContextResolverError() } }); const value = await handler(bookingAuthRequest); assert.equal(value.status, 503); assert.equal(value.body.error.code, "INTERNAL_ERROR"); assert.equal(value.body.error.message, "Authentication service is temporarily unavailable."); assert.equal(publicAuthFailureIsSafe(value), true) })
+test("Booking Intent maps unknown resolver exception to safe 500", async () => { const handler = createCustomerFlightBookingIntentHttpHandlerV1({ service: neverBookingService, resolveOwnerContext: async () => { throw new Error("Supabase private-token stack") } }); const value = await handler(bookingAuthRequest); assert.equal(value.status, 500); assert.equal(value.body.error.code, "INTERNAL_ERROR"); assert.equal(publicAuthFailureIsSafe(value), true) })
+test("Payment Initiation maps null owner to 401 AUTH_REQUIRED", async () => { const handler = createCustomerFlightPaymentInitiationHttpHandlerV1({ service: neverPaymentService, resolveOwnerContext: async () => null }); const value = await handler(paymentAuthRequest); assert.equal(value.status, 401); assert.equal(value.body.error.code, "AUTH_REQUIRED") })
+test("Payment Initiation maps Auth verifier unavailable to safe 503", async () => { const handler = createCustomerFlightPaymentInitiationHttpHandlerV1({ service: neverPaymentService, resolveOwnerContext: async () => { throw new FlightOwnerContextResolverError() } }); const value = await handler(paymentAuthRequest); assert.equal(value.status, 503); assert.equal(value.body.error.code, "INTERNAL_ERROR"); assert.equal(value.body.error.message, "Authentication service is temporarily unavailable."); assert.equal(publicAuthFailureIsSafe(value), true) })
+test("Payment Initiation maps unknown resolver exception to safe 500", async () => { const handler = createCustomerFlightPaymentInitiationHttpHandlerV1({ service: neverPaymentService, resolveOwnerContext: async () => { throw new Error("Supabase private-token stack") } }); const value = await handler(paymentAuthRequest); assert.equal(value.status, 500); assert.equal(value.body.error.code, "INTERNAL_ERROR"); assert.equal(publicAuthFailureIsSafe(value), true) })
 
 const validEnv = () => ({
   NODE_ENV: "test",

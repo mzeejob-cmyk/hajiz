@@ -17,10 +17,19 @@ import { createSupplierRegistry } from "../suppliers/supplierRegistry.js"
 import { createBoundedInMemoryFlightAdmissionV1, createHajizFlightHttpHostV1, parseFlightAllowedOriginsV1 } from "./flightHttpHostV1.js"
 
 export const FLIGHT_SERVER_COMPOSITION_VERSION = "flight-server-composition/v1"
+export const FLIGHT_AUTH_VERIFICATION_UNAVAILABLE = "AUTH_VERIFICATION_UNAVAILABLE"
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 const required = (condition, code) => { if (!condition) throw new Error(code) }
 const header = (headers, name) => headers instanceof Headers ? headers.get(name) : headers?.[name.toLowerCase()] ?? headers?.[name]
+
+export class FlightOwnerContextResolverError extends Error {
+  constructor(code = FLIGHT_AUTH_VERIFICATION_UNAVAILABLE) {
+    super(code)
+    this.name = "FlightOwnerContextResolverError"
+    this.code = code
+  }
+}
 
 export function readFlightServerEnvironmentV1(env = process.env) {
   required(env?.HAJIZ_FLIGHT_HOST_ENABLED === "true", "FLIGHT_HOST_NOT_ENABLED")
@@ -41,9 +50,14 @@ export function createSupabaseFlightOwnerContextResolverV1({ client }) {
     const authorization = header(request?.headers, "authorization")
     if (typeof authorization !== "string" || !/^Bearer \S+$/.test(authorization)) return null
     let result
-    try { result = await client.auth.getUser(authorization.slice(7)) } catch { return null }
+    try { result = await client.auth.getUser(authorization.slice(7)) } catch { throw new FlightOwnerContextResolverError() }
+    if (!result || typeof result !== "object" || Array.isArray(result)) throw new FlightOwnerContextResolverError()
+    if (result.error) {
+      if ([401, 403].includes(result.error.status)) return null
+      throw new FlightOwnerContextResolverError()
+    }
     const ownerId = result?.data?.user?.id
-    if (result?.error || !uuid.test(ownerId)) return null
+    if (!uuid.test(ownerId)) throw new FlightOwnerContextResolverError()
     return Object.freeze({ ownerId, source: "authenticated" })
   }
 }
