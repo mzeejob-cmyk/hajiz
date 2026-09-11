@@ -17,7 +17,7 @@ export function createCustomerFlightCheckoutHttpHandlerV1({ service }) {
     try { return response(200, { contractVersion: CUSTOMER_FLIGHT_CHECKOUT_HTTP_VERSION, data: await service.prepare(body, { signal: request.signal }) }) } catch (failure) {
       if (failure instanceof FlightCheckoutError && failure.code === "CHECKOUT_SELECTION_EXPIRED") return error(410, "CHECKOUT_SELECTION_EXPIRED", "The repriced selection has expired.")
       if (failure instanceof FlightCheckoutError && failure.code === "REQUEST_TIMEOUT") return error(504, "REQUEST_TIMEOUT", "Checkout preparation timed out.")
-      if (failure instanceof FlightCheckoutError && failure.code === "REPRICE_UNAVAILABLE") return error(503, "REPRICE_UNAVAILABLE", "Flight repricing is temporarily unavailable.")
+      if (failure instanceof FlightCheckoutError && ["REPRICE_UNAVAILABLE", "CHECKOUT_UNAVAILABLE"].includes(failure.code)) return error(503, "REPRICE_UNAVAILABLE", "Flight repricing is temporarily unavailable.")
       return error(500, "INTERNAL_ERROR", "Checkout preparation failed.")
     }
   }
