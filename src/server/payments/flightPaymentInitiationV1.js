@@ -30,6 +30,15 @@ const positiveAmount = (value, label) => {
 const exact = (value, keys) => value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === keys.length && Object.keys(value).every((key) => keys.includes(key))
 const snapshot = (all, base, quote) => all?.[`${base}_${quote}`]
 
+const assertPersistedCustomerPrice = (value, expectedInternalOfferId) => {
+  if (exact(value, ["amount", "currency", "validUntil"])) {
+    positiveAmount(value.amount, "customer price amount")
+    if (!/^(USD|AED|SDG)$/.test(value.currency) || !Number.isFinite(Date.parse(value.validUntil))) throw new TypeError("persisted customer price is invalid")
+    return value
+  }
+  return assertCustomerPriceV1(value, expectedInternalOfferId)
+}
+
 const normalizeIntent = (input) => Object.freeze({
   bookingIntentId: input.bookingIntentId ?? input.booking_intent_id,
   ownerId: input.ownerId ?? input.owner_id,
@@ -57,7 +66,8 @@ const assertIntent = (value, ownerId, now) => {
   if (intent.status !== "READY_FOR_PAYMENT") throw new FlightPaymentInitiationError("BOOKING_INTENT_CONFLICT")
   if (!Number.isFinite(Date.parse(intent.validUntil)) || Date.parse(intent.validUntil) <= now) throw new FlightPaymentInitiationError("INTENT_EXPIRED")
   if (!Array.isArray(intent.travelers) || !intent.travelers.length || !intent.contact || typeof intent.contact !== "object" || Array.isArray(intent.contact)) throw new FlightPaymentInitiationError("BOOKING_INTENT_INCOMPLETE")
-  try { assertCustomerPriceV1(intent.customerPrice, intent.internalOfferId) } catch { throw new FlightPaymentInitiationError("BOOKING_INTENT_INCOMPLETE") }
+  try { assertPersistedCustomerPrice(intent.customerPrice, intent.internalOfferId) } catch { throw new FlightPaymentInitiationError("BOOKING_INTENT_INCOMPLETE") }
+  if (Date.parse(intent.customerPrice.validUntil) !== Date.parse(intent.validUntil)) throw new FlightPaymentInitiationError("BOOKING_INTENT_INCOMPLETE")
   if (Date.parse(intent.customerPrice.validUntil) <= now) throw new FlightPaymentInitiationError("INTENT_EXPIRED")
   requiredText(intent.provider, "intent provider", 64)
   requiredText(intent.providerOfferRef, "intent provider offer reference")

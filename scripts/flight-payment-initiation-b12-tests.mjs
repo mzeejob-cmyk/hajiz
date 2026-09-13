@@ -107,6 +107,18 @@ await test("P8 changed current price requires explicit repricing", async () => {
 await test("P9 unavailable supplier offer creates no payment", async () => { const isolated = serviceFor({ intentStore: seeded.store, commercialRevalidator: { async revalidate() { throw new FlightPaymentInitiationError("OFFER_UNAVAILABLE") } } }); await assert.rejects(isolated.service.initiate(request(seeded.bookingIntentId, "unavailable")), /OFFER_UNAVAILABLE/); assert.equal(isolated.paymentStore.counts().bookings, 0) })
 await test("P10 commercial authority is revalidated at initiation", async () => { let calls = 0; const isolated = serviceFor({ intentStore: seeded.store, commercialRevalidator: { async revalidate(intent) { calls += 1; return { currentCustomerPrice: intent.customerPrice } } } }); await isolated.service.initiate(request(seeded.bookingIntentId, "revalidation")); assert.equal(calls, 1) })
 await test("P11 non-ready intent status fails closed", async () => { const intentStore = { async resolveForOwner() { return { ...intentRecord(), bookingIntentId: seeded.bookingIntentId, status: "CONFLICTED" } } }; const isolated = serviceFor({ intentStore }); await assert.rejects(isolated.service.initiate(request(seeded.bookingIntentId, "conflicted")), /BOOKING_INTENT_CONFLICT/) })
+await test("P11A canonical durable three-field Customer Price can initiate payment", async () => {
+  const durablePrice = { amount: customerPrice.amount, currency: customerPrice.currency, validUntil: customerPrice.validUntil }
+  const intentStore = { async resolveForOwner() { return { ...intentRecord(), bookingIntentId: seeded.bookingIntentId, status: "READY_FOR_PAYMENT", customerPrice: durablePrice } } }
+  const isolated = serviceFor({ intentStore })
+  const result = await isolated.service.initiate(request(seeded.bookingIntentId, "durable-price"))
+  assert.deepEqual([result.amount, result.currency], ["999.00", "AED"])
+})
+await test("P11B drifted durable Customer Price shape fails closed", async () => {
+  const intentStore = { async resolveForOwner() { return { ...intentRecord(), bookingIntentId: seeded.bookingIntentId, status: "READY_FOR_PAYMENT", customerPrice: { amount: "999.00", currency: "AED", validUntil: customerPrice.validUntil, extra: true } } } }
+  const isolated = serviceFor({ intentStore })
+  await assert.rejects(isolated.service.initiate(request(seeded.bookingIntentId, "durable-price-extra")), /BOOKING_INTENT_INCOMPLETE/)
+})
 await test("P12 Bankak materializes exactly one booking and payment", () => assert.deepEqual(base.paymentStore.counts(), { reservations: 1, bookings: 1, payments: 1 }))
 await test("P13 booking begins only at pending_payment", () => assert.equal(bankak.bookingStatus, "pending_payment"))
 await test("P14 payment begins only at awaiting", () => assert.equal(bankak.paymentStatus, "awaiting"))
@@ -184,5 +196,5 @@ const durableResult = await durableStore.materialize({ reservation: durableReser
 await test("P59 durable materialization maps only the safe customer handoff", () => { assert.deepEqual([durableResult.bookingStatus, durableResult.paymentStatus, durableResult.providerSession], ["pending_payment", "awaiting", "safe-session"]); assert.equal(Object.hasOwn(durableResult, "providerName"), false) })
 await test("P60 durable RPC adapter never carries traveler PII or client economics", () => { const serialized = JSON.stringify(rpcCalls); assert.equal(/PRIVATE-ALI|PRIVATE-P123|private@example\.com|traveler_snapshot|contact_snapshot|net_cost|commission|margin/.test(serialized), false) })
 
-assert.equal(passed, 63)
-process.stdout.write(`Flight payment initiation B12 tests: ${passed}/63 passed\n`)
+assert.equal(passed, 65)
+process.stdout.write(`Flight payment initiation B12 tests: ${passed}/65 passed\n`)
