@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createHajizFlightNodeApplicationV1, FLIGHT_NODE_HEALTH_PATH } from "../src/server/host/flightNodeApplicationV1.js"
-import { closeHajizFlightNodeRuntimeV1, readFlightNodeBootstrapEnvironmentV1 } from "../src/server/host/flightNodeEntrypointV1.js"
+import { closeHajizFlightNodeRuntimeV1, createMockFlightRuntimeAuthoritiesV1, readFlightNodeBootstrapEnvironmentV1 } from "../src/server/host/flightNodeEntrypointV1.js"
 import { createHajizFlightNodeHttpServerV1, listenHajizFlightNodeHttpServerV1 } from "../src/server/host/flightNodeHttpRuntimeV1.js"
 
 const tests = []
@@ -59,6 +59,13 @@ test("production requires assigned port", () => assert.throws(() => readFlightNo
 test("production refuses synthetic supplier even with port", () => assert.throws(() => readFlightNodeBootstrapEnvironmentV1({ NODE_ENV: "production", PORT: "8080", HAJIZ_FLIGHT_SUPPLIER_MODE: "mock" }), /PRODUCTION_SUPPLIER_CONFIGURATION_FORBIDDEN/))
 test("supplier mode is explicit and fail closed", () => assert.throws(() => readFlightNodeBootstrapEnvironmentV1({ NODE_ENV: "staging", PORT: "8080" }), /HAJIZ_FLIGHT_SUPPLIER_MODE_REQUIRED/))
 test("unsupported supplier mode is rejected", () => assert.throws(() => readFlightNodeBootstrapEnvironmentV1({ NODE_ENV: "staging", PORT: "8080", HAJIZ_FLIGHT_SUPPLIER_MODE: "travelport" }), /HAJIZ_FLIGHT_SUPPLIER_MODE_REQUIRED/))
+test("mock runtime has explicit active pricing, FX and ranking authorities", () => {
+  const authorities = createMockFlightRuntimeAuthoritiesV1({ clock: () => Date.parse("2026-09-13T00:00:00.000Z") })
+  assert.equal(authorities.pricingPolicy.contractVersion, "pricing-policy/v1")
+  assert.deepEqual(Object.keys(authorities.fxSnapshotsByPair).sort(), ["AED_USD", "USD_AED"])
+  assert.equal(authorities.rankingPolicy.contractVersion, "flight-ranking-policy/v1")
+})
+test("mock runtime authority expires closed with its synthetic offer", () => assert.throws(() => createMockFlightRuntimeAuthoritiesV1({ clock: () => Date.parse("2026-09-15T06:20:00.000Z") }), /MOCK_FLIGHT_AUTHORITY_EXPIRED/))
 test("server runtime source contains no VITE credential use", async () => { const sources = await Promise.all(["../src/server/host/flightNodeApplicationV1.js", "../src/server/host/flightNodeEntrypointV1.js"].map(path => import("node:fs/promises").then(({ readFile }) => readFile(new URL(path, import.meta.url), "utf8")))); assert.equal(/VITE_.*(?:SECRET|TOKEN|KEY)/i.test(sources.join("\n")), false) })
 test("startup errors and logs cannot serialize environment or request data", async () => { const source = await import("node:fs/promises").then(({ readFile }) => readFile(new URL("../src/server/host/flightNodeEntrypointV1.js", import.meta.url), "utf8")); assert.equal(/JSON\.stringify\((?:process\.env|error)\)|authorization|request\.body/i.test(source), false) })
 

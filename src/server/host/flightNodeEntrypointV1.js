@@ -1,6 +1,8 @@
 import { fileURLToPath } from "node:url"
 import { resolve } from "node:path"
 import { createMockFlightSupplier } from "../suppliers/mockFlightSupplier.js"
+import { createFlightRankingPolicyV1 } from "../pricing/flightRankingV1.js"
+import { createFxSnapshotV1, createPricingPolicyV1 } from "../pricing/pricingFxV1.js"
 import { createHajizFlightServerCompositionV1 } from "./flightServerCompositionV1.js"
 import { assertFlightNodeDistV1, createHajizFlightNodeApplicationV1 } from "./flightNodeApplicationV1.js"
 import { createHajizFlightNodeHttpServerV1, listenHajizFlightNodeHttpServerV1 } from "./flightNodeHttpRuntimeV1.js"
@@ -8,6 +10,7 @@ import { createHajizFlightNodeHttpServerV1, listenHajizFlightNodeHttpServerV1 } 
 export const FLIGHT_NODE_ENTRYPOINT_VERSION = "flight-node-entrypoint/v1"
 const DEFAULT_PORT = 3000
 const DEFAULT_HOST = "0.0.0.0"
+const MOCK_AUTHORITY_EXPIRES_AT = "2026-09-15T06:20:00.000Z"
 
 const required = (condition, code) => { if (!condition) throw new Error(code) }
 
@@ -23,18 +26,66 @@ export function readFlightNodeBootstrapEnvironmentV1(env = process.env) {
   return Object.freeze({ host, port, supplierMode: "mock" })
 }
 
+export function createMockFlightRuntimeAuthoritiesV1({ clock = Date.now } = {}) {
+  const now = clock()
+  required(Number.isFinite(now) && now < Date.parse(MOCK_AUTHORITY_EXPIRES_AT), "MOCK_FLIGHT_AUTHORITY_EXPIRED")
+  const fetchedAt = new Date(now - 60_000).toISOString()
+  const effectiveAt = new Date(now - 30_000).toISOString()
+  const validFrom = new Date(now - 60_000).toISOString()
+  const fx = (baseCurrency, quoteCurrency, referenceRate) => createFxSnapshotV1({
+    contractVersion: "fx-snapshot/v1",
+    snapshotId: `hfx_mock_${baseCurrency}_${quoteCurrency}_v1`,
+    baseCurrency,
+    quoteCurrency,
+    referenceRate,
+    source: "hajiz_mock_runtime",
+    bufferPct: "0",
+    volatilityGuardPct: "20",
+    observedVolatilityPct: "0",
+    fetchedAt,
+    effectiveAt,
+    expiresAt: MOCK_AUTHORITY_EXPIRES_AT,
+    policyVersion: "mock-fx-runtime-v1",
+  })
+  return Object.freeze({
+    pricingPolicy: createPricingPolicyV1({
+      contractVersion: "pricing-policy/v1",
+      pricingPolicyVersion: "mock-pricing-runtime-v1",
+      marginPct: "10",
+      maxMarginPct: "10",
+      partnerCommissionRatePct: "0",
+      agentUpliftAmountUsd: "0",
+      maxAgentUpliftAmountUsd: "0",
+      validFrom,
+      validUntil: MOCK_AUTHORITY_EXPIRES_AT,
+    }),
+    fxSnapshotsByPair: Object.freeze({
+      AED_USD: fx("AED", "USD", "0.272294"),
+      USD_AED: fx("USD", "AED", "3.6725"),
+    }),
+    rankingPolicy: createFlightRankingPolicyV1({
+      contractVersion: "flight-ranking-policy/v1",
+      rankingPolicyVersion: "mock-ranking-runtime-v1",
+      mode: "price_only",
+      validFrom,
+      validUntil: MOCK_AUTHORITY_EXPIRES_AT,
+    }),
+  })
+}
+
 export async function createHajizFlightNodeRuntimeV1({ env = process.env, distDirectory = resolve(process.cwd(), "dist"), logger } = {}) {
   const bootstrap = readFlightNodeBootstrapEnvironmentV1(env)
   const root = await assertFlightNodeDistV1(distDirectory)
+  const authorities = createMockFlightRuntimeAuthoritiesV1()
   const composition = createHajizFlightServerCompositionV1({
     env,
     supplierAdapters: [createMockFlightSupplier({ env })],
     enabledProviderNames: [bootstrap.supplierMode],
     defaultProviderName: bootstrap.supplierMode,
     supplierPolicy: { maxConcurrency: 1, supplierTimeoutMs: 5_000, requestTimeoutMs: 12_000 },
-    pricingPolicy: {},
-    fxSnapshotsByPair: {},
-    rankingPolicy: {},
+    pricingPolicy: authorities.pricingPolicy,
+    fxSnapshotsByPair: authorities.fxSnapshotsByPair,
+    rankingPolicy: authorities.rankingPolicy,
     logger,
   })
   const application = createHajizFlightNodeApplicationV1({ flightFetch: composition.fetch, distDirectory: root })
