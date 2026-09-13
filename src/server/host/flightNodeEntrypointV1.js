@@ -11,6 +11,7 @@ export const FLIGHT_NODE_ENTRYPOINT_VERSION = "flight-node-entrypoint/v1"
 const DEFAULT_PORT = 3000
 const DEFAULT_HOST = "0.0.0.0"
 const MOCK_AUTHORITY_EXPIRES_AT = "2026-09-15T06:20:00.000Z"
+const MOCK_BANKAK_SDG_PER_AED = 1_000n
 
 const required = (condition, code) => { if (!condition) throw new Error(code) }
 
@@ -73,10 +74,28 @@ export function createMockFlightRuntimeAuthoritiesV1({ clock = Date.now } = {}) 
   })
 }
 
+export function createMockBankakRuntimeConfigV1() {
+  return Object.freeze({
+    bankAccountDisplayName: "HAJIZ Staging Bankak — TEST ONLY",
+    maskedAccountNumber: "****0000",
+    receiptUploadAvailable: true,
+    async amountSdgResolver(customerPrice) {
+      const match = typeof customerPrice?.amount === "string" && customerPrice.currency === "AED"
+        ? customerPrice.amount.match(/^([1-9]\d*)\.(\d{2})$/)
+        : null
+      required(match, "MOCK_BANKAK_PRICE_UNSUPPORTED")
+      const amountMinor = BigInt(match[1]) * 100n + BigInt(match[2])
+      const sdgMinor = amountMinor * MOCK_BANKAK_SDG_PER_AED
+      return `${sdgMinor / 100n}.${String(sdgMinor % 100n).padStart(2, "0")}`
+    },
+  })
+}
+
 export async function createHajizFlightNodeRuntimeV1({ env = process.env, distDirectory = resolve(process.cwd(), "dist"), logger } = {}) {
   const bootstrap = readFlightNodeBootstrapEnvironmentV1(env)
   const root = await assertFlightNodeDistV1(distDirectory)
   const authorities = createMockFlightRuntimeAuthoritiesV1()
+  const bankakConfig = createMockBankakRuntimeConfigV1()
   const composition = createHajizFlightServerCompositionV1({
     env,
     supplierAdapters: [createMockFlightSupplier({ env })],
@@ -86,6 +105,7 @@ export async function createHajizFlightNodeRuntimeV1({ env = process.env, distDi
     pricingPolicy: authorities.pricingPolicy,
     fxSnapshotsByPair: authorities.fxSnapshotsByPair,
     rankingPolicy: authorities.rankingPolicy,
+    bankakConfig,
     logger,
   })
   const application = createHajizFlightNodeApplicationV1({ flightFetch: composition.fetch, distDirectory: root })

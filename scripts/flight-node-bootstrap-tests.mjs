@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createHajizFlightNodeApplicationV1, FLIGHT_NODE_HEALTH_PATH } from "../src/server/host/flightNodeApplicationV1.js"
-import { closeHajizFlightNodeRuntimeV1, createMockFlightRuntimeAuthoritiesV1, readFlightNodeBootstrapEnvironmentV1 } from "../src/server/host/flightNodeEntrypointV1.js"
+import { closeHajizFlightNodeRuntimeV1, createMockBankakRuntimeConfigV1, createMockFlightRuntimeAuthoritiesV1, readFlightNodeBootstrapEnvironmentV1 } from "../src/server/host/flightNodeEntrypointV1.js"
 import { createHajizFlightNodeHttpServerV1, listenHajizFlightNodeHttpServerV1 } from "../src/server/host/flightNodeHttpRuntimeV1.js"
 
 const tests = []
@@ -66,6 +66,22 @@ test("mock runtime has explicit active pricing, FX and ranking authorities", () 
   assert.equal(authorities.rankingPolicy.contractVersion, "flight-ranking-policy/v1")
 })
 test("mock runtime authority expires closed with its synthetic offer", () => assert.throws(() => createMockFlightRuntimeAuthoritiesV1({ clock: () => Date.parse("2026-09-15T06:20:00.000Z") }), /MOCK_FLIGHT_AUTHORITY_EXPIRED/))
+test("mock Bankak runtime is visibly staging-only and masked", () => {
+  const config = createMockBankakRuntimeConfigV1()
+  assert.match(config.bankAccountDisplayName, /Staging.*TEST ONLY/)
+  assert.equal(config.maskedAccountNumber, "****0000")
+  assert.equal(config.receiptUploadAvailable, true)
+})
+test("mock Bankak conversion is deterministic AED to synthetic SDG", async () => {
+  const config = createMockBankakRuntimeConfigV1()
+  assert.equal(await config.amountSdgResolver({ amount: "1100.00", currency: "AED" }), "1100000.00")
+})
+test("mock Bankak conversion fails closed for unsupported currency", async () => {
+  await assert.rejects(() => createMockBankakRuntimeConfigV1().amountSdgResolver({ amount: "1100.00", currency: "USD" }), /MOCK_BANKAK_PRICE_UNSUPPORTED/)
+})
+test("mock Bankak conversion fails closed for non-canonical amount", async () => {
+  await assert.rejects(() => createMockBankakRuntimeConfigV1().amountSdgResolver({ amount: "1100", currency: "AED" }), /MOCK_BANKAK_PRICE_UNSUPPORTED/)
+})
 test("server runtime source contains no VITE credential use", async () => { const sources = await Promise.all(["../src/server/host/flightNodeApplicationV1.js", "../src/server/host/flightNodeEntrypointV1.js"].map(path => import("node:fs/promises").then(({ readFile }) => readFile(new URL(path, import.meta.url), "utf8")))); assert.equal(/VITE_.*(?:SECRET|TOKEN|KEY)/i.test(sources.join("\n")), false) })
 test("startup errors and logs cannot serialize environment or request data", async () => { const source = await import("node:fs/promises").then(({ readFile }) => readFile(new URL("../src/server/host/flightNodeEntrypointV1.js", import.meta.url), "utf8")); assert.equal(/JSON\.stringify\((?:process\.env|error)\)|authorization|request\.body/i.test(source), false) })
 
