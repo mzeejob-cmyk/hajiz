@@ -10,7 +10,9 @@ import { createHajizFlightNodeHttpServerV1, listenHajizFlightNodeHttpServerV1 } 
 export const FLIGHT_NODE_ENTRYPOINT_VERSION = "flight-node-entrypoint/v1"
 const DEFAULT_PORT = 3000
 const DEFAULT_HOST = "0.0.0.0"
-const MOCK_AUTHORITY_EXPIRES_AT = "2026-09-15T06:20:00.000Z"
+const DEFAULT_MOCK_AUTHORITY_TTL_SECONDS = 21_600
+const MIN_MOCK_AUTHORITY_TTL_SECONDS = 300
+const MAX_MOCK_AUTHORITY_TTL_SECONDS = 86_400
 const MOCK_BANKAK_SDG_PER_AED = 1_000n
 
 const required = (condition, code) => { if (!condition) throw new Error(code) }
@@ -24,12 +26,35 @@ export function readFlightNodeBootstrapEnvironmentV1(env = process.env) {
   required(typeof host === "string" && host.length > 0 && !/[/\\\s]/.test(host), "HOST_INVALID")
   required(env.HAJIZ_FLIGHT_SUPPLIER_MODE === "mock", "HAJIZ_FLIGHT_SUPPLIER_MODE_REQUIRED")
   required(!production, "PRODUCTION_SUPPLIER_CONFIGURATION_FORBIDDEN")
-  return Object.freeze({ host, port, supplierMode: "mock" })
+  const rawAuthorityTtl = env.HAJIZ_MOCK_AUTHORITY_TTL_SECONDS
+  const mockAuthorityTtlSeconds = rawAuthorityTtl === undefined
+    ? DEFAULT_MOCK_AUTHORITY_TTL_SECONDS
+    : Number(rawAuthorityTtl)
+  required(
+    typeof rawAuthorityTtl === "undefined" || /^\d+$/.test(rawAuthorityTtl),
+    "HAJIZ_MOCK_AUTHORITY_TTL_SECONDS_INVALID",
+  )
+  required(
+    Number.isSafeInteger(mockAuthorityTtlSeconds)
+      && mockAuthorityTtlSeconds >= MIN_MOCK_AUTHORITY_TTL_SECONDS
+      && mockAuthorityTtlSeconds <= MAX_MOCK_AUTHORITY_TTL_SECONDS,
+    "HAJIZ_MOCK_AUTHORITY_TTL_SECONDS_INVALID",
+  )
+  return Object.freeze({ host, port, supplierMode: "mock", mockAuthorityTtlSeconds })
 }
 
-export function createMockFlightRuntimeAuthoritiesV1({ clock = Date.now } = {}) {
+export function createMockFlightRuntimeAuthoritiesV1({ clock = Date.now, ttlSeconds = DEFAULT_MOCK_AUTHORITY_TTL_SECONDS } = {}) {
   const now = clock()
-  required(Number.isFinite(now) && now < Date.parse(MOCK_AUTHORITY_EXPIRES_AT), "MOCK_FLIGHT_AUTHORITY_EXPIRED")
+  required(Number.isFinite(now), "MOCK_FLIGHT_AUTHORITY_CLOCK_INVALID")
+  required(
+    Number.isSafeInteger(ttlSeconds)
+      && ttlSeconds >= MIN_MOCK_AUTHORITY_TTL_SECONDS
+      && ttlSeconds <= MAX_MOCK_AUTHORITY_TTL_SECONDS,
+    "HAJIZ_MOCK_AUTHORITY_TTL_SECONDS_INVALID",
+  )
+  const authorityExpiresAtMs = now + ttlSeconds * 1_000
+  required(Number.isFinite(authorityExpiresAtMs), "MOCK_FLIGHT_AUTHORITY_CLOCK_INVALID")
+  const authorityExpiresAt = new Date(authorityExpiresAtMs).toISOString()
   const fetchedAt = new Date(now - 60_000).toISOString()
   const effectiveAt = new Date(now - 30_000).toISOString()
   const validFrom = new Date(now - 60_000).toISOString()
@@ -45,7 +70,7 @@ export function createMockFlightRuntimeAuthoritiesV1({ clock = Date.now } = {}) 
     observedVolatilityPct: "0",
     fetchedAt,
     effectiveAt,
-    expiresAt: MOCK_AUTHORITY_EXPIRES_AT,
+    expiresAt: authorityExpiresAt,
     policyVersion: "mock-fx-runtime-v1",
   })
   return Object.freeze({
@@ -58,7 +83,7 @@ export function createMockFlightRuntimeAuthoritiesV1({ clock = Date.now } = {}) 
       agentUpliftAmountUsd: "0",
       maxAgentUpliftAmountUsd: "0",
       validFrom,
-      validUntil: MOCK_AUTHORITY_EXPIRES_AT,
+      validUntil: authorityExpiresAt,
     }),
     fxSnapshotsByPair: Object.freeze({
       AED_USD: fx("AED", "USD", "0.272294"),
@@ -69,7 +94,7 @@ export function createMockFlightRuntimeAuthoritiesV1({ clock = Date.now } = {}) 
       rankingPolicyVersion: "mock-ranking-runtime-v1",
       mode: "price_only",
       validFrom,
-      validUntil: MOCK_AUTHORITY_EXPIRES_AT,
+      validUntil: authorityExpiresAt,
     }),
   })
 }
@@ -91,10 +116,10 @@ export function createMockBankakRuntimeConfigV1() {
   })
 }
 
-export async function createHajizFlightNodeRuntimeV1({ env = process.env, distDirectory = resolve(process.cwd(), "dist"), logger } = {}) {
+export async function createHajizFlightNodeRuntimeV1({ env = process.env, distDirectory = resolve(process.cwd(), "dist"), logger, clock = Date.now } = {}) {
   const bootstrap = readFlightNodeBootstrapEnvironmentV1(env)
   const root = await assertFlightNodeDistV1(distDirectory)
-  const authorities = createMockFlightRuntimeAuthoritiesV1()
+  const authorities = createMockFlightRuntimeAuthoritiesV1({ clock, ttlSeconds: bootstrap.mockAuthorityTtlSeconds })
   const bankakConfig = createMockBankakRuntimeConfigV1()
   const composition = createHajizFlightServerCompositionV1({
     env,
@@ -107,6 +132,7 @@ export async function createHajizFlightNodeRuntimeV1({ env = process.env, distDi
     rankingPolicy: authorities.rankingPolicy,
     bankakConfig,
     logger,
+    clock,
   })
   const application = createHajizFlightNodeApplicationV1({ flightFetch: composition.fetch, distDirectory: root })
   const server = createHajizFlightNodeHttpServerV1({ fetchHandler: application.fetch, logger })

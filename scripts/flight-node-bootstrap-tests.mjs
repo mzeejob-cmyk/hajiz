@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createHajizFlightNodeApplicationV1, FLIGHT_NODE_HEALTH_PATH } from "../src/server/host/flightNodeApplicationV1.js"
-import { closeHajizFlightNodeRuntimeV1, createMockBankakRuntimeConfigV1, createMockFlightRuntimeAuthoritiesV1, readFlightNodeBootstrapEnvironmentV1 } from "../src/server/host/flightNodeEntrypointV1.js"
+import { closeHajizFlightNodeRuntimeV1, createHajizFlightNodeRuntimeV1, createMockBankakRuntimeConfigV1, createMockFlightRuntimeAuthoritiesV1, readFlightNodeBootstrapEnvironmentV1 } from "../src/server/host/flightNodeEntrypointV1.js"
 import { createHajizFlightNodeHttpServerV1, listenHajizFlightNodeHttpServerV1 } from "../src/server/host/flightNodeHttpRuntimeV1.js"
 
 const tests = []
@@ -52,20 +52,58 @@ test("Node HTTP process serves health, SPA, asset and API on one origin", async 
 test("graceful close stops accepting new connections", async () => { const dist = await fixture(); const app = application(dist); const server = createHajizFlightNodeHttpServerV1({ fetchHandler: app.fetch }); const bound = await listenHajizFlightNodeHttpServerV1({ server, host: "127.0.0.1", port: 0 }); await closeHajizFlightNodeRuntimeV1(server); assert.equal(server.listening, false); await assert.rejects(() => fetch(`http://127.0.0.1:${bound.port}/healthz`)) })
 
 const validEnv = () => ({ NODE_ENV: "staging", PORT: "8080", HAJIZ_FLIGHT_SUPPLIER_MODE: "mock" })
-test("bootstrap binds provider port and container host", () => assert.deepEqual(readFlightNodeBootstrapEnvironmentV1(validEnv()), { host: "0.0.0.0", port: 8080, supplierMode: "mock" }))
+test("bootstrap binds provider port, container host and restart-safe authority TTL", () => assert.deepEqual(readFlightNodeBootstrapEnvironmentV1(validEnv()), { host: "0.0.0.0", port: 8080, supplierMode: "mock", mockAuthorityTtlSeconds: 21_600 }))
 test("local port default is available outside production", () => assert.equal(readFlightNodeBootstrapEnvironmentV1({ NODE_ENV: "test", HAJIZ_FLIGHT_SUPPLIER_MODE: "mock" }).port, 3000))
 test("runtime environment must be explicit", () => assert.throws(() => readFlightNodeBootstrapEnvironmentV1({ HAJIZ_FLIGHT_SUPPLIER_MODE: "mock" }), /NODE_ENV_REQUIRED/))
 test("production requires assigned port", () => assert.throws(() => readFlightNodeBootstrapEnvironmentV1({ NODE_ENV: "production", HAJIZ_FLIGHT_SUPPLIER_MODE: "mock" }), /PORT_REQUIRED/))
 test("production refuses synthetic supplier even with port", () => assert.throws(() => readFlightNodeBootstrapEnvironmentV1({ NODE_ENV: "production", PORT: "8080", HAJIZ_FLIGHT_SUPPLIER_MODE: "mock" }), /PRODUCTION_SUPPLIER_CONFIGURATION_FORBIDDEN/))
 test("supplier mode is explicit and fail closed", () => assert.throws(() => readFlightNodeBootstrapEnvironmentV1({ NODE_ENV: "staging", PORT: "8080" }), /HAJIZ_FLIGHT_SUPPLIER_MODE_REQUIRED/))
 test("unsupported supplier mode is rejected", () => assert.throws(() => readFlightNodeBootstrapEnvironmentV1({ NODE_ENV: "staging", PORT: "8080", HAJIZ_FLIGHT_SUPPLIER_MODE: "travelport" }), /HAJIZ_FLIGHT_SUPPLIER_MODE_REQUIRED/))
-test("mock runtime has explicit active pricing, FX and ranking authorities", () => {
-  const authorities = createMockFlightRuntimeAuthoritiesV1({ clock: () => Date.parse("2026-09-13T00:00:00.000Z") })
+test("mock runtime remains valid after the removed fixed calendar expiry", () => {
+  const now = Date.parse("2030-01-01T00:00:00.000Z")
+  const authorities = createMockFlightRuntimeAuthoritiesV1({ clock: () => now })
   assert.equal(authorities.pricingPolicy.contractVersion, "pricing-policy/v1")
   assert.deepEqual(Object.keys(authorities.fxSnapshotsByPair).sort(), ["AED_USD", "USD_AED"])
   assert.equal(authorities.rankingPolicy.contractVersion, "flight-ranking-policy/v1")
+  assert.equal(authorities.pricingPolicy.validUntil, "2030-01-01T06:00:00.000Z")
 })
-test("mock runtime authority expires closed with its synthetic offer", () => assert.throws(() => createMockFlightRuntimeAuthoritiesV1({ clock: () => Date.parse("2026-09-15T06:20:00.000Z") }), /MOCK_FLIGHT_AUTHORITY_EXPIRED/))
+test("configured TTL creates internally consistent pricing, FX and ranking windows", () => {
+  const now = Date.parse("2031-02-03T04:05:06.000Z")
+  const authorities = createMockFlightRuntimeAuthoritiesV1({ clock: () => now, ttlSeconds: 3_600 })
+  const expected = "2031-02-03T05:05:06.000Z"
+  assert.equal(authorities.pricingPolicy.validUntil, expected)
+  assert.equal(authorities.rankingPolicy.validUntil, expected)
+  assert.equal(authorities.fxSnapshotsByPair.AED_USD.expiresAt, expected)
+  assert.equal(authorities.fxSnapshotsByPair.USD_AED.expiresAt, expected)
+})
+test("staging Node runtime composes after the retired fixed expiry using an injected clock", async () => {
+  const dist = await fixture()
+  const runtime = await createHajizFlightNodeRuntimeV1({
+    distDirectory: dist,
+    clock: () => Date.parse("2032-03-04T05:06:07.000Z"),
+    env: {
+      ...validEnv(),
+      HAJIZ_FLIGHT_HOST_ENABLED: "true",
+      HAJIZ_SUPABASE_URL: "https://runtime-test.invalid",
+      HAJIZ_SUPABASE_SECRET_KEY: "synthetic_server_key_for_tests_only",
+      HAJIZ_FLIGHT_TOKEN_SECRET: "synthetic-flight-token-secret-0000000000000000",
+      HAJIZ_ALLOWED_ORIGINS: "http://localhost:5173",
+    },
+  })
+  assert.equal(runtime.bootstrap.mockAuthorityTtlSeconds, 21_600)
+  assert.equal(runtime.server.listening, false)
+})
+for (const value of ["0", "-1", "NaN", "300.5", " 3600", "86401", "999999999999999999999"]) {
+  test(`invalid mock authority TTL fails closed: ${JSON.stringify(value)}`, () => assert.throws(() => readFlightNodeBootstrapEnvironmentV1({ ...validEnv(), HAJIZ_MOCK_AUTHORITY_TTL_SECONDS: value }), /HAJIZ_MOCK_AUTHORITY_TTL_SECONDS_INVALID/))
+}
+test("minimum and maximum mock authority TTL bounds are accepted", () => {
+  assert.equal(readFlightNodeBootstrapEnvironmentV1({ ...validEnv(), HAJIZ_MOCK_AUTHORITY_TTL_SECONDS: "300" }).mockAuthorityTtlSeconds, 300)
+  assert.equal(readFlightNodeBootstrapEnvironmentV1({ ...validEnv(), HAJIZ_MOCK_AUTHORITY_TTL_SECONDS: "86400" }).mockAuthorityTtlSeconds, 86_400)
+})
+test("authority factory rejects invalid TTL and clock values", () => {
+  assert.throws(() => createMockFlightRuntimeAuthoritiesV1({ ttlSeconds: 0 }), /HAJIZ_MOCK_AUTHORITY_TTL_SECONDS_INVALID/)
+  assert.throws(() => createMockFlightRuntimeAuthoritiesV1({ clock: () => Number.NaN }), /MOCK_FLIGHT_AUTHORITY_CLOCK_INVALID/)
+})
 test("mock Bankak runtime is visibly staging-only and masked", () => {
   const config = createMockBankakRuntimeConfigV1()
   assert.match(config.bankAccountDisplayName, /Staging.*TEST ONLY/)
