@@ -11,9 +11,10 @@ export async function runSupplierAdapterTests(vite, test) {
   const offerContract = await vite.ssrLoadModule("/src/server/suppliers/flightOfferV1.js")
   const providerIdentity = await vite.ssrLoadModule("/src/server/suppliers/providerIdentity.js")
   const orchestration = await vite.ssrLoadModule("/src/server/suppliers/bookingOrchestration.js")
-  const mock = createMockFlightSupplier()
+  const NOW = Date.parse("2030-01-10T00:00:00.000Z")
+  const mock = createMockFlightSupplier({ clock: () => NOW })
   const registry = createSupplierRegistry({ adapters: [mock], enabledProviderNames: [mock.providerName], defaultProviderName: mock.providerName })
-  const search = { origin: "DXB", destination: "KRT", departureDate: "2026-09-15", adults: 1 }
+  const search = { origin: "DXB", destination: "KRT", departureDate: "2030-01-12", adults: 1 }
 
   await test("supplier registry fails closed for unknown and disabled providers", () => {
     assert.throws(() => registry.getByServerProviderName("unknown"))
@@ -36,6 +37,8 @@ export async function runSupplierAdapterTests(vite, test) {
     const [offer] = await mock.searchFlights(search)
     assert.equal(offer.itinerary.segments[0].marketingCarrier, "EK")
     assert.equal(offer.itinerary.segments[0].flightNumber, "735")
+    assert.equal(offer.itinerary.departureAt.slice(0, 10), search.departureDate)
+    assert.equal(Date.parse(offer.validity.expiresAt) > NOW, true)
     assert.equal((await mock.searchFlights({ ...search, origin: "AUH" })).length, 0)
   })
   await test("public mapper emits exactly the frozen customer offer fields", async () => {
@@ -55,12 +58,13 @@ export async function runSupplierAdapterTests(vite, test) {
     const first = await mock.repriceOffer(offer.providerOfferRef)
     const second = await mock.repriceOffer(offer.providerOfferRef)
     assert.deepEqual(first, second)
-    assert.equal(first.validity.expiresAt, "2026-09-15T06:20:00.000Z")
+    assert.equal(first.validity.expiresAt, "2030-01-10T06:00:00.000Z")
     assert.equal(first.economics.supplierAmount, "1000.00")
     assert.equal("sellingAmount" in first, false)
   })
   await test("createBooking is idempotent for a trusted key", async () => {
-    const request = { supplierOfferRef: "mock-offer-dxb-krt-ek735", idempotencyKey: "trusted-001", trustedTravelerToken: "traveler-token-001" }
+    const [offer] = await mock.searchFlights(search)
+    const request = { supplierOfferRef: offer.providerOfferRef, idempotencyKey: "trusted-001", trustedTravelerToken: "traveler-token-001" }
     assert.deepEqual(await mock.createBooking(request), await mock.createBooking(request))
   })
   await test("supplier execution enforces payment-confirmed precondition", () => {
@@ -78,7 +82,8 @@ export async function runSupplierAdapterTests(vite, test) {
     assert.throws(() => orchestration.nextBookingTransition("confirmed", { operationalOutcome: "ticketed" }))
   })
   await test("ticket metadata is exposed only after ticketed supplier evidence", async () => {
-    const booking = await mock.createBooking({ supplierOfferRef: "mock-offer-dxb-krt-ek735", idempotencyKey: "trusted-002", trustedTravelerToken: "traveler-token-002" })
+    const [offer] = await mock.searchFlights(search)
+    const booking = await mock.createBooking({ supplierOfferRef: offer.providerOfferRef, idempotencyKey: "trusted-002", trustedTravelerToken: "traveler-token-002" })
     await assert.rejects(() => mock.retrieveTicket(booking.supplierBookingRef))
     const confirmed = await mock.getBookingStatus(booking.supplierBookingRef)
     assert.equal(confirmed.operationalOutcome, "confirmed")
@@ -94,6 +99,22 @@ export async function runSupplierAdapterTests(vite, test) {
   })
   await test("mock health declares synthetic non-production no-network operation", async () => {
     assert.deepEqual(await mock.health(), { providerName: mock.providerName, healthy: true, synthetic: true, network: false, productionAllowed: false, capabilities: mock.capabilities })
+  })
+  await test("mock remains deterministic with an injected clock and rejects invalid configuration", async () => {
+    const first = createMockFlightSupplier({ clock: () => NOW })
+    const second = createMockFlightSupplier({ clock: () => NOW })
+    assert.deepEqual(await first.searchFlights(search), await second.searchFlights(search))
+    assert.throws(() => createMockFlightSupplier({ env: { NODE_ENV: "production" }, clock: () => NOW }), /forbidden in production/)
+    assert.throws(() => createMockFlightSupplier({ clock: () => Number.NaN }), /clock is invalid/)
+    assert.throws(() => createMockFlightSupplier({ clock: () => NOW, offerTtlSeconds: 299 }), /TTL is invalid/)
+  })
+  await test("mock offer becomes unavailable after its bounded lifetime", async () => {
+    let current = NOW
+    const expiring = createMockFlightSupplier({ clock: () => current, offerTtlSeconds: 300 })
+    const [offer] = await expiring.searchFlights(search)
+    assert.equal((await expiring.repriceOffer(offer.providerOfferRef)).operationalOutcome, "repriced")
+    current = Date.parse(offer.validity.expiresAt)
+    assert.equal((await expiring.repriceOffer(offer.providerOfferRef)).operationalOutcome, "unavailable")
   })
   await test("supplier layer has no network or direct persistence authority", async () => {
     const files = await fs.readdir(new URL("../src/server/suppliers", import.meta.url))

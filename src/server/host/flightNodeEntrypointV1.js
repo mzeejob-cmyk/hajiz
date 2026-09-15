@@ -123,7 +123,7 @@ export async function createHajizFlightNodeRuntimeV1({ env = process.env, distDi
   const bankakConfig = createMockBankakRuntimeConfigV1()
   const composition = createHajizFlightServerCompositionV1({
     env,
-    supplierAdapters: [createMockFlightSupplier({ env })],
+    supplierAdapters: [createMockFlightSupplier({ env, clock, offerTtlSeconds: bootstrap.mockAuthorityTtlSeconds })],
     enabledProviderNames: [bootstrap.supplierMode],
     defaultProviderName: bootstrap.supplierMode,
     supplierPolicy: { maxConcurrency: 1, supplierTimeoutMs: 5_000, requestTimeoutMs: 12_000 },

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { execFileSync } from "node:child_process"
-import { readFile } from "node:fs/promises"
+import { readFile, readdir } from "node:fs/promises"
 import { createPublicCatalogEdgeHandler, createPublicCatalogRead, MAX_PUBLIC_CATALOG_REQUEST_BYTES } from "../src/server/product/publicCatalogRead.js"
 
 let passed = 0
@@ -31,7 +31,7 @@ await test("pricing fields rejected", async () => { for (const key of ["price", 
 await test("malformed RPC result rejected", async () => { for (const value of [null, {}, [null]]) await assert.rejects(service(value).api.read({ type: "package" }), /UNAVAILABLE/) })
 await test("raw RPC error redacted", async () => { await assert.rejects(service(new Error("SQL token secret")).api.read({ type: "package" }), error => error.message === "PUBLIC_CATALOG_UNAVAILABLE") })
 await test("no direct private table access", async () => { const files = ["../src/server/product/publicCatalogRead.js", "../supabase/functions/catalog-public/index.ts"]; for (const file of files) assert.equal(/app_private|\.from\s*\(/.test(await readFile(new URL(file, import.meta.url), "utf8")), false) })
-await test("no public RPC grant introduced", async () => { const changes = execFileSync("git", ["diff", "ee468d55bdead5f950ed720c1a58d79cf08aef7a", "--", "supabase/migrations"], { encoding: "utf8" }); assert.equal(/grant\s+execute/i.test(changes), false) })
+await test("no public RPC grant introduced", async () => { const directory = new URL("../supabase/migrations/", import.meta.url); const sql = (await Promise.all((await readdir(directory)).filter(name => name.endsWith(".sql")).map(name => readFile(new URL(name, directory), "utf8")))).join("\n"); assert.doesNotMatch(sql, /grant\s+execute\s+on\s+function\s+public\.p2_catalog_v1\([^;]+\)\s+to\s+(?:public|anon|authenticated)\b/i) })
 await test("no arbitrary RPC dispatcher", async () => { const code = await readFile(new URL("../src/server/product/publicCatalogRead.js", import.meta.url), "utf8"); assert.equal(/input\.(?:rpc|operation)|request\.(?:rpc|operation)/.test(code), false); assert.equal((code.match(/"p2_catalog_v1"/g) ?? []).length, 1) })
 await test("product p2 source and JWT setting unchanged", async () => { for (const file of ["src/server/product/productP2Service.js", "src/server/product/productP2Http.js", "supabase/functions/product-p2/index.ts"]) execFileSync("git", ["diff", "--quiet", "ee468d55bdead5f950ed720c1a58d79cf08aef7a", "--", file]); const config = await readFile(new URL("../supabase/config.toml", import.meta.url), "utf8"); assert.match(config, /\[functions\.product-p2\]\s*verify_jwt = true/); assert.match(config, /\[functions\.catalog-public\]\s*verify_jwt = false/) })
 await test("Customer Packages uses only the public catalog boundary", async () => { const code = await readFile(new URL("../src/features/packages/PackagesPage.jsx", import.meta.url), "utf8"); assert.match(code, /PublicCatalogCollection type="package"/); assert.equal(/product-p2|AdminCatalog/.test(code), false) })
