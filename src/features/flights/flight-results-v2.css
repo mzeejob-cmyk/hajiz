@@ -1,0 +1,485 @@
+/*
+ * HAJIZ V2 Flight Results.
+ * Source: Figma node 17:2 "Flights · Results and system grammar" and its
+ * descendants — 17:6 result header, 17:9 results layout, 17:10 filters rail,
+ * 17:18 sort bar, 17:21/17:26/17:29 result card, price block and select CTA.
+ *
+ * Node 17:3 (compact header) is intentionally not implemented here: the global
+ * header is owned by the Execution 02 App Shell and is not redesigned.
+ *
+ * Loaded from src/main.jsx after the design system and Home, so these rules
+ * supersede the V1 flight styles in src/index.css by source order — without
+ * !important and without deleting any legacy rule. Every value resolves to a
+ * V2 token; no Figma sample fare is encoded anywhere in this file.
+ */
+
+.flights-page {
+  background: var(--hajiz-v2-color-surface-canvas);
+  /* Node 17:21 card elevation — softer than shadow-md, scoped to this page
+     rather than added to the shared token set. */
+  --flight-card-shadow: 0 4px 16px 0 rgb(10 29 47 / 6%);
+}
+
+/* ---- Result header · node 17:6 --------------------------------------- */
+
+.flights-result-header-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-3);
+  padding-block: var(--hajiz-v2-space-12) var(--hajiz-v2-space-6);
+  text-align: start;
+}
+
+.flights-result-header-v2 h1 {
+  font: var(--hajiz-v2-ar-h1);
+  color: var(--hajiz-v2-color-text-primary);
+  margin: 0;
+  letter-spacing: normal;
+}
+
+.flights-result-header-v2 p {
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  margin: 0;
+}
+
+/* ---- Search summary --------------------------------------------------- */
+
+.flights-page .flights-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hajiz-v2-space-6);
+  flex-wrap: wrap;
+  padding: var(--hajiz-v2-space-6);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--flight-card-shadow);
+}
+
+.flights-page .flights-summary .summary-route {
+  font: var(--hajiz-v2-en-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.flights-page .flights-summary p,
+.flights-page .flights-summary small {
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.flights-page .flights-summary button {
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding-inline: var(--hajiz-v2-space-4);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-primary);
+  cursor: pointer;
+}
+
+/* ---- Results layout · node 17:9 --------------------------------------- */
+
+.flights-layout-v2 {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--hajiz-v2-space-6);
+  padding-block: var(--hajiz-v2-space-8);
+}
+
+.flights-results-v2__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-4);
+  min-inline-size: 0;
+}
+
+/* ---- Filters rail · node 17:10 ---------------------------------------- */
+
+.flight-filters-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  padding: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--flight-card-shadow);
+  text-align: start;
+}
+
+.flight-filters-v2__title {
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+  margin: 0;
+}
+
+.flight-filters-v2__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flight-filters-v2__item {
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.flight-filters-v2__note,
+.flight-sort-v2__note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  /* Truthfulness copy: never animated. */
+  animation: none;
+}
+
+/* ---- Sort bar · node 17:18 -------------------------------------------- */
+
+.flight-sort-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  text-align: start;
+}
+
+.flight-sort-v2__row {
+  display: flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-6);
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+}
+
+/* The active order carries an underline as well as the accent colour, so the
+   canonical order is never communicated by colour alone. */
+.flight-sort-v2__active {
+  position: relative;
+  color: var(--hajiz-v2-color-text-accent);
+}
+
+.flight-sort-v2__active::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -6px;
+  block-size: 2px;
+  border-radius: var(--hajiz-v2-radius-pill);
+  background: var(--hajiz-v2-color-journey-line);
+}
+
+.flight-sort-v2__inactive { color: var(--hajiz-v2-color-text-secondary); }
+
+.flight-sort-v2__count {
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+/* ---- Result card · node 17:21 ----------------------------------------- */
+
+.flight-result-card-v2 {
+  display: flex;
+  align-items: stretch;
+  gap: var(--hajiz-v2-space-6);
+  padding: var(--hajiz-v2-space-6);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--flight-card-shadow);
+  transition: box-shadow var(--hajiz-v2-duration-move) var(--hajiz-v2-ease-out);
+}
+
+.flight-result-card-v2:hover { box-shadow: var(--hajiz-v2-shadow-md); }
+
+.flight-result-card-v2__itinerary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-3);
+  flex: 1;
+  min-inline-size: 0;
+  text-align: start;
+}
+
+.flight-result-card-v2__eyebrow {
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+  /* Route emphasis is textual; never animated. */
+  animation: none;
+}
+
+.flight-result-card-v2__eyebrow--emphasis { color: var(--hajiz-v2-color-text-accent); }
+
+.flight-result-card-v2__eyebrow .ranking-badge {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.flight-result-card-v2__meta {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+/* Route line · node 17:24. Latin numerals and codes read left-to-right in
+   both document directions; the connector is a plain rule. */
+.flight-result-card-v2 .flight-segment {
+  display: flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-4);
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.flight-result-card-v2 .segment-end {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hajiz-v2-space-2);
+  flex: none;
+}
+
+.flight-result-card-v2 .segment-end strong {
+  font: var(--hajiz-v2-en-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.flight-result-card-v2 .segment-end .latin-text {
+  font: var(--hajiz-v2-en-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.flight-result-card-v2 .segment-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--hajiz-v2-space-1);
+  flex: 1;
+  min-inline-size: 48px;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.flight-result-card-v2 .segment-line i {
+  display: block;
+  inline-size: 100%;
+  block-size: 1px;
+  background: var(--hajiz-v2-color-border-strong);
+}
+
+/* ---- Price block · nodes 17:26 / 17:29 -------------------------------- */
+
+.flight-result-card-v2__price {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  flex: none;
+  inline-size: 260px;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+  text-align: start;
+}
+
+/* The fare is authoritative customer-facing data. It must never animate. */
+.flight-result-card-v2__amount {
+  font: var(--hajiz-v2-en-h3);
+  color: var(--hajiz-v2-color-text-primary);
+  animation: none;
+  transition: none;
+}
+
+.flight-result-card-v2__price-note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+}
+
+.flight-result-card-v2__select {
+  inline-size: 100%;
+  margin-block-start: auto;
+}
+
+/* ---- States ----------------------------------------------------------- */
+
+.flight-loading-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-4);
+}
+
+.flight-loading-v2 h2 {
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+  margin: 0;
+}
+
+.flight-loading-v2 p {
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  margin: 0;
+}
+
+/* Skeletons occupy the real card height so results arriving cause no jump. */
+.flight-loading-v2 .flight-card-skeleton {
+  block-size: 148px;
+  inline-size: 100%;
+  border-radius: var(--hajiz-v2-radius-lg);
+}
+
+.flight-results-state-v2,
+.selection-notice-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-3);
+  padding: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--flight-card-shadow);
+  text-align: start;
+}
+
+.flight-results-state-v2 h2,
+.selection-notice-v2 h2 {
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+  margin: 0;
+}
+
+.flight-results-state-v2 p,
+.selection-notice-v2 p {
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  margin: 0;
+}
+
+/* Error and unavailable copy must stay completely static. */
+.flight-results-state-v2[role="alert"],
+.selection-notice-v2[role="alert"] {
+  background: var(--hajiz-v2-color-surface-error);
+  animation: none;
+  transition: none;
+}
+
+.flight-results-state-v2[role="alert"] h2,
+.selection-notice-v2[role="alert"] h2 { color: var(--hajiz-v2-color-status-error); }
+
+.flight-results-state-v2 button,
+.selection-notice-v2 button {
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding-inline: var(--hajiz-v2-space-6);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-action-primary);
+  font: var(--hajiz-v2-ar-button);
+  color: var(--hajiz-v2-color-text-inverse);
+  cursor: pointer;
+}
+
+.flights-page .flight-partial-notice {
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-warning);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-status-warning);
+}
+
+/* ---- Focus ------------------------------------------------------------ */
+
+.flight-result-card-v2__select:focus-visible,
+.flights-page .flights-summary button:focus-visible,
+.flight-results-state-v2 button:focus-visible,
+.selection-notice-v2 button:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Responsive · 1440 / 1024 / 768 / 390 ----------------------------- */
+
+@media (max-width: 1024px) {
+  .flights-layout-v2 {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: var(--hajiz-v2-space-4);
+  }
+  .flight-result-card-v2__price { inline-size: 220px; }
+}
+
+@media (max-width: 900px) {
+  /* Mobile is a stacked composition, not a compressed desktop card. */
+  .flights-layout-v2 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hajiz-v2-space-4);
+    padding-block: var(--hajiz-v2-space-4);
+  }
+
+  /* The rail follows the results rather than pushing them below the fold. */
+  .flight-filters-v2 { order: 2; }
+  .flights-results-v2__list { order: 1; }
+
+  .flights-result-header-v2 { padding-block: var(--hajiz-v2-space-6) var(--hajiz-v2-space-4); }
+  .flights-result-header-v2 h1 { font: var(--hajiz-v2-ar-h2); }
+
+  .flight-result-card-v2 {
+    flex-direction: column;
+    gap: var(--hajiz-v2-space-4);
+    padding: var(--hajiz-v2-space-4);
+  }
+
+  .flight-result-card-v2__price {
+    inline-size: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--hajiz-v2-space-3);
+  }
+
+  .flight-result-card-v2__price-note { inline-size: 100%; order: 3; }
+  .flight-result-card-v2__select {
+    inline-size: auto;
+    min-inline-size: 140px;
+    margin-block-start: 0;
+  }
+
+  .flight-result-card-v2 .flight-segment {
+    flex-wrap: wrap;
+    gap: var(--hajiz-v2-space-2);
+  }
+  .flight-result-card-v2 .segment-end strong,
+  .flight-result-card-v2 .segment-end .latin-text { font: var(--hajiz-v2-ar-h3); }
+
+  .flight-sort-v2__row { flex-wrap: wrap; gap: var(--hajiz-v2-space-4); }
+
+  .flights-page .flights-summary {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--hajiz-v2-space-4);
+  }
+  .flights-page .flights-summary button { inline-size: 100%; }
+}
+
+@media (max-width: 390px) {
+  .flight-result-card-v2__select { inline-size: 100%; min-inline-size: 0; }
+}
+
+/* ---- Reduced motion --------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .flight-result-card-v2,
+  .flight-result-card-v2:hover {
+    transition: none;
+  }
+}
