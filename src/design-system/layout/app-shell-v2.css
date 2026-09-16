@@ -1,0 +1,288 @@
+/*
+ * HAJIZ V2 app shell.
+ * Desktop header: Figma node 14:25 (88px, surface-primary, 24px padding,
+ *   brand / primary navigation / utilities).
+ * Mobile header: Figma node 16:35 (68px, 16px padding, menu / brand / login).
+ *
+ * These rules are loaded after src/index.css so they supersede the V1 shell
+ * styles at equal specificity without !important and without deleting them.
+ * Everything directional uses logical properties and mirrors for LTR.
+ */
+
+.v2-shell {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100vh;
+  background: var(--hajiz-v2-color-surface-canvas);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.v2-shell__main {
+  flex: 1;
+}
+
+/* ---- Skip link -------------------------------------------------------- */
+
+.v2-shell .skip-link {
+  z-index: var(--hajiz-v2-z-skip-link);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-primary);
+  color: var(--hajiz-v2-color-text-primary);
+  font: var(--hajiz-v2-ar-label);
+  box-shadow: var(--hajiz-v2-shadow-md);
+}
+
+.v2-shell .skip-link:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Header ----------------------------------------------------------- */
+
+.v2-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--hajiz-v2-z-sticky);
+  background: var(--hajiz-v2-color-surface-primary);
+  border-block-end: 1px solid var(--hajiz-v2-color-border-subtle);
+  backdrop-filter: none;
+}
+
+.v2-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hajiz-v2-space-6);
+  min-block-size: var(--hajiz-v2-header-height-desktop);
+  padding-block: var(--hajiz-v2-space-2);
+  inline-size: min(100% - (2 * var(--hajiz-v2-gutter-mobile)), var(--hajiz-v2-container-wide));
+  margin-inline: auto;
+}
+
+/* ---- Brand ------------------------------------------------------------ */
+
+.v2-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-2);
+  min-block-size: var(--hajiz-v2-touch-target);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.v2-brand__word {
+  font: var(--hajiz-v2-ar-h2);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.v2-brand__latin {
+  font: var(--hajiz-v2-en-label);
+  letter-spacing: 0.08em;
+  color: var(--hajiz-v2-color-text-secondary);
+  unicode-bidi: isolate;
+}
+
+.v2-brand:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 4px;
+  border-radius: var(--hajiz-v2-radius-sm);
+}
+
+/* ---- Primary navigation ----------------------------------------------- */
+
+.v2-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-8);
+}
+
+.v2-nav__link,
+.v2-utilities__item {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding-inline: var(--hajiz-v2-space-1);
+  border-radius: var(--hajiz-v2-radius-sm);
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-primary);
+  background: transparent;
+  text-decoration: none;
+  transition: color var(--hajiz-v2-duration-connect) var(--hajiz-v2-ease-out);
+}
+
+[dir="ltr"] .v2-nav__link,
+[dir="ltr"] .v2-utilities__item { font: var(--hajiz-v2-en-label); }
+
+.v2-nav__link:hover,
+.v2-utilities__item:hover { color: var(--hajiz-v2-color-text-accent); }
+
+/* Active uses the accent token, matching node 14:30, and is additionally
+   marked with aria-current so colour is not the only signal. */
+.v2-nav__link--active {
+  color: var(--hajiz-v2-color-text-accent);
+  position: relative;
+}
+
+.v2-nav__link--active::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: var(--hajiz-v2-space-2);
+  block-size: 2px;
+  border-radius: var(--hajiz-v2-radius-pill);
+  background: var(--hajiz-v2-color-journey-line);
+}
+
+.v2-nav__link:focus-visible,
+.v2-utilities__item:focus-visible,
+.v2-menu-button:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Utilities -------------------------------------------------------- */
+
+.v2-utilities {
+  display: flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-4);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.v2-utilities__item {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.v2-utilities__item[aria-live] { cursor: default; color: var(--hajiz-v2-color-text-secondary); }
+
+/* ---- Menu button ------------------------------------------------------ */
+
+.v2-menu-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--hajiz-v2-touch-target);
+  block-size: var(--hajiz-v2-touch-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: transparent;
+  color: var(--hajiz-v2-color-text-primary);
+  cursor: pointer;
+}
+
+.v2-menu-button__glyph {
+  display: block;
+  font: 600 24px/34px var(--hajiz-v2-font-latin);
+}
+
+/* ---- Mobile navigation panel ------------------------------------------ */
+
+.v2-mobile-nav {
+  display: grid;
+  gap: var(--hajiz-v2-space-1);
+  padding-block: var(--hajiz-v2-space-2) var(--hajiz-v2-space-4);
+  padding-inline: var(--hajiz-v2-gutter-mobile);
+  background: var(--hajiz-v2-color-surface-primary);
+  border-block-start: 1px solid var(--hajiz-v2-color-border-subtle);
+}
+
+.v2-mobile-nav .v2-nav__link,
+.v2-mobile-nav .v2-utilities__item {
+  inline-size: 100%;
+  padding-inline: var(--hajiz-v2-space-3);
+  justify-content: flex-start;
+}
+
+/* ---- Footer ----------------------------------------------------------- */
+/*
+ * The canonical Figma Home frames (14:24 / 16:34) contain no footer, so the
+ * existing V1 footer structure is preserved as-is and only re-skinned onto V2
+ * tokens. No footer content or links were invented.
+ */
+
+.v2-footer {
+  background: var(--hajiz-v2-color-surface-inverse);
+  color: var(--hajiz-v2-color-text-inverse);
+  padding-block: var(--hajiz-v2-space-12) var(--hajiz-v2-space-8);
+  border-block-start: 0;
+}
+
+.v2-footer .v2-brand__word,
+.v2-footer .v2-brand { color: var(--hajiz-v2-color-text-inverse); }
+.v2-footer .v2-brand__latin { color: var(--hajiz-v2-neutral-300); }
+
+.v2-footer__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hajiz-v2-space-8);
+  flex-wrap: wrap;
+  min-block-size: 5rem;
+}
+
+.v2-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hajiz-v2-space-4);
+}
+
+.v2-footer__nav a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--hajiz-v2-touch-target);
+  color: var(--hajiz-v2-neutral-300);
+  font: var(--hajiz-v2-ar-body-sm);
+}
+
+.v2-footer__nav a:hover { color: var(--hajiz-v2-color-text-inverse); }
+
+.v2-footer__nav a:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-journey-line);
+  outline-offset: 2px;
+  border-radius: var(--hajiz-v2-radius-sm);
+}
+
+.v2-footer__tagline {
+  margin: 0;
+  color: var(--hajiz-v2-neutral-300);
+  font: var(--hajiz-v2-ar-body-sm);
+}
+
+/* ---- Responsive ------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .v2-header__inner {
+    min-block-size: var(--hajiz-v2-header-height-mobile);
+    gap: var(--hajiz-v2-space-4);
+    padding-block: var(--hajiz-v2-space-2);
+  }
+
+  .v2-nav { display: none; }
+  .v2-menu-button { display: inline-flex; }
+
+  /*
+   * Mobile order follows Figma node 16:35: login at the inline start of the
+   * reading order, brand centred, menu at the opposite edge. Because these are
+   * flex `order` values and not physical floats, the arrangement mirrors
+   * correctly for LTR instead of being hard-coded left/right.
+   */
+  .v2-utilities { order: 1; gap: var(--hajiz-v2-space-2); }
+  .v2-utilities .desktop-only { display: none; }
+  .v2-brand { order: 2; margin-inline: auto; }
+  .v2-menu-button { order: 3; }
+
+  .v2-brand__word { font: var(--hajiz-v2-ar-h2); }
+  .v2-brand__latin { display: none; }
+
+  .v2-footer__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--hajiz-v2-space-4);
+  }
+}
+
+@media (min-width: 901px) {
+  .v2-header__inner { padding-inline: var(--hajiz-v2-space-6); }
+}

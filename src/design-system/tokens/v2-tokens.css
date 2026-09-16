@@ -1,0 +1,128 @@
+/*
+ * HAJIZ V2 design tokens.
+ * Source of truth: Figma 3Lbz1WPyBG3KpE8RgEeS7T
+ * Names match the Figma variable names exactly (--hajiz-v2-*).
+ *
+ * [figma]   = read directly from Figma variable definitions.
+ * [derived] = not exposed as a Figma variable; computed from the 4px grid or
+ *             measured off a canonical frame. Node reference given per line.
+ */
+
+:root {
+  /* ---- Brand ramp ---------------------------------------------- [figma] */
+  --hajiz-v2-navy-900: #0a1d2f;
+  --hajiz-v2-gold-500: #d4a23a;
+  --hajiz-v2-gold-400: #dfb348;
+  --hajiz-v2-neutral-500: #6b7280;
+  --hajiz-v2-neutral-300: #cdd2d9;
+  --hajiz-v2-neutral-200: #e5e7eb;
+  --hajiz-v2-neutral-100: #f5f6f8;
+  --hajiz-v2-info-50: #edf5fa;
+  --hajiz-v2-error-50: #fceef0;
+
+  /* ---- Text ---------------------------------------------------- [figma] */
+  --hajiz-v2-color-text-primary: #0a1d2f;
+  --hajiz-v2-color-text-secondary: #525c6a;
+  --hajiz-v2-color-text-inverse: #ffffff;
+  /* Accent is a darkened gold. gold-500 must never be used for small text. */
+  --hajiz-v2-color-text-accent: #855711;
+
+  /* ---- Surfaces ------------------------------------------------ [figma] */
+  --hajiz-v2-color-surface-canvas: #faf8f3;
+  --hajiz-v2-color-surface-primary: #ffffff;
+  --hajiz-v2-color-surface-subtle: #f5f6f8;
+  --hajiz-v2-color-surface-inverse: #0a1d2f;
+  --hajiz-v2-color-surface-success: #eaf5ef;
+  --hajiz-v2-color-surface-warning: #fff9ec;
+  --hajiz-v2-color-surface-error: var(--hajiz-v2-error-50);
+  --hajiz-v2-color-surface-info: var(--hajiz-v2-info-50);
+
+  /* ---- Action -------------------------------------------------- [figma] */
+  --hajiz-v2-color-action-primary: #0a1d2f;
+  --hajiz-v2-color-action-hover: #274257;
+  /* [derived] Pressed = action-primary at 88% opacity, per node 11:8. */
+  --hajiz-v2-color-action-pressed: #0a1d2f;
+  --hajiz-v2-opacity-pressed: 0.88;
+
+  /* ---- Status (node 17:88) ------------------------------------- [figma] */
+  --hajiz-v2-color-status-success: #176448;
+  --hajiz-v2-color-status-warning: #855711;
+  --hajiz-v2-color-status-error: #a42d36;
+  --hajiz-v2-color-status-info: #245d84;
+
+  /* ---- Borders & focus ----------------------------------------- [figma] */
+  --hajiz-v2-color-border-focus: #476b83;
+  --hajiz-v2-stroke-focus: 2px;
+  /* [derived] Neutral borders alias the neutral ramp. */
+  --hajiz-v2-color-border-subtle: var(--hajiz-v2-neutral-200);
+  --hajiz-v2-color-border-strong: var(--hajiz-v2-neutral-300);
+
+  /* ---- Disabled ------------------------------------- [figma, node 11:10] */
+  --hajiz-v2-color-disabled-surface: var(--hajiz-v2-neutral-200);
+  --hajiz-v2-color-disabled-text: var(--hajiz-v2-color-text-secondary);
+
+  /* ---- Brand geometry ------------------------------------------ [figma] */
+  --hajiz-v2-color-journey-line: #ebc45f;
+
+  /* ---- Spacing · 4px grid -------------------------------------- [figma] */
+  --hajiz-v2-space-1: 4px;
+  --hajiz-v2-space-2: 8px;
+  --hajiz-v2-space-3: 12px;
+  --hajiz-v2-space-4: 16px;
+  --hajiz-v2-space-6: 24px;
+  --hajiz-v2-space-8: 32px;
+  --hajiz-v2-space-12: 48px;
+  --hajiz-v2-space-16: 64px;
+  /* [derived] Grid-consistent infill. */
+  --hajiz-v2-space-5: 20px;
+  --hajiz-v2-space-10: 40px;
+  --hajiz-v2-space-20: 80px;
+
+  /* ---- Radius -------------------------------------------------- [figma] */
+  --hajiz-v2-radius-md: 12px;
+  --hajiz-v2-radius-lg: 20px;
+  /* [derived] 14px measured on node 16:20; sm/pill from the grid. */
+  --hajiz-v2-radius-sm: 8px;
+  --hajiz-v2-radius-image: 14px;
+  --hajiz-v2-radius-pill: 999px;
+
+  /* ---- Shadows ----------------------- [figma, nodes 15:2 / 16:19] ------ */
+  --hajiz-v2-shadow-md: 0 8px 24px 0 rgb(10 29 47 / 8%);
+  --hajiz-v2-shadow-lg: 0 18px 48px 0 rgb(10 29 47 / 16%);
+
+  /* ---- Z-index ------------------------------------------------ [derived] */
+  --hajiz-v2-z-base: 0;
+  --hajiz-v2-z-sticky: 50;
+  --hajiz-v2-z-overlay: 100;
+  --hajiz-v2-z-modal: 200;
+  --hajiz-v2-z-skip-link: 1000;
+
+  /* ---- Layout ------------ [figma, measured on 14:24 / 15:2 / 16:34] ---- */
+  --hajiz-v2-container-desktop: 1200px;
+  --hajiz-v2-container-wide: 1432px;
+  --hajiz-v2-container-mobile: 382px;
+  --hajiz-v2-gutter-desktop: var(--hajiz-v2-space-16);
+  --hajiz-v2-gutter-tablet: var(--hajiz-v2-space-8);
+  --hajiz-v2-gutter-mobile: var(--hajiz-v2-space-6);
+
+  /* ---- Breakpoints ------------------------------------------- [derived] */
+  /* 900px is the breakpoint the existing stylesheet already behaves on and is
+     preserved deliberately. 390px / 1440px are the canonical Figma widths. */
+  --hajiz-v2-bp-mobile: 600px;
+  --hajiz-v2-bp-tablet: 900px;
+  --hajiz-v2-bp-desktop: 1200px;
+  --hajiz-v2-viewport-mobile: 390px;
+  --hajiz-v2-viewport-desktop: 1440px;
+
+  /* ---- Control heights ---------- [figma, nodes 11:2 / 16:59 / 14:25] --- */
+  --hajiz-v2-touch-target: 48px;
+  --hajiz-v2-control-height-sm: 40px;
+  --hajiz-v2-control-height-md: 52px;
+  --hajiz-v2-control-height-lg: 56px;
+  --hajiz-v2-header-height-desktop: 88px;
+  --hajiz-v2-header-height-mobile: 68px;
+
+  /* ---- Type families ------------------------------------------- [figma] */
+  --hajiz-v2-font-arabic: "Tajawal", system-ui, sans-serif;
+  --hajiz-v2-font-latin: "Inter", system-ui, sans-serif;
+}

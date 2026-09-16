@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@400;500;600;700;800&display=swap");
+@import "./v2-tokens.css";
 
 :root {
   --hajiz-navy: #0c1b2e;
@@ -19,4 +20,33 @@
   --radius-md: 1rem;
   --radius-lg: 1.5rem;
   --shadow-soft: 0 18px 50px rgb(12 27 46 / 9%);
+}
+
+/*
+ * V1 -> V2 compatibility bridge.
+ * The legacy names below are consumed by ~62KB of existing rules in
+ * src/index.css. Rather than rewriting that stylesheet, each legacy token is
+ * re-pointed at its V2 equivalent so the whole app adopts the V2 brand values
+ * in one reviewable place. Legacy names are retained, not deleted.
+ */
+:root {
+  --hajiz-navy: var(--hajiz-v2-navy-900);
+  --hajiz-navy-soft: var(--hajiz-v2-color-action-hover);
+  --hajiz-gold: var(--hajiz-v2-color-text-accent);
+  --hajiz-gold-accent: var(--hajiz-v2-gold-500);
+  --hajiz-cream: var(--hajiz-v2-color-surface-canvas);
+  --hajiz-surface: var(--hajiz-v2-color-surface-primary);
+  --hajiz-ink: var(--hajiz-v2-color-text-primary);
+  --hajiz-muted: var(--hajiz-v2-color-text-secondary);
+  --hajiz-border: var(--hajiz-v2-color-border-subtle);
+  --hajiz-focus: var(--hajiz-v2-color-border-focus);
+  --font-arabic: var(--hajiz-v2-font-arabic);
+  --font-latin: var(--hajiz-v2-font-latin);
+  --container-max: var(--hajiz-v2-container-desktop);
+  /* Raised 44px -> 48px to meet the V2 accessibility floor. */
+  --touch-target: var(--hajiz-v2-touch-target);
+  --radius-sm: var(--hajiz-v2-radius-sm);
+  --radius-md: var(--hajiz-v2-radius-md);
+  --radius-lg: var(--hajiz-v2-radius-lg);
+  --shadow-soft: var(--hajiz-v2-shadow-lg);
 }

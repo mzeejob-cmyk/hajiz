@@ -1,0 +1,116 @@
+/*
+ * HAJIZ V2 motion foundation.
+ * Brand language: CONNECT -> MOVE -> ARRIVE.
+ * Keyframe timings below are transcribed from Figma motion data on node 14:24
+ * (timeline cohort 14:46 / 14:47 / 14:48, 2000ms, loop).
+ *
+ * CSS only. No animation library is introduced.
+ */
+
+:root {
+  --hajiz-v2-duration-connect: 150ms;
+  --hajiz-v2-duration-move: 250ms;
+  --hajiz-v2-duration-arrive: 350ms;
+  --hajiz-v2-duration-journey: 2000ms;
+
+  --hajiz-v2-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --hajiz-v2-ease-linear: linear;
+
+  /* Decorative parallax budgets. Hard ceilings, not starting points. */
+  --hajiz-v2-parallax-desktop: 12px;
+  --hajiz-v2-parallax-mobile: 6px;
+}
+
+@media (max-width: 900px) {
+  :root { --hajiz-v2-parallax-desktop: var(--hajiz-v2-parallax-mobile); }
+}
+
+/* ---- Journey mark · CONNECT / MOVE / ARRIVE --------------------------- */
+
+@keyframes hajiz-v2-node-origin {
+  0% { transform: translateY(8px); }
+  35% { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes hajiz-v2-line-connect {
+  0% { transform: scaleX(0.05); }
+  5% { transform: scaleX(0.05); }
+  32.5% { transform: scaleX(1); }
+  100% { transform: scaleX(1); }
+}
+
+@keyframes hajiz-v2-node-arrive {
+  0% { transform: translateY(12px) scale(0.72); }
+  17.5% { transform: translateY(12px) scale(0.72); }
+  40% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.v2-motion-origin {
+  animation: hajiz-v2-node-origin var(--hajiz-v2-duration-journey)
+    var(--hajiz-v2-ease-out) infinite;
+}
+
+.v2-motion-line {
+  transform-origin: inline-start center;
+  animation: hajiz-v2-line-connect var(--hajiz-v2-duration-journey)
+    var(--hajiz-v2-ease-out) infinite;
+}
+
+.v2-motion-arrive {
+  animation: hajiz-v2-node-arrive var(--hajiz-v2-duration-journey)
+    var(--hajiz-v2-ease-out) infinite;
+}
+
+/* ---- Interaction transitions ----------------------------------------- */
+
+.v2-transition-connect {
+  transition-duration: var(--hajiz-v2-duration-connect);
+  transition-timing-function: var(--hajiz-v2-ease-out);
+}
+
+.v2-transition-move {
+  transition-duration: var(--hajiz-v2-duration-move);
+  transition-timing-function: var(--hajiz-v2-ease-out);
+}
+
+.v2-transition-arrive {
+  transition-duration: var(--hajiz-v2-duration-arrive);
+  transition-timing-function: var(--hajiz-v2-ease-out);
+}
+
+@keyframes hajiz-v2-spin { to { transform: rotate(360deg); } }
+@keyframes hajiz-v2-skeleton { 50% { opacity: 0.45; } }
+
+/*
+ * Protected regions. Decorative motion is forbidden on payment confirmation,
+ * payment totals, legal text, expiry text, input labels, critical booking
+ * state and authentication errors. Marking an element .v2-no-motion makes
+ * that guarantee enforceable rather than conventional.
+ */
+.v2-no-motion,
+.v2-no-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ---- Reduced motion: STATIC ------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Resting composition, not a mid-animation freeze. */
+  .v2-motion-origin,
+  .v2-motion-arrive,
+  .v2-motion-line { transform: none !important; }
+
+  :root { --hajiz-v2-parallax-desktop: 0px; --hajiz-v2-parallax-mobile: 0px; }
+}

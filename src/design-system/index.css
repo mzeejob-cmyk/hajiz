@@ -1,0 +1,22 @@
+/*
+ * HAJIZ V2 design system entry point.
+ * Imported from src/main.jsx AFTER src/index.css so that V2 component and
+ * shell rules supersede the V1 stylesheet by source order, without
+ * !important and without deleting any legacy rule.
+ */
+@import "./typography/typography.css";
+@import "./motion/motion.css";
+@import "./primitives/primitives.css";
+@import "./layout/app-shell-v2.css";
+
+.v2-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,355 @@
+/*
+ * HAJIZ V2 primitives.
+ * Button geometry and state colours come from the Figma component set
+ * "HAJIZ / Button" (node 12:2, variants 11:2 - 11:16).
+ * Component note carried from Figma: "One primary action per section.
+ * Minimum 48px touch target. No bounce or position shift while loading."
+ *
+ * All directional styling uses logical properties so RTL and LTR share rules.
+ */
+
+/* ---- Button ---------------------------------------------------------- */
+
+.v2-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--hajiz-v2-space-2);
+  min-height: var(--hajiz-v2-touch-target);
+  height: var(--hajiz-v2-control-height-md);
+  padding-inline: var(--hajiz-v2-space-6);
+  padding-block: var(--hajiz-v2-space-3);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  font: var(--hajiz-v2-ar-button);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color var(--hajiz-v2-duration-connect) var(--hajiz-v2-ease-out),
+    opacity var(--hajiz-v2-duration-connect) var(--hajiz-v2-ease-out);
+}
+
+[dir="ltr"] .v2-button { font-family: var(--hajiz-v2-font-latin); }
+
+.v2-button--block { width: 100%; }
+
+/* Focus ring is drawn as an outline, never a border, so the box never grows
+   and the control cannot shift on focus. */
+.v2-button:focus-visible,
+.v2-field:focus-visible,
+.v2-select-trigger:focus-visible,
+.v2-icon-button:focus-visible,
+.v2-search-input:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+.v2-button--primary {
+  background: var(--hajiz-v2-color-action-primary);
+  color: var(--hajiz-v2-color-text-inverse);
+}
+
+.v2-button--primary:hover:not(:disabled) {
+  background: var(--hajiz-v2-color-action-hover);
+}
+
+.v2-button--primary:active:not(:disabled) {
+  background: var(--hajiz-v2-color-action-pressed);
+  opacity: var(--hajiz-v2-opacity-pressed);
+}
+
+.v2-button--secondary {
+  background: var(--hajiz-v2-color-surface-primary);
+  color: var(--hajiz-v2-color-text-primary);
+  box-shadow: inset 0 0 0 var(--hajiz-v2-stroke-focus)
+    var(--hajiz-v2-color-border-focus);
+}
+
+.v2-button--secondary:hover:not(:disabled) {
+  background: var(--hajiz-v2-color-surface-subtle);
+}
+
+.v2-button--ghost {
+  background: var(--hajiz-v2-color-surface-primary);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.v2-button--ghost:hover:not(:disabled) {
+  background: var(--hajiz-v2-color-surface-subtle);
+}
+
+.v2-button:disabled,
+.v2-button[aria-disabled="true"] {
+  background: var(--hajiz-v2-color-disabled-surface);
+  color: var(--hajiz-v2-color-disabled-text);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* Loading keeps the label in place and reserves the spinner slot, so the
+   button never resizes or bounces between states. */
+.v2-button[data-loading="true"] { cursor: progress; }
+.v2-button[data-loading="true"] .v2-button__label { opacity: 0.85; }
+
+/* ---- IconButton ------------------------------------------------------ */
+
+.v2-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--hajiz-v2-touch-target);
+  block-size: var(--hajiz-v2-touch-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: transparent;
+  color: var(--hajiz-v2-color-text-primary);
+  cursor: pointer;
+  transition: background-color var(--hajiz-v2-duration-connect) var(--hajiz-v2-ease-out);
+}
+
+.v2-icon-button:hover:not(:disabled) { background: var(--hajiz-v2-color-surface-subtle); }
+.v2-icon-button:disabled { color: var(--hajiz-v2-color-disabled-text); cursor: not-allowed; }
+
+/* ---- Field foundation (TextField / Select trigger / Search) ---------- */
+
+.v2-field-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+  text-align: start;
+}
+
+.v2-field-label {
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+[dir="ltr"] .v2-field-label { font: var(--hajiz-v2-en-label); }
+
+.v2-field {
+  min-height: var(--hajiz-v2-touch-target);
+  inline-size: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  text-align: start;
+}
+
+[dir="ltr"] .v2-field { font: var(--hajiz-v2-en-body); }
+
+.v2-field::placeholder { color: var(--hajiz-v2-color-text-secondary); }
+.v2-field:disabled { color: var(--hajiz-v2-color-disabled-text); cursor: not-allowed; }
+
+.v2-field-shell[data-invalid="true"] {
+  background: var(--hajiz-v2-color-surface-error);
+  box-shadow: inset 0 0 0 1px var(--hajiz-v2-color-status-error);
+}
+
+.v2-field-error {
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-status-error);
+}
+
+.v2-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hajiz-v2-space-2);
+  inline-size: 100%;
+  min-height: var(--hajiz-v2-touch-target);
+  border: 0;
+  background: transparent;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  text-align: start;
+  cursor: pointer;
+}
+
+/* The caret is a glyph, mirrored by the document direction. */
+.v2-select-trigger::after {
+  content: "";
+  inline-size: 0;
+  block-size: 0;
+  border-inline: 5px solid transparent;
+  border-block-start: 6px solid var(--hajiz-v2-color-text-secondary);
+  flex: none;
+}
+
+.v2-search {
+  display: flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-2);
+  padding-inline: var(--hajiz-v2-space-4);
+  min-height: var(--hajiz-v2-control-height-lg);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+}
+
+.v2-search-input {
+  flex: 1;
+  min-height: var(--hajiz-v2-touch-target);
+  border: 0;
+  background: transparent;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  text-align: start;
+}
+
+/* ---- Badge / StatusBadge --------------------------------------------- */
+
+.v2-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-1);
+  padding-inline: var(--hajiz-v2-space-3);
+  padding-block: var(--hajiz-v2-space-1);
+  border-radius: var(--hajiz-v2-radius-pill);
+  background: var(--hajiz-v2-color-surface-subtle);
+  color: var(--hajiz-v2-color-text-secondary);
+  font: var(--hajiz-v2-ar-label);
+}
+
+[dir="ltr"] .v2-badge { font: var(--hajiz-v2-en-label); }
+
+.v2-badge--accent {
+  background: transparent;
+  padding-inline: 0;
+  color: var(--hajiz-v2-color-text-accent);
+}
+
+.v2-status-badge--neutral { background: var(--hajiz-v2-color-surface-subtle); color: var(--hajiz-v2-color-text-secondary); }
+.v2-status-badge--info { background: var(--hajiz-v2-color-surface-info); color: var(--hajiz-v2-color-status-info); }
+.v2-status-badge--success { background: var(--hajiz-v2-color-surface-success); color: var(--hajiz-v2-color-status-success); }
+.v2-status-badge--warning { background: var(--hajiz-v2-color-surface-warning); color: var(--hajiz-v2-color-status-warning); }
+.v2-status-badge--error { background: var(--hajiz-v2-color-surface-error); color: var(--hajiz-v2-color-status-error); }
+
+/* ---- Surface / Card / Section / Divider ------------------------------ */
+
+.v2-surface {
+  background: var(--hajiz-v2-color-surface-primary);
+  border-radius: var(--hajiz-v2-radius-lg);
+}
+
+.v2-surface--canvas { background: var(--hajiz-v2-color-surface-canvas); }
+.v2-surface--subtle { background: var(--hajiz-v2-color-surface-subtle); }
+.v2-surface--inverse { background: var(--hajiz-v2-color-surface-inverse); color: var(--hajiz-v2-color-text-inverse); }
+.v2-surface--raised { box-shadow: var(--hajiz-v2-shadow-md); }
+.v2-surface--floating { box-shadow: var(--hajiz-v2-shadow-lg); }
+
+.v2-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-4);
+  padding: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-md);
+}
+
+.v2-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-8);
+  padding-block: var(--hajiz-v2-space-16);
+  padding-inline: var(--hajiz-v2-gutter-desktop);
+}
+
+@media (max-width: 900px) {
+  .v2-section {
+    padding-block: var(--hajiz-v2-space-8);
+    padding-inline: var(--hajiz-v2-gutter-mobile);
+  }
+}
+
+.v2-divider {
+  border: 0;
+  block-size: 1px;
+  inline-size: 100%;
+  background: var(--hajiz-v2-color-border-subtle);
+  margin: 0;
+}
+
+.v2-divider--network {
+  block-size: 3px;
+  border-radius: var(--hajiz-v2-radius-pill);
+  background: linear-gradient(
+    to inline-end,
+    transparent,
+    var(--hajiz-v2-color-journey-line),
+    transparent
+  );
+}
+
+.v2-container {
+  inline-size: min(100% - (2 * var(--hajiz-v2-gutter-mobile)), var(--hajiz-v2-container-desktop));
+  margin-inline: auto;
+}
+
+/* ---- Loading / Skeleton ---------------------------------------------- */
+
+.v2-spinner {
+  display: inline-block;
+  inline-size: 1.25em;
+  block-size: 1.25em;
+  border-radius: 50%;
+  border: 2px solid currentcolor;
+  border-block-start-color: transparent;
+  animation: hajiz-v2-spin 700ms linear infinite;
+  flex: none;
+}
+
+.v2-skeleton {
+  display: block;
+  border-radius: var(--hajiz-v2-radius-sm);
+  background: var(--hajiz-v2-color-surface-subtle);
+  animation: hajiz-v2-skeleton 1.4s var(--hajiz-v2-ease-out) infinite;
+}
+
+.v2-skeleton--text { block-size: 1em; }
+.v2-skeleton--block { block-size: 180px; }
+
+/* ---- Empty / Error state shells -------------------------------------- */
+
+.v2-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--hajiz-v2-space-3);
+  padding: var(--hajiz-v2-space-12) var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  text-align: center;
+}
+
+.v2-state__title { font: var(--hajiz-v2-ar-h3); color: var(--hajiz-v2-color-text-primary); margin: 0; }
+.v2-state__body { font: var(--hajiz-v2-ar-body); color: var(--hajiz-v2-color-text-secondary); margin: 0; }
+.v2-state__actions { display: flex; gap: var(--hajiz-v2-space-3); flex-wrap: wrap; justify-content: center; }
+.v2-state--error { background: var(--hajiz-v2-color-surface-error); }
+.v2-state--error .v2-state__title { color: var(--hajiz-v2-color-status-error); }
+
+/* ---- Network mark ---------------------------------------------------- */
+
+.v2-network-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-2);
+}
+
+.v2-network-mark__node {
+  border-radius: 50%;
+  background: var(--hajiz-v2-color-journey-line);
+  flex: none;
+}
+
+.v2-network-mark__line {
+  block-size: 3px;
+  border-radius: var(--hajiz-v2-radius-pill);
+  background: var(--hajiz-v2-color-journey-line);
+  flex: none;
+}

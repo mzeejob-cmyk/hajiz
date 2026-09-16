@@ -1,0 +1,60 @@
+/*
+ * HAJIZ V2 typography.
+ * Every size/line-height pair below is a Figma text style from
+ * file 3Lbz1WPyBG3KpE8RgEeS7T. Arabic (Tajawal) is the primary system;
+ * English (Inter) mirrors structure, not meaning.
+ */
+
+:root {
+  /* Arabic · Tajawal ------------------------------------------- [figma] */
+  --hajiz-v2-ar-display: 700 56px/72px var(--hajiz-v2-font-arabic);
+  --hajiz-v2-ar-h1: 700 40px/56px var(--hajiz-v2-font-arabic);
+  --hajiz-v2-ar-h2: 700 32px/44px var(--hajiz-v2-font-arabic);
+  --hajiz-v2-ar-h3: 700 24px/36px var(--hajiz-v2-font-arabic);
+  --hajiz-v2-ar-body: 400 16px/28px var(--hajiz-v2-font-arabic);
+  --hajiz-v2-ar-body-sm: 400 14px/24px var(--hajiz-v2-font-arabic);
+  --hajiz-v2-ar-label: 700 14px/22px var(--hajiz-v2-font-arabic);
+  --hajiz-v2-ar-button: 700 16px/24px var(--hajiz-v2-font-arabic);
+
+  /* English · Inter -------------------------------------------- [figma] */
+  --hajiz-v2-en-h1: 700 40px/50px var(--hajiz-v2-font-latin);
+  --hajiz-v2-en-h2: 600 32px/42px var(--hajiz-v2-font-latin);
+  --hajiz-v2-en-h3: 600 24px/34px var(--hajiz-v2-font-latin);
+  --hajiz-v2-en-body: 400 16px/26px var(--hajiz-v2-font-latin);
+  --hajiz-v2-en-label: 500 14px/20px var(--hajiz-v2-font-latin);
+
+  /* [derived] Caption completes the ramp; no Figma style exists for it. */
+  --hajiz-v2-ar-caption: 400 12px/20px var(--hajiz-v2-font-arabic);
+  --hajiz-v2-en-caption: 400 12px/18px var(--hajiz-v2-font-latin);
+}
+
+/* Direction-aware resolution: one class, correct family per document
+   direction. Consumers use .v2-h1 and never pick the family by hand. */
+.v2-display { font: var(--hajiz-v2-ar-display); margin: 0; }
+.v2-h1 { font: var(--hajiz-v2-ar-h1); margin: 0; }
+.v2-h2 { font: var(--hajiz-v2-ar-h2); margin: 0; }
+.v2-h3 { font: var(--hajiz-v2-ar-h3); margin: 0; }
+.v2-body { font: var(--hajiz-v2-ar-body); margin: 0; }
+.v2-body-sm { font: var(--hajiz-v2-ar-body-sm); margin: 0; }
+.v2-label { font: var(--hajiz-v2-ar-label); margin: 0; }
+.v2-caption { font: var(--hajiz-v2-ar-caption); margin: 0; }
+
+[dir="ltr"] .v2-display,
+[lang="en"] .v2-display { font: var(--hajiz-v2-en-h1); }
+[dir="ltr"] .v2-h1,
+[lang="en"] .v2-h1 { font: var(--hajiz-v2-en-h1); }
+[dir="ltr"] .v2-h2,
+[lang="en"] .v2-h2 { font: var(--hajiz-v2-en-h2); }
+[dir="ltr"] .v2-h3,
+[lang="en"] .v2-h3 { font: var(--hajiz-v2-en-h3); }
+[dir="ltr"] .v2-body,
+[lang="en"] .v2-body { font: var(--hajiz-v2-en-body); }
+[dir="ltr"] .v2-body-sm,
+[lang="en"] .v2-body-sm { font: var(--hajiz-v2-en-label); }
+[dir="ltr"] .v2-label,
+[lang="en"] .v2-label { font: var(--hajiz-v2-en-label); }
+[dir="ltr"] .v2-caption,
+[lang="en"] .v2-caption { font: var(--hajiz-v2-en-caption); }
+
+/* Latin runs inside Arabic copy stay isolated and use Inter. */
+.v2-latin { font-family: var(--hajiz-v2-font-latin); unicode-bidi: isolate; }
