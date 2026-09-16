@@ -1,3 +1,18 @@
 import { Container } from "../../../design-system/primitives/Container.jsx"
+import { HomeHero } from "./HomeHero.jsx"
 import { HomeSearch } from "./HomeSearch.jsx"
-export function HeroSection() { return <section className="home-hero-v1"><Container><div className="home-hero-copy"><h1>السفر أقرب ليك.</h1><p>ابحث. قارن. ادفع بطريقتك. وسافر.</p></div><HomeSearch /></Container></section> }
+
+/**
+ * Home masthead: V2 hero (14:38 / 16:39) with the Signature Search card
+ * (15:2 / 16:49) stacked beneath it, matching the canonical Home composition.
+ */
+export function HeroSection() {
+  return (
+    <section className="home-masthead-v2">
+      <HomeHero />
+      <Container className="home-masthead-v2__search">
+        <HomeSearch />
+      </Container>
+    </section>
+  )
+}
