@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Container } from "../../design-system/primitives/Container.jsx"
-import { FareSelection } from "./components/FareSelection.jsx"
 import { FlightOfferCard } from "./components/FlightOfferCard.jsx"
 import { FlightsSearchSummary } from "./components/FlightsSearchSummary.jsx"
 import { FlightsResultsSortBar } from "./components/FlightsResultsSortBar.jsx"
@@ -123,14 +122,12 @@ export default function FlightsPage() {
   }, [coordinator, request, requestKey])
   useEffect(() => { repriceCoordinator?.cancel(); setRepriceState({ status: "idle" }); return () => repriceCoordinator?.cancel() }, [repriceCoordinator, request?.customerCurrency])
   useEffect(() => { checkoutCoordinator?.cancel(); intentCoordinator?.cancel(); paymentCoordinator?.cancel(); setCheckoutState({ status: "idle" }); setIntentState({ status: "idle" }); setPaymentState({ status: "idle" }); setTravelerDraft(null); return () => { checkoutCoordinator?.cancel(); intentCoordinator?.cancel(); paymentCoordinator?.cancel() } }, [checkoutCoordinator, intentCoordinator, paymentCoordinator, requestKey])
-  const itineraryKey = params.get("itinerary")
-  const fareKey = params.get("fare")
-  if (params.get("view") === "fare") return <FareSelection itineraryKey={itineraryKey} initialFareKey={fareKey} onBack={() => navigate(`/flights?from=${query.from}&to=${query.to}`)} onContinue={() => navigate(`/flights?from=${query.from}&to=${query.to}`)}/>
-  // Legacy fixture-driven customer views (?view=traveler / ?view=review) are
-  // retired. The trusted flow is Search -> Reprice -> B10 Traveler/Checkout ->
-  // B11 Booking Intent -> B12 Payment Initiation. These query values now fall
-  // through to the canonical results view; no fixture fare or traveler can
-  // reach a customer, and no in-memory draft is carried in a URL.
+  // The legacy fixture-driven customer checkout path is fully retired. The
+  // ?view=fare, ?view=traveler and ?view=review query values render nothing of
+  // their own and fall through to the canonical V2 results view below, so no
+  // fixture fare or fixture traveler identity can reach a customer. The only
+  // customer flight path is Search -> Reprice -> B10 Traveler/Checkout ->
+  // B11 Booking Intent -> B12 Payment Initiation.
   const retry = () => request && coordinator?.search(request)
   const options = searchState.result ? toFlightResultsViewModelV1(searchState.result) : []
   const hasResults = searchState.status === "success" || searchState.status === "partial"
