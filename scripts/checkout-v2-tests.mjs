@@ -260,12 +260,14 @@ await test("the traveler form cannot pay or book", () => {
   assert.equal((ready.match(/<fieldset/g) || []).length, 2)
 })
 
-await test("PaymentInitiationPanel is untouched by this execution", () => {
+await test("the payment layer keeps its own V2 surface, not checkout's", () => {
+  // Execution 06 owns the payment presentation; checkout must not style it and
+  // must not be styled by it.
   const panel = pageSource.slice(pageSource.indexOf("export function PaymentInitiationPanel"),
     pageSource.indexOf("export function BookingIntentPanel"))
-  assert.ok(!panel.includes("checkout-v2"), "payment panel must not adopt checkout V2 styling yet")
-  assert.match(panel, /selection-notice selection-notice-v2/)
-  assert.equal(/\.payment-v2|payment-v2__/.test(css), false)
+  assert.ok(!panel.includes("checkout-v2"), "payment panel must not adopt checkout V2 styling")
+  assert.match(panel, /payments-v2/)
+  assert.equal(/\.payments-v2|payment-status-v2|bankak-receipt-v2/.test(css), false)
 })
 
 await test("no customer payment-transition authority is added", () => {

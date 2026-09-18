@@ -1,0 +1,389 @@
+/*
+ * HAJIZ V2 Payments + Bankak.
+ * Source: Figma node 17:88 "Payments · Six canonical states" and descendants —
+ * 17:91 Bankak awaiting-upload card, 17:92 instructions, 17:95 the 24-hour
+ * expiry headline, 17:97 amount card, 17:101 status card row, and
+ * 17:102 to 17:125 the six canonical status treatments.
+ *
+ * Loaded from src/main.jsx after the design system, Home, results and
+ * checkout, so these rules supersede the V1 payment styles in src/index.css by
+ * source order — without !important and without deleting any legacy rule.
+ *
+ * Nothing here is authoritative. Amount, currency, reference, expiry and
+ * status are all rendered exactly as the server sends them.
+ */
+
+.payments-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--hajiz-v2-space-6);
+  padding: var(--hajiz-v2-space-8);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-md);
+  text-align: start;
+}
+
+.payments-v2__title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.payments-v2__muted {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  /* Payment truth copy. Never animated. */
+  animation: none;
+}
+
+/* Reference, account and expiry values read left-to-right in both document
+   directions and must never be reflowed by the surrounding Arabic. */
+.payments-v2__value {
+  font-family: var(--hajiz-v2-font-latin);
+  unicode-bidi: isolate;
+  overflow-wrap: anywhere;
+  animation: none;
+}
+
+/* ---- Bankak card · node 17:91 ----------------------------------------- */
+
+.payments-v2__bankak {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+  gap: var(--hajiz-v2-space-8);
+  padding: var(--hajiz-v2-space-8);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-inverse);
+  color: var(--hajiz-v2-color-text-inverse);
+}
+
+.payments-v2__instructions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-3);
+  min-inline-size: 0;
+}
+
+.payments-v2__instructions-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h2);
+  color: var(--hajiz-v2-color-text-inverse);
+}
+
+.payments-v2__instructions-body {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-inverse);
+}
+
+/* Node 17:95. The 24-hour window is settled product truth and is stated in
+   the design's own words. It is never animated. */
+.payments-v2__expiry-headline {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-gold-400);
+  animation: none;
+  transition: none;
+}
+
+.payments-v2__bankak .payments-v2__muted { color: var(--hajiz-v2-neutral-300); }
+.payments-v2__bankak .payments-v2__value { color: var(--hajiz-v2-color-text-inverse); }
+
+/* ---- Amount card · node 17:97 ----------------------------------------- */
+
+.payments-v2__amount {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-inline-size: 0;
+  padding-block: 20px;
+  padding-inline: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.payments-v2__amount-label {
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+/* The trusted amount. Authoritative customer data: it is displayed verbatim,
+   never computed in the browser, and it never animates. */
+.payments-v2__amount-value {
+  display: block;
+  font: var(--hajiz-v2-en-h2);
+  color: var(--hajiz-v2-color-text-primary);
+  overflow-wrap: anywhere;
+  animation: none;
+  transition: none;
+}
+
+/* Node 39:2. The equivalent is the trusted customer amount from the same
+   server response, shown for reference — no rate is applied here. */
+.payments-v2__equivalent {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-accent);
+  animation: none;
+}
+
+.payments-v2__equivalent .price { font: inherit; color: inherit; }
+
+.payments-v2__amount-note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+  animation: none;
+}
+
+.payments-v2__amount .payments-v2__value { color: var(--hajiz-v2-color-text-primary); }
+
+/* ---- Status cards · nodes 17:102 to 17:125 ---------------------------- */
+
+.payment-status-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  inline-size: 100%;
+  max-inline-size: 260px;
+  min-inline-size: 0;
+  padding-block: var(--hajiz-v2-space-4);
+  padding-inline: 20px;
+  border-radius: var(--hajiz-v2-radius-lg);
+  text-align: start;
+  /* Status is payment truth. It never animates. */
+  animation: none;
+  transition: none;
+}
+
+/* The status code is rendered as text in every card, so a status is never
+   carried by colour alone. */
+.payment-status-v2__code {
+  margin: 0;
+  font: var(--hajiz-v2-en-label);
+  unicode-bidi: isolate;
+}
+
+.payment-status-v2__title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.payment-status-v2__note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.payment-status-v2--warning { background: var(--hajiz-v2-color-surface-warning); }
+.payment-status-v2--warning .payment-status-v2__code { color: var(--hajiz-v2-color-status-warning); }
+.payment-status-v2--info { background: var(--hajiz-v2-info-50); }
+.payment-status-v2--info .payment-status-v2__code { color: var(--hajiz-v2-color-status-info); }
+.payment-status-v2--success { background: var(--hajiz-v2-color-surface-success); }
+.payment-status-v2--success .payment-status-v2__code { color: var(--hajiz-v2-color-status-success); }
+.payment-status-v2--error { background: var(--hajiz-v2-error-50); }
+.payment-status-v2--error .payment-status-v2__code { color: var(--hajiz-v2-color-status-error); }
+
+/* ---- Method selection -------------------------------------------------- */
+
+.payments-v2__methods {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-3);
+  margin: 0;
+  padding: var(--hajiz-v2-space-6);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+}
+
+.payments-v2__methods-legend {
+  padding: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.payments-v2__method {
+  display: flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-3);
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding-inline: var(--hajiz-v2-space-3);
+  border-radius: var(--hajiz-v2-radius-sm);
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  cursor: pointer;
+}
+
+.payments-v2__method input {
+  inline-size: 20px;
+  block-size: 20px;
+  flex: none;
+  accent-color: var(--hajiz-v2-color-action-primary);
+}
+
+.payments-v2__methods:disabled { opacity: 0.6; }
+
+.payments-v2__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hajiz-v2-space-3);
+}
+
+.payments-v2__redirect {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--hajiz-v2-touch-target);
+  text-decoration: none;
+}
+
+/* Sandbox disclosure must stay visually distinct and completely static. */
+.payments-v2__sandbox {
+  margin: 0;
+  padding: var(--hajiz-v2-space-3) var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-warning);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-status-warning);
+}
+
+.payments-v2__error {
+  margin: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-error);
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-status-error);
+}
+
+/* ---- Receipt upload ---------------------------------------------------- */
+
+.bankak-receipt-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-3);
+  padding: var(--hajiz-v2-space-6);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-subtle);
+  text-align: start;
+}
+
+.bankak-receipt-v2--accepted { background: var(--hajiz-v2-color-surface-info); }
+
+.bankak-receipt-v2__headline {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-status-info);
+}
+
+.bankak-receipt-v2__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  inline-size: 100%;
+  min-inline-size: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.bankak-receipt-v2__input {
+  min-block-size: var(--hajiz-v2-touch-target);
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-3);
+  border: 1px dashed var(--hajiz-v2-color-border-strong);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-primary);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.bankak-receipt-v2__note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+  animation: none;
+}
+
+.bankak-receipt-v2__error {
+  margin: 0;
+  padding: var(--hajiz-v2-space-3) var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-error);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-status-error);
+}
+
+.bankak-receipt-v2__submit { inline-size: auto; }
+
+/* ---- Focus ------------------------------------------------------------- */
+
+.payments-v2__method input:focus-visible,
+.payments-v2__redirect:focus-visible,
+.bankak-receipt-v2__input:focus-visible,
+.bankak-receipt-v2__submit:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Responsive · 1440 / 1024 / 768 / 390 ----------------------------- */
+
+@media (max-width: 1024px) {
+  .payments-v2__bankak {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: var(--hajiz-v2-space-6);
+    padding: var(--hajiz-v2-space-6);
+  }
+  .payments-v2 { padding: var(--hajiz-v2-space-6); }
+}
+
+@media (max-width: 900px) {
+  /* Mobile stacks: instructions first, then the amount the customer must send. */
+  .payments-v2__bankak {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hajiz-v2-space-4);
+    padding: var(--hajiz-v2-space-4);
+  }
+
+  .payments-v2 {
+    gap: var(--hajiz-v2-space-4);
+    padding: var(--hajiz-v2-space-4);
+  }
+
+  .payments-v2__instructions-title { font: var(--hajiz-v2-ar-h3); }
+  .payments-v2__amount-value { font: var(--hajiz-v2-ar-h2); }
+  .payment-status-v2 { max-inline-size: none; }
+
+  .payments-v2__methods { padding: var(--hajiz-v2-space-4); }
+  .payments-v2__actions { flex-direction: column; align-items: stretch; }
+  .payments-v2__actions .v2-button,
+  .payments-v2__redirect,
+  .bankak-receipt-v2__submit { inline-size: 100%; }
+  .bankak-receipt-v2 { padding: var(--hajiz-v2-space-4); }
+}
+
+@media (max-width: 390px) {
+  .payments-v2__expiry-headline { font: var(--hajiz-v2-ar-body); font-weight: 700; }
+}
+
+/* ---- Reduced motion ---------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .payments-v2,
+  .payments-v2 * {
+    transition: none;
+  }
+}
