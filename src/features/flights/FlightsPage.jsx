@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Container } from "../../design-system/primitives/Container.jsx"
 import { FareSelection } from "./components/FareSelection.jsx"
-import { TravelerDetails } from "./components/TravelerDetails.jsx"
-import { FlightReview } from "./components/FlightReview.jsx"
 import { FlightOfferCard } from "./components/FlightOfferCard.jsx"
 import { FlightsSearchSummary } from "./components/FlightsSearchSummary.jsx"
 import { FlightsResultsSortBar } from "./components/FlightsResultsSortBar.jsx"
@@ -98,7 +96,6 @@ export default function FlightsPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const query = parseFlightQuery(params)
-  const [reviewDraft, setReviewDraft] = useState(null)
   const [searchState, setSearchState] = useState({ status: "idle" })
   const [repriceState, setRepriceState] = useState({ status: "idle" })
   const [checkoutState, setCheckoutState] = useState({ status: "idle" })
@@ -128,9 +125,12 @@ export default function FlightsPage() {
   useEffect(() => { checkoutCoordinator?.cancel(); intentCoordinator?.cancel(); paymentCoordinator?.cancel(); setCheckoutState({ status: "idle" }); setIntentState({ status: "idle" }); setPaymentState({ status: "idle" }); setTravelerDraft(null); return () => { checkoutCoordinator?.cancel(); intentCoordinator?.cancel(); paymentCoordinator?.cancel() } }, [checkoutCoordinator, intentCoordinator, paymentCoordinator, requestKey])
   const itineraryKey = params.get("itinerary")
   const fareKey = params.get("fare")
-  if (params.get("view") === "fare") return <FareSelection itineraryKey={itineraryKey} initialFareKey={fareKey} onBack={() => navigate(`/flights?from=${query.from}&to=${query.to}`)} onContinue={(selectedFare) => navigate(`/flights?from=${query.from}&to=${query.to}&view=traveler&itinerary=${encodeURIComponent(itineraryKey)}&fare=${encodeURIComponent(selectedFare)}`)}/>
-  if (params.get("view") === "traveler") return <TravelerDetails itineraryKey={itineraryKey} fareKey={fareKey} onBack={() => navigate(`/flights?from=${query.from}&to=${query.to}&view=fare&itinerary=${encodeURIComponent(itineraryKey)}&fare=${encodeURIComponent(fareKey)}`)} onInvalid={() => navigate(`/flights?from=${query.from}&to=${query.to}`)} onReview={(values) => { setReviewDraft(values); navigate(`/flights?from=${query.from}&to=${query.to}&view=review&itinerary=${encodeURIComponent(itineraryKey)}&fare=${encodeURIComponent(fareKey)}`) }}/>
-  if (params.get("view") === "review") return <FlightReview itineraryKey={itineraryKey} fareKey={fareKey} draft={reviewDraft} onBack={() => navigate(`/flights?from=${query.from}&to=${query.to}&view=traveler&itinerary=${encodeURIComponent(itineraryKey)}&fare=${encodeURIComponent(fareKey)}`)} onMissingDraft={() => navigate(`/flights?from=${query.from}&to=${query.to}&view=traveler&itinerary=${encodeURIComponent(itineraryKey)}&fare=${encodeURIComponent(fareKey)}`)}/>
+  if (params.get("view") === "fare") return <FareSelection itineraryKey={itineraryKey} initialFareKey={fareKey} onBack={() => navigate(`/flights?from=${query.from}&to=${query.to}`)} onContinue={() => navigate(`/flights?from=${query.from}&to=${query.to}`)}/>
+  // Legacy fixture-driven customer views (?view=traveler / ?view=review) are
+  // retired. The trusted flow is Search -> Reprice -> B10 Traveler/Checkout ->
+  // B11 Booking Intent -> B12 Payment Initiation. These query values now fall
+  // through to the canonical results view; no fixture fare or traveler can
+  // reach a customer, and no in-memory draft is carried in a URL.
   const retry = () => request && coordinator?.search(request)
   const options = searchState.result ? toFlightResultsViewModelV1(searchState.result) : []
   const hasResults = searchState.status === "success" || searchState.status === "partial"
