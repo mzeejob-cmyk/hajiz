@@ -1,0 +1,342 @@
+/*
+ * HAJIZ V2 Traveler + Checkout.
+ * Source: Figma node 17:126 "Checkout · Desktop and mobile rules" and its
+ * descendants — 17:129 review layout, 17:130 review details card,
+ * 17:131-17:138 the four review groups, 17:139 sticky price summary,
+ * 17:141 total, 17:142 server-authority note, 17:143 continue action.
+ *
+ * Loaded from src/main.jsx after the design system, Home and Flight Results,
+ * so these rules supersede the V1 traveler styles in src/index.css by source
+ * order — without !important and without deleting any legacy rule.
+ *
+ * The payment layer is deliberately not restyled here: PaymentInitiationPanel
+ * keeps the shared selection-notice-v2 surface until Execution 06 owns it.
+ */
+
+.checkout-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-8);
+  padding: var(--hajiz-v2-space-8);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-canvas);
+  box-shadow: none;
+}
+
+/* ---- Head · nodes 17:127 / 17:128 ------------------------------------- */
+
+.checkout-v2__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-3);
+  text-align: start;
+}
+
+.checkout-v2__head h2 {
+  font: var(--hajiz-v2-ar-h1);
+  color: var(--hajiz-v2-color-text-primary);
+  margin: 0;
+}
+
+.checkout-v2__subtitle {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  /* Product-truth copy. Never animated. */
+  animation: none;
+}
+
+.checkout-v2__back {
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding-inline: var(--hajiz-v2-space-4);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-primary);
+  cursor: pointer;
+}
+
+/* ---- Review layout · node 17:129 -------------------------------------- */
+
+.checkout-v2__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 430px;
+  align-items: start;
+  gap: var(--hajiz-v2-space-6);
+}
+
+/* ---- Details card · node 17:130 --------------------------------------- */
+
+.checkout-v2__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-6);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-8);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  text-align: start;
+}
+
+.checkout-v2__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  min-inline-size: 0;
+}
+
+.checkout-v2__group h3 {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.checkout-v2__group p {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.checkout-v2__muted {
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+/* Itinerary values are trusted data; they never animate. */
+.checkout-v2__route {
+  margin: 0;
+  font: var(--hajiz-v2-en-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+  transition: none;
+}
+
+/* ---- Traveler form --------------------------------------------------- */
+
+.checkout-v2__details fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--hajiz-v2-space-4);
+  margin: 0;
+  padding: var(--hajiz-v2-space-6);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+}
+
+.checkout-v2__details legend {
+  padding: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+/* Labels stay visible and programmatically attached: the label element wraps
+   its control, so the association survives any layout change. */
+.checkout-v2__details label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  min-inline-size: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+  text-align: start;
+}
+
+.checkout-v2__details input,
+.checkout-v2__details select {
+  min-block-size: var(--hajiz-v2-touch-target);
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding-inline: var(--hajiz-v2-space-3);
+  border: 1px solid var(--hajiz-v2-color-border-subtle);
+  border-radius: var(--hajiz-v2-radius-sm);
+  background: var(--hajiz-v2-color-surface-primary);
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  text-align: start;
+}
+
+.checkout-v2__details input[type="date"] { font: var(--hajiz-v2-en-body); }
+
+/* Native validation styling must not rely on colour alone, so the invalid
+   state also thickens the border. */
+.checkout-v2__details input:user-invalid,
+.checkout-v2__details select:user-invalid {
+  border-width: 2px;
+  border-color: var(--hajiz-v2-color-status-error);
+}
+
+.checkout-v2__details input:focus-visible,
+.checkout-v2__details select:focus-visible,
+.checkout-v2__back:focus-visible,
+.checkout-v2__cta:focus-visible,
+.checkout-v2__secondary:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Validation feedback is error copy: static, always visible, never animated. */
+.checkout-v2__feedback {
+  margin: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  animation: none;
+  transition: none;
+}
+
+/* ---- Sticky price summary · node 17:139 ------------------------------- */
+
+.checkout-v2__summary {
+  position: sticky;
+  inset-block-start: var(--hajiz-v2-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-4);
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-8);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-inverse);
+  color: var(--hajiz-v2-color-text-inverse);
+  text-align: start;
+}
+
+.checkout-v2__summary-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-inverse);
+}
+
+/* Node 17:141. The trusted total is authoritative customer data: it must
+   never animate and must never be produced by browser arithmetic. */
+.checkout-v2__total {
+  display: block;
+  font: var(--hajiz-v2-en-h1);
+  color: var(--hajiz-v2-color-text-inverse);
+  animation: none;
+  transition: none;
+  overflow-wrap: anywhere;
+}
+
+.checkout-v2__summary-note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-neutral-300);
+  animation: none;
+}
+
+.checkout-v2__summary .checkout-v2__route {
+  color: var(--hajiz-v2-neutral-300);
+  font: var(--hajiz-v2-en-body);
+}
+
+/* ---- Continue action · node 17:143 ------------------------------------ */
+
+.checkout-v2__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding: var(--hajiz-v2-space-4);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-gold-500);
+  font: var(--hajiz-v2-ar-button);
+  color: var(--hajiz-v2-color-text-primary);
+  cursor: pointer;
+  transition: background-color var(--hajiz-v2-duration-connect) var(--hajiz-v2-ease-out);
+}
+
+.checkout-v2__cta:hover:not(:disabled) { background: var(--hajiz-v2-gold-400); }
+.checkout-v2__cta:disabled { background: var(--hajiz-v2-color-disabled-surface); color: var(--hajiz-v2-color-disabled-text); cursor: not-allowed; }
+
+.checkout-v2__secondary {
+  inline-size: 100%;
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding: var(--hajiz-v2-space-3);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: transparent;
+  box-shadow: inset 0 0 0 var(--hajiz-v2-stroke-focus) var(--hajiz-v2-neutral-300);
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-inverse);
+  cursor: pointer;
+}
+
+/* ---- Price change · explicit acceptance ------------------------------- */
+
+.checkout-price-change-v2 {
+  gap: var(--hajiz-v2-space-3);
+}
+
+/* Both trusted prices stay legible side by side, and neither animates. */
+.checkout-price-change-v2 .price {
+  font: var(--hajiz-v2-en-h3);
+  color: var(--hajiz-v2-color-text-primary);
+  animation: none;
+  transition: none;
+}
+
+.checkout-price-change-v2 button {
+  inline-size: auto;
+  min-block-size: var(--hajiz-v2-touch-target);
+}
+
+/* ---- Responsive · 1440 / 1024 / 768 / 390 ----------------------------- */
+
+@media (max-width: 1024px) {
+  .checkout-v2__layout { grid-template-columns: minmax(0, 1fr) 340px; }
+  .checkout-v2 { padding: var(--hajiz-v2-space-6); }
+  .checkout-v2__details,
+  .checkout-v2__summary { padding: var(--hajiz-v2-space-6); }
+}
+
+@media (max-width: 900px) {
+  /* Mobile is a stacked composition. The summary follows the details it
+     summarises, rather than a desktop sidebar squeezed into one column. */
+  .checkout-v2__layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hajiz-v2-space-4);
+  }
+
+  .checkout-v2 {
+    gap: var(--hajiz-v2-space-6);
+    padding: var(--hajiz-v2-space-4);
+  }
+
+  .checkout-v2__head h2 { font: var(--hajiz-v2-ar-h2); }
+
+  .checkout-v2__summary {
+    position: static;
+    padding: var(--hajiz-v2-space-6);
+  }
+
+  .checkout-v2__total { font: var(--hajiz-v2-ar-h2); }
+
+  .checkout-v2__details,
+  .checkout-v2__details fieldset {
+    padding: var(--hajiz-v2-space-4);
+  }
+
+  .checkout-v2__details fieldset { grid-template-columns: minmax(0, 1fr); }
+
+  .checkout-v2__back { inline-size: 100%; }
+}
+
+@media (max-width: 390px) {
+  .checkout-v2__details legend { font: var(--hajiz-v2-ar-body); font-weight: 700; }
+}
+
+/* ---- Reduced motion --------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .checkout-v2__cta { transition: none; }
+}
