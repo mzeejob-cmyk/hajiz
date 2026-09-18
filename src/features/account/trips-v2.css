@@ -1,0 +1,397 @@
+/*
+ * HAJIZ V2 My Trips + Booking Detail.
+ * Source: Figma node 17:145 "My Trips · Digital wallet" and descendants —
+ * 17:146 heading, 17:147-17:150 trip tabs, 17:151 trip wallet card,
+ * 17:152-17:156 journey and payment/booking truth, 17:157-17:160 documents.
+ *
+ * Loaded from src/main.jsx after every earlier V2 layer, so these rules
+ * supersede the V1 trips styles in src/index.css by source order — without
+ * !important and without deleting any legacy rule.
+ *
+ * Nothing here is authoritative. Payment status, booking status, ticketing
+ * state and document availability are rendered exactly as the trusted
+ * owner-scoped read supplies them.
+ */
+
+.trips-v2 {
+  background: var(--hajiz-v2-color-surface-canvas);
+  padding-block: var(--hajiz-v2-space-12);
+}
+
+/* ---- Heading · node 17:146 -------------------------------------------- */
+
+.trips-v2__heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-2);
+  margin-block-end: var(--hajiz-v2-space-8);
+  text-align: start;
+}
+
+.trips-v2__eyebrow {
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-accent);
+}
+
+.trips-v2__title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h1);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.trips-v2__subtitle {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+/* References are Latin identifiers: isolated, wrapping, never animated. */
+.trips-v2__reference {
+  font-family: var(--hajiz-v2-font-latin);
+  unicode-bidi: isolate;
+  overflow-wrap: anywhere;
+  color: var(--hajiz-v2-color-text-primary);
+  animation: none;
+}
+
+/* ---- Trip tabs · node 17:147 ------------------------------------------ */
+
+.trips-v2__tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  margin-block-end: var(--hajiz-v2-space-6);
+  text-align: start;
+}
+
+.trips-v2__tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hajiz-v2-space-6);
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+}
+
+.trips-v2__tab { color: var(--hajiz-v2-color-text-secondary); }
+
+/* The default view carries an underline as well as the accent colour, so it
+   is never signalled by colour alone. */
+.trips-v2__tab--active {
+  position: relative;
+  color: var(--hajiz-v2-color-text-accent);
+}
+
+.trips-v2__tab--active::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -6px;
+  block-size: 2px;
+  border-radius: var(--hajiz-v2-radius-pill);
+  background: var(--hajiz-v2-color-journey-line);
+}
+
+.trips-v2__tab-note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+}
+
+/* ---- Trip wallet card · node 17:151 ----------------------------------- */
+
+.trips-v2__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-6);
+}
+
+.trips-v2__card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+  gap: var(--hajiz-v2-space-8);
+  padding: var(--hajiz-v2-space-8);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-inverse);
+  color: var(--hajiz-v2-color-text-inverse);
+}
+
+.trips-v2__journey {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-3);
+  min-inline-size: 0;
+  text-align: start;
+}
+
+.trips-v2__journey-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h2);
+  color: var(--hajiz-v2-color-text-inverse);
+}
+
+.trips-v2__journey-meta {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-neutral-200);
+  overflow-wrap: anywhere;
+  /* Trusted trip facts. Never animated. */
+  animation: none;
+}
+
+.trips-v2__journey .trips-v2__reference { color: var(--hajiz-v2-color-text-inverse); }
+
+/* Node 17:156. Ticket-authority truth: static, always legible. */
+.trips-v2__journey-note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-neutral-300);
+  animation: none;
+  transition: none;
+}
+
+/* ---- Payment and booking · node 17:155 -------------------------------- */
+/*
+ * Two independent indicators rendered side by side, never merged into one
+ * outcome. The separator is decorative only.
+ */
+.trips-v2__statuses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hajiz-v2-space-3);
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-gold-400);
+  animation: none;
+  transition: none;
+}
+
+.trips-v2__status-separator { color: var(--hajiz-v2-gold-400); }
+
+.trips-v2__statuses .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-2);
+  padding-inline: var(--hajiz-v2-space-3);
+  padding-block: var(--hajiz-v2-space-1);
+  border-radius: var(--hajiz-v2-radius-pill);
+  font: var(--hajiz-v2-ar-label);
+  background: var(--hajiz-v2-color-surface-primary);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.trips-v2__statuses .status-badge--warning { background: var(--hajiz-v2-color-surface-warning); color: var(--hajiz-v2-color-status-warning); }
+.trips-v2__statuses .status-badge--info { background: var(--hajiz-v2-color-surface-info); color: var(--hajiz-v2-color-status-info); }
+.trips-v2__statuses .status-badge--success { background: var(--hajiz-v2-color-surface-success); color: var(--hajiz-v2-color-status-success); }
+.trips-v2__statuses .status-badge--neutral { background: var(--hajiz-v2-color-surface-subtle); color: var(--hajiz-v2-color-text-secondary); }
+
+.trips-v2__detail-link {
+  margin-block-start: var(--hajiz-v2-space-2);
+  background: transparent;
+  color: var(--hajiz-v2-color-text-inverse);
+  box-shadow: inset 0 0 0 var(--hajiz-v2-stroke-focus) var(--hajiz-v2-neutral-300);
+  text-decoration: none;
+}
+
+/* ---- Documents · node 17:157 ------------------------------------------ */
+
+.trips-v2__documents {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-3);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  color: var(--hajiz-v2-color-text-primary);
+  text-align: start;
+}
+
+.trips-v2__documents-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+/* Node 17:159. Document availability is stated in words, not by tone alone. */
+.trips-v2__documents-pending {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-status-warning);
+  animation: none;
+  transition: none;
+}
+
+.trips-v2__documents-available {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-status-success);
+  animation: none;
+  transition: none;
+}
+
+.trips-v2__documents-note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+  animation: none;
+}
+
+.trips-v2__documents-error {
+  margin: 0;
+  padding: var(--hajiz-v2-space-3);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-error);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-status-error);
+}
+
+.trips-v2__tickets-button { inline-size: 100%; }
+
+.trips-v2__ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* ---- States ------------------------------------------------------------ */
+
+.trips-v2__state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-4);
+  padding: var(--hajiz-v2-space-8);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-md);
+  text-align: start;
+}
+
+.trips-v2__state-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.trips-v2__state--error {
+  background: var(--hajiz-v2-color-surface-error);
+  animation: none;
+  transition: none;
+}
+
+.trips-v2__state--error .trips-v2__state-title { color: var(--hajiz-v2-color-status-error); }
+
+/* Skeletons match the real card height so arriving trips cause no jump. */
+.trips-v2__skeleton {
+  block-size: 196px;
+  inline-size: 100%;
+  border-radius: var(--hajiz-v2-radius-lg);
+}
+
+/* ---- Booking detail ---------------------------------------------------- */
+
+.booking-v2__state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-3);
+  margin: var(--hajiz-v2-space-12) auto;
+  inline-size: min(100% - (2 * var(--hajiz-v2-gutter-mobile)), var(--hajiz-v2-container-desktop));
+  padding: var(--hajiz-v2-space-8);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-md);
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  text-align: start;
+}
+
+.booking-v2__state--error {
+  background: var(--hajiz-v2-color-surface-error);
+  color: var(--hajiz-v2-color-status-error);
+  animation: none;
+  transition: none;
+}
+
+/* Reconciliation is a safety warning: prominent and completely static. */
+.booking-v2__reconciliation {
+  margin: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-warning);
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-status-warning);
+  animation: none;
+  transition: none;
+}
+
+/* ---- Focus -------------------------------------------------------------- */
+
+.trips-v2__detail-link:focus-visible,
+.trips-v2__tickets-button:focus-visible,
+.trips-v2__state button:focus-visible,
+.booking-v2__state button:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Responsive · 1440 / 1024 / 768 / 390 ----------------------------- */
+
+@media (max-width: 1024px) {
+  .trips-v2__card {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: var(--hajiz-v2-space-6);
+    padding: var(--hajiz-v2-space-6);
+  }
+}
+
+@media (max-width: 900px) {
+  /* Mobile stacks: the journey first, then the documents it refers to. */
+  .trips-v2 { padding-block: var(--hajiz-v2-space-8); }
+
+  .trips-v2__card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hajiz-v2-space-4);
+    padding: var(--hajiz-v2-space-4);
+  }
+
+  .trips-v2__title { font: var(--hajiz-v2-ar-h2); }
+  .trips-v2__journey-title { font: var(--hajiz-v2-ar-h3); }
+  .trips-v2__statuses { font: var(--hajiz-v2-ar-body); gap: var(--hajiz-v2-space-2); }
+  .trips-v2__documents { padding: var(--hajiz-v2-space-4); }
+  .trips-v2__detail-link { inline-size: 100%; }
+  .trips-v2__state { padding: var(--hajiz-v2-space-6); }
+  .trips-v2__state button,
+  .trips-v2__state a { inline-size: 100%; }
+  .booking-v2__state { padding: var(--hajiz-v2-space-6); }
+}
+
+@media (max-width: 390px) {
+  .trips-v2__tab-row { gap: var(--hajiz-v2-space-4); }
+}
+
+/* ---- Reduced motion ---------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .trips-v2,
+  .trips-v2 *,
+  .booking-v2,
+  .booking-v2 * {
+    transition: none;
+  }
+}
