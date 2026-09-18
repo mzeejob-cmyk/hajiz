@@ -8,6 +8,7 @@ import "./features/flights/flight-results-v2.css"
 import "./features/flights/checkout-v2.css"
 import "./features/flights/payments-v2.css"
 import "./features/account/trips-v2.css"
+import "./features/account/account-v2.css"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode><App /></React.StrictMode>,

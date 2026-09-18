@@ -1,0 +1,536 @@
+/*
+ * HAJIZ V2 Auth + Account.
+ * Source: Figma node 19:2 "Account & Auth · Arabic RTL" and descendants —
+ * 19:3 to 19:14 the login travel-welcome card, 19:15 to 19:26 the account
+ * overview, 19:27 to 19:32 the language/currency and notification capability
+ * notes.
+ *
+ * Loaded from src/main.jsx after every earlier V2 layer, so these rules
+ * supersede the V1 account styles in src/index.css by source order — without
+ * !important and without deleting any legacy rule.
+ *
+ * Nothing here is authoritative. Credentials, profile fields, saved travelers,
+ * favorites and the locale preference all live behind their existing trusted
+ * boundaries; this file only dresses them.
+ */
+
+/* ---- Login · node 19:3 ------------------------------------------------ */
+
+.auth-v2 {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--hajiz-v2-space-16);
+  padding-inline: var(--hajiz-v2-gutter-mobile);
+  background: var(--hajiz-v2-color-surface-canvas);
+}
+
+.auth-v2__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-6);
+  inline-size: min(100%, 560px);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-12);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-inverse);
+  color: var(--hajiz-v2-color-text-inverse);
+  text-align: start;
+}
+
+.auth-v2__title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h1);
+  color: var(--hajiz-v2-color-text-inverse);
+}
+
+.auth-v2__lede {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-neutral-200);
+}
+
+.auth-v2__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-6);
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+/* Node 19:6/19:9: white field card, label above value. The label element
+   wraps its control, so the association survives any layout change. */
+.auth-v2__field,
+.account-v2__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-primary);
+  text-align: start;
+}
+
+.auth-v2__label,
+.account-v2__label {
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.auth-v2__input,
+.account-v2__input {
+  min-block-size: var(--hajiz-v2-touch-target);
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+/* Credentials and identity values read left-to-right in both directions. */
+.auth-v2__input--latin,
+.account-v2__input[dir="ltr"] {
+  font-family: var(--hajiz-v2-font-latin);
+  unicode-bidi: isolate;
+}
+
+/* A read-only identity field is conveyed in text, not by dimming alone. */
+.account-v2__readonly {
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.account-v2__input[aria-readonly="true"],
+.account-v2__input:disabled,
+.auth-v2__input:disabled {
+  color: var(--hajiz-v2-color-disabled-text);
+  cursor: not-allowed;
+}
+
+/* Node 19:12: gold action with the primary label colour. */
+.auth-v2__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding: var(--hajiz-v2-space-4);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-gold-500);
+  font: var(--hajiz-v2-ar-button);
+  color: var(--hajiz-v2-color-text-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--hajiz-v2-duration-connect) var(--hajiz-v2-ease-out);
+}
+
+.auth-v2__action:hover:not(:disabled) { background: var(--hajiz-v2-gold-400); }
+.auth-v2__action:disabled { background: var(--hajiz-v2-color-disabled-surface); color: var(--hajiz-v2-color-disabled-text); cursor: not-allowed; }
+
+/* Auth errors and the unavailable-surfaces note are never animated. */
+.auth-v2__error {
+  margin: 0;
+  inline-size: 100%;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-error);
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-status-error);
+  animation: none;
+  transition: none;
+}
+
+/* Node 19:14. Static text: never a link, never a control. */
+.auth-v2__note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-neutral-300);
+  animation: none;
+  transition: none;
+}
+
+/* ---- Account shell · node 19:15 --------------------------------------- */
+
+.account-v2 {
+  background: var(--hajiz-v2-color-surface-canvas);
+  padding-block: var(--hajiz-v2-space-12);
+}
+
+.account-v2__layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--hajiz-v2-space-8);
+}
+
+.account-v2__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  text-align: start;
+}
+
+.account-v2__nav-title {
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.account-v2__nav-note {
+  margin: 0 0 var(--hajiz-v2-space-2);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.account-v2__nav-link {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding-inline: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-primary);
+  text-decoration: none;
+  transition: background-color var(--hajiz-v2-duration-connect) var(--hajiz-v2-ease-out);
+}
+
+.account-v2__nav-link:hover { background: var(--hajiz-v2-color-surface-subtle); }
+
+/* The active section carries a marker as well as a tint, so it is never
+   signalled by colour alone. */
+.account-v2__nav-link--active {
+  position: relative;
+  background: var(--hajiz-v2-color-surface-subtle);
+  color: var(--hajiz-v2-color-text-accent);
+}
+
+.account-v2__nav-link--active::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: var(--hajiz-v2-space-2);
+  inline-size: 3px;
+  border-radius: var(--hajiz-v2-radius-pill);
+  background: var(--hajiz-v2-color-journey-line);
+}
+
+.account-v2__main { min-inline-size: 0; }
+
+/* ---- Capability notes · nodes 19:27 to 19:32 -------------------------- */
+
+.account-v2__capabilities {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-3);
+  margin-block-start: var(--hajiz-v2-space-6);
+  padding-block-start: var(--hajiz-v2-space-4);
+  border-block-start: 1px solid var(--hajiz-v2-color-border-subtle);
+}
+
+.account-v2__capabilities-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.account-v2__capability {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+}
+
+.account-v2__capability-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  font-weight: 700;
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.account-v2__capability-note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+}
+
+/* ---- Account sections · nodes 19:18 to 19:26 -------------------------- */
+
+.account-v2__grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-6);
+  min-inline-size: 0;
+}
+
+.account-v2__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-3);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-6);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-md);
+  text-align: start;
+}
+
+.account-v2__card-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.account-v2__card-note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.account-v2__chip {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--hajiz-v2-space-3);
+  padding-block: var(--hajiz-v2-space-1);
+  border-radius: var(--hajiz-v2-radius-pill);
+  background: var(--hajiz-v2-color-surface-subtle);
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+/* Save and load state is announced, and never animated. */
+.account-v2__status {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+  transition: none;
+}
+
+.account-v2__error {
+  margin: 0;
+  inline-size: 100%;
+  padding: var(--hajiz-v2-space-3) var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-error);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-status-error);
+}
+
+.account-v2__partial {
+  margin: 0;
+  padding: var(--hajiz-v2-space-3) var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-warning);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-status-warning);
+  animation: none;
+}
+
+.account-v2__empty {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+/* Privacy copy is a standing guarantee: static, always readable. */
+.account-v2__privacy {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+  transition: none;
+}
+
+/* ---- Forms -------------------------------------------------------------- */
+
+.account-v2__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-4);
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.account-v2__submit {
+  align-self: flex-start;
+  min-block-size: var(--hajiz-v2-touch-target);
+}
+
+/* ---- Rows: travelers and favorites -------------------------------------- */
+
+.account-v2__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-3);
+  inline-size: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-v2__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hajiz-v2-space-4);
+  flex-wrap: wrap;
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+}
+
+.account-v2__row-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-1);
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.account-v2__row-name {
+  font: var(--hajiz-v2-ar-body);
+  font-weight: 700;
+  color: var(--hajiz-v2-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.account-v2__row-summary {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* A canonical identifier is shown verbatim, isolated and wrapping — never
+   dressed up as a title. */
+.account-v2__canonical {
+  font-family: var(--hajiz-v2-font-latin);
+  font-size: 14px;
+  unicode-bidi: isolate;
+  overflow-wrap: anywhere;
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+}
+
+.account-v2__row-actions {
+  display: flex;
+  gap: var(--hajiz-v2-space-2);
+  flex: none;
+}
+
+.account-v2__row-action { min-block-size: var(--hajiz-v2-touch-target); }
+
+/* ---- Language preference · locale only --------------------------------- */
+
+.account-v2__locale {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hajiz-v2-space-4);
+  inline-size: 100%;
+  margin: 0;
+  padding: var(--hajiz-v2-space-4);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+}
+
+.account-v2__locale-option {
+  display: flex;
+  align-items: center;
+  gap: var(--hajiz-v2-space-2);
+  min-block-size: var(--hajiz-v2-touch-target);
+  padding-inline: var(--hajiz-v2-space-3);
+  border-radius: var(--hajiz-v2-radius-sm);
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  cursor: pointer;
+}
+
+.account-v2__locale-option input {
+  inline-size: 20px;
+  block-size: 20px;
+  flex: none;
+  accent-color: var(--hajiz-v2-color-action-primary);
+}
+
+.account-v2__locale:disabled { opacity: 0.6; }
+
+/* ---- Focus -------------------------------------------------------------- */
+
+.auth-v2__input:focus-visible,
+.auth-v2__action:focus-visible,
+.account-v2__input:focus-visible,
+.account-v2__submit:focus-visible,
+.account-v2__nav-link:focus-visible,
+.account-v2__row-action:focus-visible,
+.account-v2__locale-option input:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Responsive · 1440 / 1024 / 768 / 390 ----------------------------- */
+
+@media (max-width: 1024px) {
+  .account-v2__layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: var(--hajiz-v2-space-6);
+  }
+  .auth-v2__card { padding: var(--hajiz-v2-space-8); }
+}
+
+@media (max-width: 900px) {
+  /* Mobile stacks: section navigation first, then the section itself. */
+  .account-v2__layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hajiz-v2-space-4);
+  }
+
+  .account-v2 { padding-block: var(--hajiz-v2-space-8); }
+  .account-v2__nav { padding: var(--hajiz-v2-space-4); }
+  .account-v2__card { padding: var(--hajiz-v2-space-4); }
+  .account-v2__card-title { font: var(--hajiz-v2-ar-h3); }
+
+  .auth-v2 { padding-block: var(--hajiz-v2-space-8); }
+  .auth-v2__card { padding: var(--hajiz-v2-space-6); gap: var(--hajiz-v2-space-4); }
+  .auth-v2__title { font: var(--hajiz-v2-ar-h2); }
+
+  .account-v2__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .account-v2__row-actions { justify-content: flex-start; }
+  .account-v2__submit,
+  .account-v2__row-action { inline-size: 100%; }
+}
+
+@media (max-width: 390px) {
+  .account-v2__locale { flex-direction: column; gap: var(--hajiz-v2-space-2); }
+}
+
+/* ---- Reduced motion ---------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-v2,
+  .auth-v2 *,
+  .account-v2,
+  .account-v2 * {
+    transition: none;
+  }
+}
