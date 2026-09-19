@@ -1,13 +1,17 @@
-const PROJECT_HOST = "pdnuswmljownjzjzpoop.supabase.co"
+import { validateSupabaseProjectBoundary } from "./contracts/supabaseProjectBoundary.js"
+
 const TYPES = new Set(["package", "offer"])
 const FIELDS = ["id", "type", "title", "summary", "state", "version", "dynamicBuilder", "supplierAvailability"]
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-function endpointFrom(value) {
-  let url
-  try { url = new URL(value) } catch { throw new Error("PUBLIC_CATALOG_NOT_CONFIGURED") }
-  if (url.protocol !== "https:" || url.hostname !== PROJECT_HOST || url.port || url.username || url.password || !["", "/"].includes(url.pathname) || url.search || url.hash) throw new Error("PUBLIC_CATALOG_NOT_CONFIGURED")
-  return `https://${PROJECT_HOST}/functions/v1/catalog-public`
+function endpointFrom(environment, value) {
+  try {
+    const projectRef = new URL(value).hostname.replace(/\.supabase\.co$/, "")
+    const boundary = validateSupabaseProjectBoundary({ environment, projectRef, supabaseUrl: value })
+    return `${boundary.origin}/functions/v1/catalog-public`
+  } catch {
+    throw new Error("PUBLIC_CATALOG_NOT_CONFIGURED")
+  }
 }
 
 function validText(value, max) { return typeof value === "string" && value.length > 0 && value.length <= max && !/[\p{Cc}]/u.test(value) }
@@ -19,9 +23,9 @@ function validateRow(row, type) {
   return Object.freeze({ id: row.id, type: row.type, title: row.title, summary: row.summary, state: row.state, version: row.version, dynamicBuilder: false, supplierAvailability: null })
 }
 
-export function createPublicCatalogDataSource({ fetchImpl = globalThis.fetch, supabaseUrl = import.meta.env?.VITE_SUPABASE_URL } = {}) {
+export function createPublicCatalogDataSource({ fetchImpl = globalThis.fetch, appEnv = import.meta.env?.VITE_APP_ENV, supabaseUrl = import.meta.env?.VITE_SUPABASE_URL } = {}) {
   if (typeof fetchImpl !== "function") throw new Error("PUBLIC_CATALOG_NOT_CONFIGURED")
-  const endpoint = endpointFrom(supabaseUrl)
+  const endpoint = endpointFrom(appEnv, supabaseUrl)
   async function load(type) {
     if (!TYPES.has(type)) throw new Error("PUBLIC_CATALOG_REQUEST_FAILED")
     let response

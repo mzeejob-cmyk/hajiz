@@ -8,12 +8,12 @@ const BASE_URL = "https://pdnuswmljownjzjzpoop.supabase.co"
 const ID = "22222222-2222-4222-8222-222222222222"
 const row = (type = "package") => ({ id: ID, type, title: "عنوان منشور", summary: "ملخص منشور", state: "published", version: 1, dynamicBuilder: false, supplierAvailability: null })
 function mockFetch(data = [row()], { ok = true, jsonError = false } = {}) { const calls = []; const fetchImpl = async (...args) => { calls.push(args); return { ok, async json() { if (jsonError) throw new Error("raw parser detail"); return structuredClone(data) } } }; return { calls, fetchImpl } }
-const source = mock => createPublicCatalogDataSource({ fetchImpl: mock.fetchImpl, supabaseUrl: BASE_URL })
+const source = mock => createPublicCatalogDataSource({ fetchImpl: mock.fetchImpl, appEnv: "staging", supabaseUrl: BASE_URL })
 
 await test("Packages sends exact public request", async () => { const mock = mockFetch(); await source(mock).loadPackages(); assert.deepEqual(mock.calls, [[`${BASE_URL}/functions/v1/catalog-public`, { method: "POST", headers: { "Content-Type": "application/json" }, body: '{"type":"package"}' }]]) })
 await test("Offers sends exact public request", async () => { const mock = mockFetch([row("offer")]); await source(mock).loadOffers(); assert.equal(mock.calls[0][1].body, '{"type":"offer"}') })
 await test("endpoint derives from exact Staging URL", async () => { const mock = mockFetch(); await source(mock).loadPackages(); assert.equal(mock.calls[0][0], `${BASE_URL}/functions/v1/catalog-public`) })
-await test("invalid environment fails closed", () => { for (const value of [undefined, "http://pdnuswmljownjzjzpoop.supabase.co", "https://other.supabase.co", `${BASE_URL}/rest`, `${BASE_URL}?x=1`]) assert.throws(() => createPublicCatalogDataSource({ fetchImpl: () => {}, supabaseUrl: value }), /NOT_CONFIGURED/) })
+await test("invalid environment fails closed", () => { for (const value of [undefined, "http://pdnuswmljownjzjzpoop.supabase.co", "https://other.supabase.co", `${BASE_URL}/rest`, `${BASE_URL}?x=1`]) assert.throws(() => createPublicCatalogDataSource({ fetchImpl: () => {}, appEnv: "staging", supabaseUrl: value }), /NOT_CONFIGURED/) })
 await test("no Authorization header", async () => { const mock = mockFetch(); await source(mock).loadPackages(); assert.equal(Object.keys(mock.calls[0][1].headers).some(key => key.toLowerCase() === "authorization"), false) })
 await test("package response accepted", async () => { assert.equal((await source(mockFetch()).loadPackages())[0].type, "package") })
 await test("offer response accepted", async () => { assert.equal((await source(mockFetch([row("offer")])).loadOffers())[0].type, "offer") })

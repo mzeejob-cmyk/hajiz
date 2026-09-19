@@ -1,20 +1,22 @@
 import { createNotificationOutbox, createP2RpcAdapter, createP2SupabaseAuthenticator, createProductP2Service } from "./productP2Service.js"
 import { createProductP2Http } from "./productP2Http.js"
+import { HAJIZ_PRODUCTION_PROJECT, HAJIZ_STAGING_PROJECT, validateSupabaseProjectBoundary } from "../../services/contracts/supabaseProjectBoundary.js"
 
-export const HAJIZ_STAGING_PROJECT_REF = "pdnuswmljownjzjzpoop"
-export const HAJIZ_STAGING_SUPABASE_URL = `https://${HAJIZ_STAGING_PROJECT_REF}.supabase.co`
+export const HAJIZ_STAGING_PROJECT_REF = HAJIZ_STAGING_PROJECT.projectRef
+export const HAJIZ_STAGING_SUPABASE_URL = HAJIZ_STAGING_PROJECT.origin
+export const HAJIZ_PRODUCTION_PROJECT_REF = HAJIZ_PRODUCTION_PROJECT.projectRef
+export const HAJIZ_PRODUCTION_SUPABASE_URL = HAJIZ_PRODUCTION_PROJECT.origin
 export const MAX_P2_EDGE_ENVELOPE_BYTES = 8192
 
 function requireStaging(value, code) {
   if (!value) throw new Error(code)
 }
 
-// This composition is deliberately server-only. The privileged client is used
-// only by the reviewed RPC adapter and is never returned to an HTTP caller.
-export function createProductP2StagingComposition({ environment, projectRef, supabaseUrl, userClient, serviceClient }) {
-  requireStaging(environment === "staging", "P2_STAGING_ENVIRONMENT_REQUIRED")
-  requireStaging(projectRef === HAJIZ_STAGING_PROJECT_REF, "P2_STAGING_PROJECT_REQUIRED")
-  requireStaging(supabaseUrl === HAJIZ_STAGING_SUPABASE_URL, "P2_STAGING_URL_REQUIRED")
+// Deliberately server-only. The privileged client is used only by the reviewed
+// RPC adapter and is never returned to an HTTP caller.
+export function createProductP2Composition({ environment, projectRef, supabaseUrl, userClient, serviceClient }) {
+  try { validateSupabaseProjectBoundary({ environment, projectRef, supabaseUrl }) }
+  catch { throw new Error("P2_PROJECT_BOUNDARY_REJECTED") }
   requireStaging(userClient && serviceClient && userClient !== serviceClient, "P2_CLIENT_SEPARATION_REQUIRED")
 
   const authenticate = createP2SupabaseAuthenticator(userClient)
@@ -25,6 +27,13 @@ export function createProductP2StagingComposition({ environment, projectRef, sup
     http: createProductP2Http(service),
     notificationOutbox: createNotificationOutbox({ rpc, schemaReady: true }),
   })
+}
+
+export function createProductP2StagingComposition(input) {
+  requireStaging(input?.environment === "staging", "P2_STAGING_ENVIRONMENT_REQUIRED")
+  requireStaging(input?.projectRef === HAJIZ_STAGING_PROJECT_REF, "P2_STAGING_PROJECT_REQUIRED")
+  requireStaging(input?.supabaseUrl === HAJIZ_STAGING_SUPABASE_URL, "P2_STAGING_URL_REQUIRED")
+  return createProductP2Composition(input)
 }
 
 function plainObject(value) {

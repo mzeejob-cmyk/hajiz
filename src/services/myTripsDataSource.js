@@ -1,21 +1,28 @@
 import { createClient } from "@supabase/supabase-js"
 import { toMyTicketDetails, toMyTripsPresentation } from "../features/account/data/myTripsContract.js"
+import { HAJIZ_STAGING_PROJECT, validateSupabaseProjectBoundary } from "./contracts/supabaseProjectBoundary.js"
 
-export const HAJIZ_STAGING_PROJECT_REF = "pdnuswmljownjzjzpoop"
+export const HAJIZ_STAGING_PROJECT_REF = HAJIZ_STAGING_PROJECT.projectRef
 
-function stagingConfig(env = import.meta.env) {
+export function resolveMyTripsConfig(env = import.meta.env) {
+  const environment = env.VITE_APP_ENV
   const url = env.VITE_SUPABASE_URL
   const anonKey = env.VITE_SUPABASE_ANON_KEY
-  if (!url || !anonKey) throw new Error("MY_TRIPS_AUTH_NOT_CONFIGURED")
-  const parsed = new URL(url)
-  if (parsed.protocol !== "https:" || parsed.hostname !== `${HAJIZ_STAGING_PROJECT_REF}.supabase.co`) throw new Error("MY_TRIPS_STAGING_ONLY")
-  return { url: parsed.origin, anonKey }
+  if (!environment || !url || !anonKey) throw new Error("MY_TRIPS_AUTH_NOT_CONFIGURED")
+  let boundary
+  try {
+    const projectRef = new URL(url).hostname.replace(/\.supabase\.co$/, "")
+    boundary = validateSupabaseProjectBoundary({ environment, projectRef, supabaseUrl: url })
+  } catch {
+    throw new Error("MY_TRIPS_PROJECT_BOUNDARY_REJECTED")
+  }
+  return Object.freeze({ environment, projectRef: boundary.projectRef, url: boundary.origin, anonKey })
 }
 
 let accountSessionClient
 export function getAccountSessionClient() {
   if (!accountSessionClient) {
-    const { url, anonKey } = stagingConfig()
+    const { url, anonKey } = resolveMyTripsConfig()
     accountSessionClient = createClient(url, anonKey, { auth: { persistSession: false, detectSessionInUrl: false, autoRefreshToken: true } })
   }
   return accountSessionClient
