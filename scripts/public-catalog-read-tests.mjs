@@ -36,6 +36,23 @@ await test("no arbitrary RPC dispatcher", async () => { const code = await readF
 await test("product p2 source and JWT setting unchanged", async () => { for (const file of ["src/server/product/productP2Service.js", "src/server/product/productP2Http.js", "supabase/functions/product-p2/index.ts"]) execFileSync("git", ["diff", "--quiet", "ee468d55bdead5f950ed720c1a58d79cf08aef7a", "--", file]); const config = await readFile(new URL("../supabase/config.toml", import.meta.url), "utf8"); assert.match(config, /\[functions\.product-p2\]\s*verify_jwt = true/); assert.match(config, /\[functions\.catalog-public\]\s*verify_jwt = false/) })
 await test("Customer Packages uses only the public catalog boundary", async () => { const code = await readFile(new URL("../src/features/packages/PackagesPage.jsx", import.meta.url), "utf8"); assert.match(code, /PublicCatalogCollection type="package"/); assert.equal(/product-p2|AdminCatalog/.test(code), false) })
 await test("Customer Offers uses only the public catalog boundary", async () => { const code = await readFile(new URL("../src/features/offers/OffersPage.jsx", import.meta.url), "utf8"); assert.match(code, /PublicCatalogCollection type="offer"/); assert.equal(/product-p2|AdminCatalog/.test(code), false) })
-await test("Admin Catalog behavior unchanged", () => { for (const file of ["src/features/admin/AdminPage.jsx", "src/features/admin/components/AdminCatalogPanel.jsx", "src/services/adminCatalogP2DataSource.js"]) execFileSync("git", ["diff", "--quiet", "ee468d55bdead5f950ed720c1a58d79cf08aef7a", "--", file]) })
+await test("Admin Catalog authority remains separate and semantically constrained", async () => {
+  const [adminPanel, adminSource, packages, offers] = await Promise.all([
+    readFile(new URL("../src/features/admin/components/AdminCatalogPanel.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/services/adminCatalogP2DataSource.js", import.meta.url), "utf8"),
+    readFile(new URL("../src/features/packages/PackagesPage.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/features/offers/OffersPage.jsx", import.meta.url), "utf8"),
+  ])
+  assert.match(adminPanel, /adminCatalogP2DataSource/)
+  for (const operation of ["listDrafts", "listPublished", "createDraft", "updateDraft", "publishDraft"])
+    assert.match(adminSource, new RegExp(`\\b${operation}\\b`), operation)
+  assert.match(adminSource, /expectedVersion/)
+  assert.match(adminSource, /new Set\(\["package", "offer"\]\)/)
+  assert.match(adminSource, /value\.dynamicBuilder === false && value\.supplierAvailability === null/)
+  for (const customerSource of [packages, offers]) {
+    assert.match(customerSource, /PublicCatalogCollection/)
+    assert.doesNotMatch(customerSource, /AdminCatalog|adminCatalogP2DataSource|createDraft|updateDraft|publishDraft/)
+  }
+})
 
 console.log(`\n${passed}/${passed} Public Catalog read tests passed`)

@@ -21,7 +21,7 @@ async function test(name, fn) {
 
 const read = path => fs.readFile(new URL(path, import.meta.url), "utf8")
 const [css, pageSource, resultsSource, noticeSource, searchSource,
-  roomsSource, guestSource, reviewSource, mainSource] = await Promise.all([
+  roomsSource, guestSource, reviewSource, fixtureSource, mainSource] = await Promise.all([
   read("../src/features/hotels/hotels-v2.css"),
   read("../src/features/hotels/HotelsPage.jsx"),
   read("../src/features/hotels/components/HotelResults.jsx"),
@@ -30,6 +30,7 @@ const [css, pageSource, resultsSource, noticeSource, searchSource,
   read("../src/features/hotels/components/RoomSelection.jsx"),
   read("../src/features/hotels/components/GuestDetails.jsx"),
   read("../src/features/hotels/components/HotelReview.jsx"),
+  read("../src/features/hotels/data/hotelCanonicalFixtures.js"),
   read("../src/main.jsx"),
 ])
 
@@ -241,6 +242,19 @@ await test("no private supplier field reaches the rendered output", () => {
   for (const [name, source] of [["results", resultsSource], ["rooms", roomsSource],
     ["guest", guestSource], ["review", reviewSource], ["search", searchSource], ["notice", noticeSource]])
     assert.equal(restricted.test(source), false, name)
+})
+
+await test("browser hotel graph excludes private mapping vocabulary", () => {
+  const forbidden = /PROPERTY_MAPPINGS|providerId|supplierHotelId|supplierRoomId|supplierRateId|supplierPropertyId|identityKey|internal-10[123]|supplierHoldCost|supplier_net|privateMetadata/
+  assert.equal(forbidden.test(fixtureSource), false)
+  assert.equal(reviewSource.includes("../contracts/hotelV2.js"), false)
+  assert.match(reviewSource, /\.\.\/presentation\/hotelReviewPresentation\.js/)
+})
+
+await test("private property mappings remain test-only", async () => {
+  const mappingFixture = await read("./fixtures/hotel-v2-property-mappings.mjs")
+  assert.match(mappingFixture, /PROPERTY_MAPPINGS/)
+  assert.equal(fixtureSource.includes("scripts/fixtures"), false)
 })
 
 await test("fixture amounts are rendered verbatim, never as provider truth", () => {

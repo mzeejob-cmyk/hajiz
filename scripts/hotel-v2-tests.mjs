@@ -2,7 +2,8 @@ import assert from "node:assert/strict"
 import { mapProperty, roomIdentity, rateIdentity, dedupeHotelOffers, rankPublicOffers } from "../src/features/hotels/services/hotelCanonical.js"
 import { assertSafeHotelClientReference, createReviewBoundary, HOTEL_SUPPLIER_CAPABILITIES, toSafeGuestAnalytics } from "../src/features/hotels/contracts/hotelV2.js"
 import { createSyntheticHotelAdapter } from "../src/features/hotels/services/syntheticHotelAdapter.js"
-import { HOTEL_FIXTURES, PALM_ROOMS, PROPERTY_MAPPINGS, resolveHotelDetail, isHotelDetailExpired } from "../src/features/hotels/data/hotelCanonicalFixtures.js"
+import { HOTEL_FIXTURES, PALM_ROOMS, resolveHotelDetail, isHotelDetailExpired } from "../src/features/hotels/data/hotelCanonicalFixtures.js"
+import { PROPERTY_MAPPINGS } from "./fixtures/hotel-v2-property-mappings.mjs"
 
 let passed = 0
 const test = async (name, fn) => { await fn(); passed++; process.stdout.write(`✓ ${name}\n`) }
@@ -23,6 +24,6 @@ await test("guest analytics contains no PII", () => assert.deepEqual(toSafeGuest
 await test("review boundary exposes final display contract only", () => { const hotel = HOTEL_FIXTURES[0], rate = PALM_ROOMS[0]; const out = createReviewBoundary({ hotel, room: rate, rate, stay: hotel.stay }); assert.equal(out.continueToPayment, "NOT_YET_WIRED"); assert.equal(JSON.stringify(out).includes("supplier"), false) })
 await test("synthetic adapter declares all future capabilities", () => assert.deepEqual(createSyntheticHotelAdapter({ env: { NODE_ENV: "test" } }).capabilities, HOTEL_SUPPLIER_CAPABILITIES))
 await test("synthetic adapter is non-network and production forbidden", () => { const adapter = createSyntheticHotelAdapter({ env: { NODE_ENV: "test" } }); assert.deepEqual([adapter.synthetic, adapter.network, adapter.productionAllowed], [true, false, false]); assert.throws(() => createSyntheticHotelAdapter({ env: { NODE_ENV: "production" } })) })
-await test("no H1 fake hold is claimed", () => { for (const room of PALM_ROOMS) assert.deepEqual([room.holdAvailable, room.holdType, room.holdUntil, room.priceGuaranteedUntil, room.supplierHoldCost], [false, "none", null, null, null]) })
+await test("no H1 fake hold or private hold cost is claimed", () => { for (const room of PALM_ROOMS) { assert.deepEqual([room.holdAvailable, room.holdType, room.holdUntil, room.priceGuaranteedUntil], [false, "none", null, null]); assert.equal(Object.hasOwn(room, "supplierHoldCost"), false) } })
 
 process.stdout.write(`\n${passed} Hotel V2 tests passed\n`)
