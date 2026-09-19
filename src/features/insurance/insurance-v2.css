@@ -1,0 +1,48 @@
+/* HAJIZ V2 Insurance — truthful presentation only. No quote or transaction UI. */
+.insurance-v2 { min-block-size: 100%; background: var(--hajiz-v2-color-surface-canvas); color: var(--hajiz-v2-color-text-primary); text-align: start; }
+.insurance-v2__hero { position: relative; overflow: hidden; padding-block: clamp(64px, 8vw, 112px); background: linear-gradient(to left, #fff 0%, #faf8f3 54%, #edf5fa 100%); }
+[dir="ltr"] .insurance-v2__hero { background: linear-gradient(to right, #fff 0%, #faf8f3 54%, #edf5fa 100%); }
+.insurance-v2__hero::after { position: absolute; inset-block-end: 0; inset-inline: 0; block-size: 1px; background: linear-gradient(90deg, transparent, var(--hajiz-v2-color-border-strong), transparent); content: ""; }
+.insurance-v2__hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); align-items: center; gap: var(--hajiz-v2-space-16); }
+.insurance-v2__intro { max-inline-size: 720px; }
+.insurance-v2__intro h1 { max-inline-size: 660px; margin: var(--hajiz-v2-space-5) 0 var(--hajiz-v2-space-4); font: var(--hajiz-v2-ar-display); text-wrap: balance; }
+.insurance-v2__lead { max-inline-size: 620px; margin: 0; color: var(--hajiz-v2-color-text-secondary); font: var(--hajiz-v2-ar-body-lg); }
+.insurance-v2__truth { display: flex; align-items: flex-start; gap: var(--hajiz-v2-space-4); margin-block-start: var(--hajiz-v2-space-8); padding: var(--hajiz-v2-space-5); border: 1px solid color-mix(in srgb, var(--hajiz-v2-color-status-info) 26%, transparent); border-radius: var(--hajiz-v2-radius-lg); background: var(--hajiz-v2-color-surface-info); }
+.insurance-v2__truth-mark { display: grid; place-items: center; flex: 0 0 32px; block-size: 32px; border-radius: 50%; background: var(--hajiz-v2-color-status-info); color: #fff; font: 700 18px/1 var(--hajiz-v2-font-latin); }
+.insurance-v2__truth strong { display: block; font: var(--hajiz-v2-ar-label); }
+.insurance-v2__truth p { margin: var(--hajiz-v2-space-2) 0 0; color: var(--hajiz-v2-color-text-secondary); font: var(--hajiz-v2-ar-body-sm); }
+.insurance-v2__visual { position: relative; display: grid; place-items: center; justify-self: center; inline-size: min(100%, 390px); aspect-ratio: 1; border: 1px solid rgb(255 255 255 / 65%); border-radius: 50%; background: radial-gradient(circle at 45% 40%, #fff 0 26%, #f3e6c8 27% 48%, #0a1d2f 49% 100%); box-shadow: var(--hajiz-v2-shadow-lg); }
+.insurance-v2__shield { z-index: 2; inline-size: 46%; filter: drop-shadow(0 18px 22px rgb(10 29 47 / 28%)); }
+.insurance-v2__shield path:first-child { fill: var(--hajiz-v2-color-surface-primary); stroke: var(--hajiz-v2-color-journey-line); stroke-width: 5; }
+.insurance-v2__shield path:last-child { fill: none; stroke: var(--hajiz-v2-navy-900); stroke-linecap: round; stroke-linejoin: round; stroke-width: 9; }
+.insurance-v2__orbit { position: absolute; inset: 12%; border: 1px solid rgb(255 255 255 / 35%); border-radius: 50%; }
+.insurance-v2__orbit--two { inset: 23%; }
+.insurance-v2__node { position: absolute; inline-size: 24px; block-size: 24px; border: 4px solid #fff; border-radius: 50%; box-shadow: var(--hajiz-v2-shadow-md); }
+.insurance-v2__node--navy { inset-block-start: 13%; inset-inline-start: 22%; background: var(--hajiz-v2-navy-900); }
+.insurance-v2__node--gold { inset-block-end: 17%; inset-inline-end: 18%; background: var(--hajiz-v2-gold-500); }
+.insurance-v2__content { display: flex; flex-direction: column; gap: var(--hajiz-v2-space-16); padding-block: var(--hajiz-v2-space-16) var(--hajiz-v2-space-20); }
+.insurance-v2__section-heading { max-inline-size: 680px; margin-block-end: var(--hajiz-v2-space-8); }
+.insurance-v2__eyebrow { color: var(--hajiz-v2-color-text-accent); font: var(--hajiz-v2-ar-label); }
+.insurance-v2__section-heading h2, .insurance-v2__future h2 { margin: var(--hajiz-v2-space-2) 0 var(--hajiz-v2-space-3); font: var(--hajiz-v2-ar-h2); }
+.insurance-v2__section-heading p, .insurance-v2__future-copy > p { margin: 0; color: var(--hajiz-v2-color-text-secondary); font: var(--hajiz-v2-ar-body); }
+.insurance-v2__boundary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--hajiz-v2-space-6); }
+.insurance-v2__boundary { min-block-size: 224px; padding: var(--hajiz-v2-space-6); border: 1px solid var(--hajiz-v2-color-border-subtle); }
+.insurance-v2__number { display: block; margin-block-end: var(--hajiz-v2-space-8); color: var(--hajiz-v2-color-text-accent); font: 700 14px/1 var(--hajiz-v2-font-latin); letter-spacing: .12em; }
+.insurance-v2__boundary h3, .insurance-v2__future-list h3 { margin: 0 0 var(--hajiz-v2-space-2); font: var(--hajiz-v2-ar-h3); }
+.insurance-v2__boundary p, .insurance-v2__future-list p { margin: 0; color: var(--hajiz-v2-color-text-secondary); font: var(--hajiz-v2-ar-body-sm); }
+.insurance-v2__future { display: grid; grid-template-columns: 190px minmax(0, .8fr) minmax(340px, 1fr); align-items: center; gap: var(--hajiz-v2-space-10); padding: var(--hajiz-v2-space-10); border-radius: var(--hajiz-v2-radius-lg); background: var(--hajiz-v2-color-surface-inverse); color: var(--hajiz-v2-color-text-inverse); box-shadow: var(--hajiz-v2-shadow-lg); }
+.insurance-v2__future-brand { display: flex; flex-direction: column; align-items: center; gap: var(--hajiz-v2-space-3); color: var(--hajiz-v2-color-journey-line); font: 700 13px/1 var(--hajiz-v2-font-latin); letter-spacing: .24em; }
+.insurance-v2__future-brand svg { inline-size: 116px; }
+.insurance-v2__future .insurance-v2__eyebrow { color: var(--hajiz-v2-color-journey-line); }
+.insurance-v2__future-copy > p, .insurance-v2__future-list p { color: rgb(255 255 255 / 72%); }
+.insurance-v2__future-list { display: flex; flex-direction: column; gap: var(--hajiz-v2-space-4); margin: 0; padding: 0; list-style: none; }
+.insurance-v2__future-list li { display: grid; grid-template-columns: 36px 1fr; gap: var(--hajiz-v2-space-4); align-items: start; }
+.insurance-v2__future-list li > span { display: grid; place-items: center; block-size: 36px; border: 1px solid rgb(235 196 95 / 55%); border-radius: 50%; color: var(--hajiz-v2-color-journey-line); font: 700 13px/1 var(--hajiz-v2-font-latin); }
+.insurance-v2__future-list h3 { color: #fff; }
+.insurance-v2__closing { display: flex; align-items: center; gap: var(--hajiz-v2-space-5); padding: var(--hajiz-v2-space-6); border-inline-start: 4px solid var(--hajiz-v2-gold-500); border-radius: var(--hajiz-v2-radius-md); background: var(--hajiz-v2-color-surface-warning); }
+.insurance-v2__closing-icon { color: var(--hajiz-v2-color-text-accent); font-size: 28px; }
+.insurance-v2__closing strong { font: var(--hajiz-v2-ar-label); }
+.insurance-v2__closing p { margin: var(--hajiz-v2-space-1) 0 0; color: var(--hajiz-v2-color-text-secondary); font: var(--hajiz-v2-ar-body-sm); }
+@media (max-width: 900px) { .insurance-v2__hero-grid, .insurance-v2__future { grid-template-columns: 1fr; } .insurance-v2__visual { inline-size: min(78vw, 360px); grid-row: 1; } .insurance-v2__future-brand { align-items: flex-start; } .insurance-v2__boundary-grid { grid-template-columns: 1fr; } .insurance-v2__boundary { min-block-size: 0; } }
+@media (max-width: 600px) { .insurance-v2__hero { padding-block: var(--hajiz-v2-space-12); } .insurance-v2__hero-grid { gap: var(--hajiz-v2-space-8); } .insurance-v2__intro h1 { font-size: clamp(2rem, 11vw, 3rem); } .insurance-v2__truth, .insurance-v2__closing { align-items: flex-start; padding: var(--hajiz-v2-space-4); } .insurance-v2__content { gap: var(--hajiz-v2-space-12); padding-block: var(--hajiz-v2-space-12); } .insurance-v2__future { gap: var(--hajiz-v2-space-8); padding: var(--hajiz-v2-space-6); } }
+@media (prefers-reduced-motion: reduce) { .insurance-v2 *, .insurance-v2 *::before, .insurance-v2 *::after { animation: none; scroll-behavior: auto; transition: none; } }
