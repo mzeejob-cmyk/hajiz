@@ -1,0 +1,559 @@
+/*
+ * HAJIZ V2 Hotels.
+ * Source: Figma node 18:2 "Hotels · Visually complete / sandbox truth" —
+ * 18:3 heading, 18:4-18:6 capability note, 18:7-18:18 hotel search panel,
+ * 18:19-18:31 hotel cards with their sandbox line and gradient media.
+ *
+ * Loaded from src/main.jsx after every earlier V2 layer, so these rules
+ * supersede the V1 hotel styles in src/index.css by source order — without
+ * !important and without deleting any legacy rule. In particular the frozen
+ * `.hotels-page button { min-height: var(--touch-target) }` rule in
+ * src/index.css is left untouched.
+ *
+ * Nothing here is authoritative. Hotels are a Fixture / Offline / Sandbox
+ * boundary: every value shown comes from the frozen synthetic fixtures.
+ */
+
+.hotels-v2 {
+  background: var(--hajiz-v2-color-surface-canvas);
+  padding-block: var(--hajiz-v2-space-12);
+}
+
+/* ---- Heading · node 18:3 ---------------------------------------------- */
+
+.hotels-v2__heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-2);
+  margin-block-end: var(--hajiz-v2-space-6);
+  text-align: start;
+}
+
+.hotels-v2__eyebrow {
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-accent);
+}
+
+.hotels-v2__title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h1);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.hotels-v2__subtitle,
+.hotels-v2 .hotels-v2__heading p {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+/* ---- Capability note · node 18:4 -------------------------------------- */
+/*
+ * Sandbox truth. This must stay visible, static and legible on every hotel
+ * screen, so it is pinned against animation and never collapsed on mobile.
+ */
+.hotels-v2__capability {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  margin-block-end: var(--hajiz-v2-space-6);
+  padding: var(--hajiz-v2-space-4) var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-warning);
+  text-align: start;
+  animation: none;
+  transition: none;
+}
+
+.hotels-v2__capability-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-accent);
+  overflow-wrap: anywhere;
+  animation: none;
+}
+
+.hotels-v2__capability-note {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+}
+
+/* ---- Search panel · node 18:7 ----------------------------------------- */
+
+.hotels-v2__search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--hajiz-v2-space-4);
+  margin-block-end: var(--hajiz-v2-space-8);
+  padding: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-inverse);
+  text-align: start;
+}
+
+.hotels-v2__search-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  flex: 1 1 260px;
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-primary);
+}
+
+.hotels-v2__search-label {
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.hotels-v2__search-value {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* Node 18:17. Static label, not a control: no pointer affordance is offered
+   because no hotel search authority stands behind it. */
+.hotels-v2__search-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  margin: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-gold-500);
+  font: var(--hajiz-v2-ar-button);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+/* ---- Layout ------------------------------------------------------------ */
+
+.hotels-v2__layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--hajiz-v2-space-6);
+}
+
+.hotels-v2__list,
+.hotels-v2__layout > main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-4);
+  min-inline-size: 0;
+}
+
+/* ---- Filters and sort · presentation only ----------------------------- */
+
+.hotels-v2__filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  text-align: start;
+}
+
+.hotels-v2__filters-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.hotels-v2__filters-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hotels-v2__filters-item {
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+/* Truthfulness copy: always visible, never animated. */
+.hotels-v2__unavailable {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+  transition: none;
+}
+
+.hotels-v2__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  text-align: start;
+}
+
+.hotels-v2__count {
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.hotels-v2__sort-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hajiz-v2-space-6);
+  margin: 0;
+  font: var(--hajiz-v2-ar-label);
+}
+
+.hotels-v2__sort { color: var(--hajiz-v2-color-text-secondary); }
+
+/* The default order carries an underline as well as the accent colour, so it
+   is never signalled by colour alone. */
+.hotels-v2__sort--active {
+  position: relative;
+  color: var(--hajiz-v2-color-text-accent);
+}
+
+.hotels-v2__sort--active::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -6px;
+  block-size: 2px;
+  border-radius: var(--hajiz-v2-radius-pill);
+  background: var(--hajiz-v2-color-journey-line);
+}
+
+.hotels-v2__group-note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  text-align: start;
+}
+
+.hotels-v2__group-note strong {
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+/* ---- Hotel card · node 18:20 ------------------------------------------ */
+
+.hotels-v2__card {
+  display: grid;
+  grid-template-columns: 362px minmax(0, 1fr) 260px;
+  align-items: start;
+  gap: var(--hajiz-v2-space-6);
+  padding: var(--hajiz-v2-space-6);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-md);
+  text-align: start;
+}
+
+/* Node 18:21: navy-to-gold gradient placeholder. Deliberately abstract — it
+   stands for media the synthetic fixture does not carry, and never pretends
+   to be a photograph of a real property. */
+.hotels-v2__card-media {
+  block-size: 170px;
+  inline-size: 100%;
+  min-inline-size: 0;
+  border-radius: var(--hajiz-v2-radius-image);
+  background: linear-gradient(to inline-end, #254257, rgb(212 162 58 / 70%));
+}
+
+.hotels-v2__card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-2);
+  min-inline-size: 0;
+}
+
+.hotels-v2__card-title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* Node 18:23. Per-card sandbox truth: static and never suppressed. */
+.hotels-v2__card-sandbox {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-accent);
+  animation: none;
+  transition: none;
+}
+
+.hotels-v2__card-meta {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.hotels-v2__stars { color: var(--hajiz-v2-gold-500); }
+
+.hotels-v2__price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-2);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+}
+
+.hotels-v2__price-label {
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+/* Synthetic fixture amounts. Displayed verbatim, never computed here, and
+   never animated. */
+.hotels-v2__price-value,
+.hotels-v2__summary-price {
+  font: var(--hajiz-v2-en-h3);
+  color: var(--hajiz-v2-color-text-primary);
+  overflow-wrap: anywhere;
+  animation: none;
+  transition: none;
+}
+
+.hotels-v2__rooms-button { inline-size: 100%; }
+
+/* ---- Rooms, guest and review ------------------------------------------ */
+
+.hotels-v2__back {
+  min-block-size: var(--hajiz-v2-touch-target);
+  margin-block-end: var(--hajiz-v2-space-4);
+  padding-inline: var(--hajiz-v2-space-4);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-primary);
+  cursor: pointer;
+}
+
+.hotels-v2__stay,
+.hotels-v2__panel,
+.hotels-v2__notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-3);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  text-align: start;
+}
+
+.hotels-v2__stay h1,
+.hotels-v2__panel h1,
+.hotels-v2__panel h2,
+.hotels-v2__notes h2 {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+.hotels-v2__room {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hajiz-v2-space-4);
+  flex-wrap: wrap;
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-4);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-md);
+}
+
+/* Selection carries a visible marker as well as a tint. */
+.hotels-v2__room.is-selected {
+  box-shadow: inset 0 0 0 var(--hajiz-v2-stroke-focus) var(--hajiz-v2-color-border-focus), var(--hajiz-v2-shadow-md);
+}
+
+.hotels-v2__room-action,
+.hotels-v2__cta {
+  min-block-size: var(--hajiz-v2-touch-target);
+}
+
+.hotels-v2__cta { inline-size: 100%; }
+
+.hotels-v2__summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-3);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-6);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-inverse);
+  color: var(--hajiz-v2-color-text-inverse);
+  text-align: start;
+}
+
+.hotels-v2__summary h2 {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-inverse);
+}
+
+.hotels-v2__summary p,
+.hotels-v2__summary .hotels-v2__unavailable { color: var(--hajiz-v2-neutral-300); }
+.hotels-v2__summary .hotels-v2__summary-price { color: var(--hajiz-v2-color-text-inverse); }
+.hotels-v2__summary hr { inline-size: 100%; border: 0; border-block-start: 1px solid var(--hajiz-v2-color-action-hover); }
+
+.hotels-v2__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hajiz-v2-space-4);
+  margin: 0 0 var(--hajiz-v2-space-4);
+  padding: 0;
+  list-style: none;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.hotels-v2__steps [aria-current="step"] { color: var(--hajiz-v2-color-text-accent); }
+
+.hotels-v2__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--hajiz-v2-space-4);
+}
+
+.hotels-v2__fields label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  min-inline-size: 0;
+  font: var(--hajiz-v2-ar-label);
+  color: var(--hajiz-v2-color-text-secondary);
+}
+
+.hotels-v2__fields input {
+  min-block-size: var(--hajiz-v2-touch-target);
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding-inline: var(--hajiz-v2-space-3);
+  border: 1px solid var(--hajiz-v2-color-border-subtle);
+  border-radius: var(--hajiz-v2-radius-sm);
+  background: var(--hajiz-v2-color-surface-primary);
+  font: var(--hajiz-v2-en-body);
+  color: var(--hajiz-v2-color-text-primary);
+}
+
+/* Privacy and boundary copy: standing guarantees, always static. */
+.hotels-v2__privacy,
+.hotels-v2__boundary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-1);
+  margin: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-subtle);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+  transition: none;
+}
+
+.hotels-v2__mobile-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hajiz-v2-space-3);
+  padding: var(--hajiz-v2-space-3) var(--hajiz-v2-space-4);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-lg);
+}
+
+/* ---- Focus -------------------------------------------------------------- */
+
+.hotels-v2__back:focus-visible,
+.hotels-v2__cta:focus-visible,
+.hotels-v2__room-action:focus-visible,
+.hotels-v2__rooms-button:focus-visible,
+.hotels-v2__fields input:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Responsive · 1440 / 1024 / 768 / 390 ----------------------------- */
+
+@media (max-width: 1024px) {
+  .hotels-v2__layout { grid-template-columns: 240px minmax(0, 1fr); gap: var(--hajiz-v2-space-4); }
+  .hotels-v2__card { grid-template-columns: 260px minmax(0, 1fr); }
+  .hotels-v2__price { grid-column: 1 / -1; }
+}
+
+@media (max-width: 900px) {
+  /* Mobile stacks: results first, the presentation-only rail after them. */
+  .hotels-v2 { padding-block: var(--hajiz-v2-space-8); }
+  .hotels-v2__layout { grid-template-columns: minmax(0, 1fr); gap: var(--hajiz-v2-space-4); }
+  .hotels-v2__filters { order: 2; }
+  .hotels-v2__list,
+  .hotels-v2__layout > main { order: 1; }
+
+  .hotels-v2__title { font: var(--hajiz-v2-ar-h2); }
+  .hotels-v2__capability { padding: var(--hajiz-v2-space-4); }
+  .hotels-v2__capability-title { font: var(--hajiz-v2-ar-body); font-weight: 700; }
+
+  .hotels-v2__search { padding: var(--hajiz-v2-space-4); gap: var(--hajiz-v2-space-3); }
+  .hotels-v2__search-field { flex: 1 1 100%; }
+  .hotels-v2__search-action { inline-size: 100%; }
+
+  .hotels-v2__card {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--hajiz-v2-space-4);
+    gap: var(--hajiz-v2-space-4);
+  }
+  .hotels-v2__card-media { block-size: 150px; }
+  .hotels-v2__price { inline-size: 100%; }
+
+  .hotels-v2__room { flex-direction: column; align-items: stretch; }
+  .hotels-v2__room-action { inline-size: 100%; }
+  .hotels-v2__summary { padding: var(--hajiz-v2-space-4); }
+  .hotels-v2__fields { grid-template-columns: minmax(0, 1fr); }
+  .hotels-v2__back { inline-size: 100%; }
+  .hotels-v2__mobile-bar { display: flex; }
+}
+
+@media (max-width: 390px) {
+  .hotels-v2__sort-row { gap: var(--hajiz-v2-space-4); }
+}
+
+/* ---- Reduced motion ---------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hotels-v2,
+  .hotels-v2 * {
+    transition: none;
+  }
+}
