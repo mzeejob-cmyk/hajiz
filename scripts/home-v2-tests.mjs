@@ -183,6 +183,11 @@ await test("discovery states never animate", () => {
 
 await test("discovery card media is the canonical gradient, not a fake photo", () => {
   assert.match(homeCss, /\.home-discovery-v2__media \{[\s\S]*?linear-gradient/)
+  // Valid direction keywords only, stated for both directions.
+  assert.equal(/to inline-(?:end|start)/.test(homeCss), false)
+  assert.match(homeCss, /\.home-discovery-v2__media \{[\s\S]*?linear-gradient\(to right,\s*var\(--hajiz-v2-navy-900\), var\(--hajiz-v2-gold-500\)\)/)
+  assert.match(homeCss, /\[dir="ltr"\] \.home-discovery-v2__media \{[\s\S]*?linear-gradient\(to left,\s*var\(--hajiz-v2-navy-900\), var\(--hajiz-v2-gold-500\)\)/)
+  assert.match(homeCss, /\[dir="ltr"\] \.home-hero-v2__overlay \{[\s\S]*?linear-gradient\(to left, rgb\(10 29 47 \/ 15%\), rgb\(10 29 47 \/ 92%\)\)/)
   assert.match(homeCss, /var\(--hajiz-v2-navy-900\), var\(--hajiz-v2-gold-500\)/)
 })
 

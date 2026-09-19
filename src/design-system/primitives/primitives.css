@@ -275,11 +275,15 @@
   margin: 0;
 }
 
+/* linear-gradient accepts no logical direction keyword, so the direction is
+   stated explicitly. This ramp is symmetric - transparent, journey line,
+   transparent - so it reads identically in both directions and needs no
+   [dir="ltr"] override. Colours and stops are unchanged. */
 .v2-divider--network {
   block-size: 3px;
   border-radius: var(--hajiz-v2-radius-pill);
   background: linear-gradient(
-    to inline-end,
+    to left,
     transparent,
     var(--hajiz-v2-color-journey-line),
     transparent

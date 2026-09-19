@@ -67,9 +67,17 @@
   position: absolute;
   inset: 0;
   z-index: -1;
+  /* Explicit direction: the base is the Arabic RTL reading order and
+     [dir="ltr"] mirrors it. Colours and stops are unchanged. */
   background:
     radial-gradient(circle at 15% 25%, rgb(212 162 58 / 14%), transparent 34%),
-    linear-gradient(to inline-start, rgb(10 29 47 / 15%), rgb(10 29 47 / 92%));
+    linear-gradient(to right, rgb(10 29 47 / 15%), rgb(10 29 47 / 92%));
+}
+
+[dir="ltr"] .home-hero-v2__overlay {
+  background:
+    radial-gradient(circle at 15% 25%, rgb(212 162 58 / 14%), transparent 34%),
+    linear-gradient(to left, rgb(10 29 47 / 15%), rgb(10 29 47 / 92%));
 }
 
 .home-hero-v2__copy {
@@ -419,7 +427,12 @@
   block-size: 180px;
   inline-size: 100%;
   border-radius: var(--hajiz-v2-radius-image);
-  background: linear-gradient(to inline-start,
+  background: linear-gradient(to right,
+    var(--hajiz-v2-navy-900), var(--hajiz-v2-gold-500));
+}
+
+[dir="ltr"] .home-discovery-v2__media {
+  background: linear-gradient(to left,
     var(--hajiz-v2-navy-900), var(--hajiz-v2-gold-500));
 }
 

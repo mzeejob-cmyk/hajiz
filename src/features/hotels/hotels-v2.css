@@ -276,7 +276,11 @@
   inline-size: 100%;
   min-inline-size: 0;
   border-radius: var(--hajiz-v2-radius-image);
-  background: linear-gradient(to inline-end, #254257, rgb(212 162 58 / 70%));
+  background: linear-gradient(to left, #254257, rgb(212 162 58 / 70%));
+}
+
+[dir="ltr"] .hotels-v2__card-media {
+  background: linear-gradient(to right, #254257, rgb(212 162 58 / 70%));
 }
 
 .hotels-v2__card-copy {

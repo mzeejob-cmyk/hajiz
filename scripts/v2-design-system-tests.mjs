@@ -312,6 +312,13 @@ await test("StatusBadge renders only the supplied label and derives no state", a
   assert.equal(/awaiting|confirmed|rejected|expired|refunded|under_review/.test(source), false)
 })
 
+await test("the network divider uses a valid gradient direction", () => {
+  // linear-gradient accepts no logical direction keyword. This ramp is
+  // symmetric, so one valid direction reads identically both ways.
+  assert.equal(/to inline-(?:end|start)/.test(primitivesCss), false)
+  assert.match(primitivesCss, /\.v2-divider--network \{[\s\S]*?linear-gradient\(\s*to left,\s*transparent,\s*var\(--hajiz-v2-color-journey-line\),\s*transparent\s*\)/)
+})
+
 await test("Skeleton and Spinner stay out of the accessibility tree by default", () => {
   assert.match(render(React.createElement(ds.Skeleton, {})), /aria-hidden="true"/)
   assert.match(render(React.createElement(ds.Spinner, {})), /aria-hidden="true"/)

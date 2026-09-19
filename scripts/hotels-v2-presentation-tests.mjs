@@ -69,7 +69,11 @@ await test("hotel cards use the node 18:20 geometry and gradient media", () => {
   assert.match(css, /\.hotels-v2__card \{[\s\S]*?border-radius: var\(--hajiz-v2-radius-lg\)/)
   assert.match(css, /\.hotels-v2__card \{[\s\S]*?padding: var\(--hajiz-v2-space-6\)/)
   assert.match(css, /\.hotels-v2__card-media \{[\s\S]*?block-size: 170px/)
-  assert.match(css, /linear-gradient\(to inline-end, #254257, rgb\(212 162 58 \/ 70%\)\)/)
+  // linear-gradient accepts no logical direction keyword; both directions are
+  // asserted explicitly and the original colours must survive both.
+  assert.equal(/to inline-(?:end|start)/.test(css), false)
+  assert.match(css, /\.hotels-v2__card-media \{[\s\S]*?background: linear-gradient\(to left, #254257, rgb\(212 162 58 \/ 70%\)\)/)
+  assert.match(css, /\[dir="ltr"\] \.hotels-v2__card-media \{\s*background: linear-gradient\(to right, #254257, rgb\(212 162 58 \/ 70%\)\);/)
   assert.match(css, /\.hotels-v2__card-media \{[\s\S]*?border-radius: var\(--hajiz-v2-radius-image\)/)
 })
 
