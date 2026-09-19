@@ -12,6 +12,7 @@ import "./features/account/account-v2.css"
 import "./features/hotels/hotels-v2.css"
 import "./features/catalog/catalog-v2.css"
 import "./features/insurance/insurance-v2.css"
+import "./features/partners/partner-v2.css"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode><App /></React.StrictMode>,
