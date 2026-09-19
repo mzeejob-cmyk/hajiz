@@ -42,7 +42,15 @@ try {
   await test("Insurance CSS is direction-aware for RTL and LTR", () => { assert.match(css, /\[dir="ltr"\] \.insurance-v2__hero/); assert.match(css, /inset-inline|border-inline-start/); assert.equal(/margin-left|margin-right|padding-left|padding-right/.test(css), false) })
   await test("Insurance CSS has responsive mobile and tablet layouts", () => { assert.match(css, /@media \(max-width: 900px\)/); assert.match(css, /@media \(max-width: 600px\)/) })
   await test("Insurance CSS honors reduced motion", () => assert.match(css, /@media \(prefers-reduced-motion: reduce\)/))
-  await test("Insurance stylesheet is last in the V2 cascade", () => { assert.match(main, /features\/insurance\/insurance-v2\.css/); assert.equal(main.trim().split("\n").filter(line => line.startsWith("import \"./features/")).at(-1), 'import "./features/insurance/insurance-v2.css"') })
+  await test("Insurance stylesheet is loaded once after the shared foundation and remains feature-scoped", () => {
+    const insuranceImport = 'import "./features/insurance/insurance-v2.css"'
+    assert.equal(main.split(insuranceImport).length - 1, 1)
+    assert.ok(main.indexOf('import "./design-system/index.css"') < main.indexOf(insuranceImport))
+    assert.doesNotMatch(css, /(?:^|[},]\s*)(?:button|section|article|h1|h2|input|form|a)(?:\b|[:.#\[])/gm)
+    assert.match(css, /\.insurance-v2(?:\s|\{|__)/)
+    assert.ok(main.indexOf(insuranceImport) < main.indexOf('import "./features/partners/partner-v2.css"'))
+    assert.ok(main.indexOf(insuranceImport) < main.indexOf('import "./features/admin/admin-v2.css"'))
+  })
   await test("Only the canonical Insurance route exists and Visas remains absent", () => { const routePaths = [...routes.matchAll(/path: "([^"]+)"/g)].map(match => match[1]); assert.equal(routePaths.filter(path => path.startsWith("/insurance")).join(), "/insurance"); assert.equal(routePaths.some(path => path.startsWith("/visas")), false) })
   await test("Insurance registers exactly one focused suite in the package chain", () => { assert.equal((pkg.scripts.test.match(/insurance-v2-tests\.mjs/g) || []).length, 1); assert.equal(pkg.scripts["test:insurance-v2"], "node scripts/insurance-v2-tests.mjs") })
   await test("All Insurance JavaScript files remain presentation-only", async () => { const forbidden = /fetch\s*\(|axios|supabase|localStorage|sessionStorage|indexedDB|document\.cookie|createCheckout|payment-initiation|Bankak|Apple Pay|Google Pay|policy issuance/i; for (const file of insuranceFiles) assert.equal(forbidden.test(await read(`src/features/insurance/${file}`)), false, file) })
