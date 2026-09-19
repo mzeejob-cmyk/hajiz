@@ -46,7 +46,7 @@ try {
     const insuranceImport = 'import "./features/insurance/insurance-v2.css"'
     assert.equal(main.split(insuranceImport).length - 1, 1)
     assert.ok(main.indexOf('import "./design-system/index.css"') < main.indexOf(insuranceImport))
-    assert.doesNotMatch(css, /(?:^|[},]\s*)(?:button|section|article|h1|h2|input|form|a)(?:\b|[:.#\[])/gm)
+    assert.doesNotMatch(css, /(?:^|[},]\s*)(?:button|section|article|h1|h2|input|form|a)(?:\b|[:.#[])/gm)
     assert.match(css, /\.insurance-v2(?:\s|\{|__)/)
     assert.ok(main.indexOf(insuranceImport) < main.indexOf('import "./features/partners/partner-v2.css"'))
     assert.ok(main.indexOf(insuranceImport) < main.indexOf('import "./features/admin/admin-v2.css"'))

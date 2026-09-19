@@ -55,7 +55,16 @@ try {
   await test("Partner CSS is responsive", () => { assert.match(css, /@media \(max-width: 900px\)/); assert.match(css, /@media \(max-width: 600px\)/) })
   await test("Partner CSS is direction-aware", () => { assert.match(css, /inset-inline|border-inline/); assert.equal(/margin-left|margin-right|padding-left|padding-right/.test(css), false) })
   await test("Partner CSS honors reduced motion", () => assert.match(css, /@media \(prefers-reduced-motion: reduce\)/))
-  await test("Partner stylesheet is last in V2 feature cascade", () => assert.equal(main.trim().split("\n").filter(line => line.startsWith("import \"./features/")).at(-1), 'import "./features/partners/partner-v2.css"'))
+  await test("Partner stylesheet is loaded once after the shared foundation and remains feature-scoped", () => {
+    const partnerImport = 'import "./features/partners/partner-v2.css"'
+    const adminImport = 'import "./features/admin/admin-v2.css"'
+    assert.equal(main.split(partnerImport).length - 1, 1)
+    assert.ok(main.indexOf('import "./design-system/index.css"') < main.indexOf(partnerImport))
+    assert.doesNotMatch(css, /(?:^|[},]\s*)(?:button|section|article|h1|h2|input|form|a)(?:\b|[:.#[])/gm)
+    assert.match(css, /\.partner-v2(?:\s|\{|__)/)
+    assert.ok(main.indexOf(partnerImport) < main.indexOf(adminImport))
+    assert.notEqual(partnerImport, adminImport)
+  })
   await test("Partner suite is registered exactly once", () => { assert.equal((pkg.scripts.test.match(/partner-v2-presentation-tests\.mjs/g) || []).length, 1); assert.equal(pkg.scripts["test:partner-v2"], "node scripts/partner-v2-presentation-tests.mjs") })
   await test("Empty fixture preserves safe server contract", async () => { const value = await empty.load(); assert.equal(value.commissions.length, 0); assert.equal(value.payouts.length, 0); assert.equal(value.availableCommission, null); assert.equal(value.walletBalance, null) })
 
