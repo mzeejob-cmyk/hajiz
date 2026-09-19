@@ -3,7 +3,29 @@ import { Link, useLocation } from "react-router-dom"
 import { publicCatalogDataSource } from "../../../services/publicCatalogDataSource.js"
 import { accountP2DataSource } from "../../../services/accountP2DataSource.js"
 import { useAuthSession } from "../../auth/authSessionContext.js"
+import { CatalogCard } from "./CatalogCard.jsx"
 import { catalogFavoritesReducer, EMPTY_FAVORITES_STATE, favoriteItemKey, findCatalogFavorite, visibleFavoritesState } from "../data/catalogFavoritesState.js"
+
+/**
+ * HAJIZ V2 catalog collection - Figma node 18:32 and descendants.
+ *
+ * Shared by the packages and offers pages so the grammar lives in one place.
+ * Presentation only: rows still come from the frozen public catalog read
+ * boundary, and the favorite path still runs through the existing account P2
+ * source with its owner and generation guards untouched.
+ *
+ * Figma node 18:40 shows a placeholder detail line ("الوجهة · المدة · ...").
+ * The trusted contract carries no such structured travel or commercial
+ * fields, so that line is NOT reproduced: the card renders row.title and
+ * row.summary and nothing else. The gradient media from node 18:38 is
+ * decorative and aria-hidden, never catalog data.
+ */
+
+const TRUTH_LABEL = "المحتوى المنشور فقط"
+
+function TruthLabel() {
+  return <p className="catalog-v2__truth v2-no-motion" data-catalog-truth="live-rows-only">{TRUTH_LABEL}</p>
+}
 
 const copy = {
   package: { loading: "جارٍ تحميل الباقات المنشورة", empty: "لا توجد باقات منشورة متاحة حاليًا.", error: "تعذر تحميل الباقات المنشورة." },
@@ -73,22 +95,21 @@ export function PublicCatalogCollection({ type, dataSource = publicCatalogDataSo
     }
   }
 
-  if (request.state === "loading") return <section className="public-catalog-state" role="status" aria-live="polite">{copy[type].loading}</section>
-  if (request.state === "error") return <section className="public-catalog-state" role="alert"><p>{copy[type].error}</p><button type="button" onClick={() => setAttempt(value => value + 1)}>إعادة المحاولة</button></section>
-  if (request.rows.length === 0) return <section className="public-catalog-state" role="status">{copy[type].empty}</section>
-  return <><section className="public-catalog-grid" aria-live="polite">{request.rows.map(row => {
+  if (request.state === "loading") return <section className="public-catalog-state catalog-v2__state" role="status" aria-live="polite"><TruthLabel/><p className="catalog-v2__state-copy">{copy[type].loading}</p></section>
+  if (request.state === "error") return <section className="public-catalog-state catalog-v2__state catalog-v2__state--error v2-no-motion" role="alert"><TruthLabel/><p className="catalog-v2__state-copy">{copy[type].error}</p><button className="v2-button v2-button--primary" type="button" onClick={() => setAttempt(value => value + 1)}>إعادة المحاولة</button></section>
+  if (request.rows.length === 0) return <section className="public-catalog-state catalog-v2__state" role="status"><TruthLabel/><p className="catalog-v2__state-copy">{copy[type].empty}</p></section>
+  return <div className="catalog-v2"><TruthLabel/><section className="public-catalog-grid catalog-v2__grid" aria-live="polite">{request.rows.map(row => {
     const itemKey = favoriteItemKey(type, row.id)
     const existing = visibleFavorites?.status === "ready" ? findCatalogFavorite(visibleFavorites.rows, type, row.id) : null
     const busy = Boolean(visibleFavorites?.busy[itemKey])
-    return <article className="public-catalog-card" key={row.id} data-catalog-id={row.id} data-catalog-type={row.type} data-catalog-version={row.version}>
-      <h2>{row.title}</h2><p>{row.summary}</p>
-      <div className="public-catalog-favorite">
-        {session.status === "signed_out" ? <Link to="/login" state={{ returnTo: location.pathname + location.search + location.hash }}>تسجيل الدخول للحفظ</Link> : null}
-        {session.status === "signed_in" && visibleFavorites?.status === "ready" ? <button type="button" disabled={busy} onClick={() => toggleFavorite(row)}>{busy ? (existing ? "جارٍ الإزالة" : "جارٍ الحفظ") : (existing ? "إزالة من المفضلة" : "حفظ في المفضلة")}</button> : null}
-        {(session.status === "checking" || session.status === "error" || (session.status === "signed_in" && visibleFavorites?.status === "loading")) ? <span className="public-catalog-favorite-status">جارٍ التحقق من حالة المفضلة</span> : null}
+    return <CatalogCard key={row.id} id={row.id} type={row.type} version={row.version} title={row.title} summary={row.summary}>
+      <div className="public-catalog-favorite catalog-v2__favorite">
+        {session.status === "signed_out" ? <Link className="v2-button v2-button--ghost catalog-v2__favorite-action" to="/login" state={{ returnTo: location.pathname + location.search + location.hash }}>تسجيل الدخول للحفظ</Link> : null}
+        {session.status === "signed_in" && visibleFavorites?.status === "ready" ? <button className="v2-button v2-button--secondary catalog-v2__favorite-action" type="button" aria-busy={busy || undefined} disabled={busy} onClick={() => toggleFavorite(row)}>{busy ? (existing ? "جارٍ الإزالة" : "جارٍ الحفظ") : (existing ? "إزالة من المفضلة" : "حفظ في المفضلة")}</button> : null}
+        {(session.status === "checking" || session.status === "error" || (session.status === "signed_in" && visibleFavorites?.status === "loading")) ? <span className="public-catalog-favorite-status catalog-v2__favorite-status">جارٍ التحقق من حالة المفضلة</span> : null}
       </div>
-    </article>
+    </CatalogCard>
   })}</section>
-  {session.status === "signed_in" && visibleFavorites?.status === "error" ? <section className="public-catalog-favorite-error" role="alert"><p>{visibleFavorites.error}</p><button type="button" onClick={() => setFavoritesAttempt(value => value + 1)}>إعادة المحاولة</button></section> : null}
-  {session.status === "signed_in" && visibleFavorites?.error && visibleFavorites.status === "ready" ? <p className="public-catalog-favorite-error" role="alert">{visibleFavorites.error}</p> : null}</>
+  {session.status === "signed_in" && visibleFavorites?.status === "error" ? <section className="public-catalog-favorite-error catalog-v2__favorite-error v2-no-motion" role="alert"><p>{visibleFavorites.error}</p><button className="v2-button v2-button--secondary" type="button" onClick={() => setFavoritesAttempt(value => value + 1)}>إعادة المحاولة</button></section> : null}
+  {session.status === "signed_in" && visibleFavorites?.error && visibleFavorites.status === "ready" ? <p className="public-catalog-favorite-error catalog-v2__favorite-error v2-no-motion" role="alert">{visibleFavorites.error}</p> : null}</div>
 }

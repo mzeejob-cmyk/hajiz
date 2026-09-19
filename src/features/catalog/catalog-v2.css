@@ -1,0 +1,226 @@
+/*
+ * HAJIZ V2 catalog — packages and offers.
+ * Source: Figma node 18:32 "باقات وعروض تلهم الرحلة" and descendants —
+ * 18:33 heading, 18:34/18:35 truth label, 18:36-18:48 editorial journey cards
+ * with their 18:38 gradient media.
+ *
+ * One shared file, used by both /packages and /offers: the two pages differ
+ * only in their heading copy and the type they request.
+ *
+ * Loaded from src/main.jsx after every earlier V2 layer, so these rules
+ * supersede the V1 catalog styles in src/index.css by source order — without
+ * !important and without deleting any legacy rule.
+ *
+ * Nothing here is authoritative. Cards render the title and summary the
+ * trusted read boundary returns, and nothing else.
+ */
+
+.catalog-v2-page {
+  background: var(--hajiz-v2-color-surface-canvas);
+}
+
+.catalog-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-8);
+  text-align: start;
+}
+
+/* ---- Truth label · nodes 18:34 / 18:35 -------------------------------- */
+/*
+ * The standing guarantee that only live catalog rows reach a customer. It is
+ * rendered on the collection and on every state, stays visible at every
+ * breakpoint, and never animates.
+ */
+.catalog-v2__truth {
+  align-self: flex-start;
+  margin: 0;
+  padding: var(--hajiz-v2-space-2) var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-success);
+  font: var(--hajiz-v2-en-label);
+  color: var(--hajiz-v2-color-status-success);
+  animation: none;
+  transition: none;
+}
+
+/* ---- Editorial journey cards · node 18:36 ----------------------------- */
+/*
+ * Three columns where the rows allow it, and fewer without leaving gaps, so
+ * the grid follows however many rows the boundary returns instead of assuming
+ * a fixed count.
+ */
+.catalog-v2__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 410px));
+  justify-content: start;
+  gap: var(--hajiz-v2-space-6);
+  align-items: stretch;
+}
+
+.catalog-v2__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hajiz-v2-space-4);
+  min-inline-size: 0;
+  padding: var(--hajiz-v2-space-6);
+  border: 0;
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-md);
+  text-align: start;
+}
+
+/* Node 18:38: navy-to-journey-line gradient. Decorative only — it stands in
+   for media the trusted contract does not carry, and is aria-hidden so it is
+   never announced or mistaken for catalog content.
+   linear-gradient takes no logical direction keyword, so the direction is
+   expressed explicitly: the base rule is the Arabic RTL reading order and
+   [dir="ltr"] mirrors it, matching the convention already used elsewhere in
+   this codebase. The two tokens are unchanged in both directions. */
+.catalog-v2__media {
+  block-size: 210px;
+  inline-size: 100%;
+  min-inline-size: 0;
+  border-radius: var(--hajiz-v2-radius-image);
+  background: linear-gradient(to left, var(--hajiz-v2-navy-900), var(--hajiz-v2-color-journey-line));
+}
+
+[dir="ltr"] .catalog-v2__media {
+  background: linear-gradient(to right, var(--hajiz-v2-navy-900), var(--hajiz-v2-color-journey-line));
+}
+
+.catalog-v2__title {
+  margin: 0;
+  font: var(--hajiz-v2-ar-h3);
+  color: var(--hajiz-v2-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.catalog-v2__summary {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* A row with no summary says so plainly rather than borrowing the node 18:40
+   placeholder structure, which the trusted contract cannot fill. */
+.catalog-v2__summary--missing {
+  color: var(--hajiz-v2-color-text-secondary);
+  font-style: normal;
+  animation: none;
+}
+
+/* ---- Favorites -------------------------------------------------------- */
+
+.catalog-v2__favorite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hajiz-v2-space-3);
+  margin-block-start: auto;
+  padding-block-start: var(--hajiz-v2-space-3);
+  border-block-start: 1px solid var(--hajiz-v2-color-border-subtle);
+}
+
+.catalog-v2__favorite-action {
+  min-block-size: var(--hajiz-v2-touch-target);
+  text-decoration: none;
+}
+
+.catalog-v2__favorite-status {
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+}
+
+.catalog-v2__favorite-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-3);
+  margin: 0;
+  padding: var(--hajiz-v2-space-4);
+  border-radius: var(--hajiz-v2-radius-md);
+  background: var(--hajiz-v2-color-surface-error);
+  font: var(--hajiz-v2-ar-body-sm);
+  color: var(--hajiz-v2-color-status-error);
+  animation: none;
+  transition: none;
+}
+
+.catalog-v2__favorite-error p { margin: 0; }
+
+/* ---- Loading / empty / error states ----------------------------------- */
+
+.catalog-v2__state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hajiz-v2-space-4);
+  padding: var(--hajiz-v2-space-8);
+  border-radius: var(--hajiz-v2-radius-lg);
+  background: var(--hajiz-v2-color-surface-primary);
+  box-shadow: var(--hajiz-v2-shadow-md);
+  text-align: start;
+}
+
+.catalog-v2__state-copy {
+  margin: 0;
+  font: var(--hajiz-v2-ar-body);
+  color: var(--hajiz-v2-color-text-secondary);
+  animation: none;
+}
+
+.catalog-v2__state--error {
+  background: var(--hajiz-v2-color-surface-error);
+  animation: none;
+  transition: none;
+}
+
+.catalog-v2__state--error .catalog-v2__state-copy { color: var(--hajiz-v2-color-status-error); }
+
+/* ---- Focus ------------------------------------------------------------ */
+
+.catalog-v2__favorite-action:focus-visible,
+.catalog-v2__state button:focus-visible,
+.catalog-v2__favorite-error button:focus-visible {
+  outline: var(--hajiz-v2-stroke-focus) solid var(--hajiz-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Responsive · 1440 / 1024 / 768 / 390 ----------------------------- */
+
+@media (max-width: 1024px) {
+  .catalog-v2 { gap: var(--hajiz-v2-space-6); }
+  .catalog-v2__grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--hajiz-v2-space-4);
+  }
+  .catalog-v2__media { block-size: 180px; }
+}
+
+@media (max-width: 900px) {
+  /* Single column; the truth label and the media both stay visible. */
+  .catalog-v2__grid { grid-template-columns: minmax(0, 1fr); }
+  .catalog-v2__card { padding: var(--hajiz-v2-space-4); gap: var(--hajiz-v2-space-3); }
+  .catalog-v2__media { block-size: 160px; }
+  .catalog-v2__state { padding: var(--hajiz-v2-space-6); }
+  .catalog-v2__favorite-action { inline-size: 100%; }
+}
+
+@media (max-width: 390px) {
+  .catalog-v2__title { font: var(--hajiz-v2-ar-body); font-weight: 700; }
+}
+
+/* ---- Reduced motion --------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-v2,
+  .catalog-v2 *,
+  .catalog-v2-page,
+  .catalog-v2-page * {
+    transition: none;
+  }
+}
